@@ -1,0 +1,18 @@
+workflows:
+  android-build:
+    name: Persian Navigator Lite Build
+    max_build_duration: 30
+    instance_type: mac_mini_m1
+    environment:
+      java: 17
+    scripts:
+      - name: Build APK
+        script: | 
+          chmod +x gradlew
+          ./gradlew assembleDebug
+    artifacts:
+      - app/build/outputs/**/*.apk
+    publishing:
+      email:
+        recipients:
+          - ghadir.baraty@gmail.com
