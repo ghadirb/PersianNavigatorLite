@@ -39,6 +39,19 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".navigation.DestinationSearchActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:label="انتخاب مقصد">
+            <!-- دریافت Share از Google Maps -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".service.NavigationService"
             android:enabled="true"

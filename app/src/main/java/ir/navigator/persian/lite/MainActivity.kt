@@ -15,6 +15,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import ir.navigator.persian.lite.service.NavigationService
+import ir.navigator.persian.lite.navigation.DestinationSearchActivity
+import ir.navigator.persian.lite.navigation.Destination
 
 class MainActivity : AppCompatActivity() {
     
@@ -26,6 +28,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnStart: Button
     private lateinit var btnStop: Button
     private lateinit var btnTestVoice: Button
+    private lateinit var btnSelectDestination: Button
     private lateinit var tvStatus: TextView
     private lateinit var tvSpeed: TextView
     private lateinit var cbVoiceAlerts: CheckBox
@@ -66,6 +69,7 @@ class MainActivity : AppCompatActivity() {
         btnStart = findViewById(R.id.btnStart)
         btnStop = findViewById(R.id.btnStop)
         btnTestVoice = findViewById(R.id.btnTestVoice)
+        btnSelectDestination = findViewById(R.id.btnSelectDestination)
         tvStatus = findViewById(R.id.tvStatus)
         tvSpeed = findViewById(R.id.tvSpeed)
         cbVoiceAlerts = findViewById(R.id.cbVoiceAlerts)
@@ -93,6 +97,34 @@ class MainActivity : AppCompatActivity() {
         // Test voice button
         btnTestVoice.setOnClickListener {
             testVoiceAlert()
+        }
+        
+        // Select destination button
+        btnSelectDestination.setOnClickListener {
+            openDestinationSearch()
+        }
+    }
+    
+    private fun openDestinationSearch() {
+        val intent = Intent(this, DestinationSearchActivity::class.java)
+        startActivityForResult(intent, 100)
+    }
+    
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 100 && resultCode == RESULT_OK) {
+            data?.let {
+                val name = it.getStringExtra("destination_name") ?: return
+                val lat = it.getDoubleExtra("destination_lat", 0.0)
+                val lng = it.getDoubleExtra("destination_lng", 0.0)
+                val address = it.getStringExtra("destination_address") ?: ""
+                
+                val destination = Destination(name, lat, lng, address)
+                destinationManager.saveDestination(destination)
+                
+                tvStatus.text = "مقصد: $name"
+                btnStart.isEnabled = true
+            }
         }
     }
     

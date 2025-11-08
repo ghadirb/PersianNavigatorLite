@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.location.Geocoder
 import android.location.Location
+import ir.navigator.persian.lite.navigation.Destination
 import java.util.Locale
 
 /**
@@ -16,13 +17,6 @@ class DestinationManager(private val context: Context) {
         context.getSharedPreferences("navigation_prefs", Context.MODE_PRIVATE)
     
     private val geocoder = Geocoder(context, Locale("fa", "IR"))
-    
-    data class Destination(
-        val latitude: Double,
-        val longitude: Double,
-        val name: String = "",
-        val address: String = ""
-    )
     
     fun saveDestination(destination: Destination) {
         prefs.edit().apply {

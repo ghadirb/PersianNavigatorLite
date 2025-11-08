@@ -33,12 +33,24 @@
             android:textColor="#666666"
             android:padding="8dp" />
 
+        <!-- دکمه انتخاب مقصد -->
+        <Button
+            android:id="@+id/btnSelectDestination"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="📍 انتخاب مقصد"
+            android:backgroundTint="#2196F3"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:padding="16dp" />
+
         <!-- دکمه شروع/توقف -->
         <Button
             android:id="@+id/btnStart"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:text="شروع ردیابی"
             android:backgroundTint="#4CAF50"
             android:textColor="#FFFFFF"
