@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun setupUI() {
-        val btnStart = findViewById<MaterialButton>(R.id.btnStart)
+        val btnStart = findViewById<Button>(R.id.btnStart)
         
         btnStart.setOnClickListener {
             if (!isTracking) {
