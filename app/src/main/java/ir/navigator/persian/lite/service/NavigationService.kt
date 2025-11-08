@@ -9,6 +9,8 @@ import ir.navigator.persian.lite.MainActivity
 import ir.navigator.persian.lite.R
 import ir.navigator.persian.lite.ai.*
 import ir.navigator.persian.lite.tts.PersianTTSPro
+import ir.navigator.persian.lite.navigation.RouteManager
+import ir.navigator.persian.lite.DestinationManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -28,7 +30,10 @@ class NavigationService : Service() {
     private lateinit var tts: PersianTTSPro
     private lateinit var speedCameraDB: SpeedCameraDB
     private lateinit var trafficPredictor: TrafficPredictor
+    private lateinit var routeManager: RouteManager
+    private lateinit var destinationManager: DestinationManager
     private var currentSpeed = 0
+    private var lastDirectionTime = 0L
     
     override fun onCreate() {
         super.onCreate()
@@ -39,6 +44,13 @@ class NavigationService : Service() {
         tts = PersianTTSPro(this)
         speedCameraDB = SpeedCameraDB()
         trafficPredictor = TrafficPredictor()
+        routeManager = RouteManager()
+        destinationManager = DestinationManager(this)
+        
+        // بارگذاری مقصد ذخیره شده
+        destinationManager.getDestination()?.let { dest ->
+            routeManager.setDestination(dest)
+        }
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -133,6 +145,24 @@ class NavigationService : Service() {
         val notification = createNotification()
         val manager = getSystemService(NotificationManager::class.java)
         manager?.notify(NOTIFICATION_ID, notification)
+        
+        // مسیریابی به مقصد
+        routeManager.calculateRoute(location)?.let { route ->
+            // بررسی رسیدن به مقصد
+            if (routeManager.hasReachedDestination(location)) {
+                tts.speak("به مقصد رسیدید", ir.navigator.persian.lite.tts.Priority.URGENT)
+                routeManager.clearDestination()
+                destinationManager.clearDestination()
+            } else {
+                // راهنمایی جهت (هر 30 ثانیه)
+                val now = System.currentTimeMillis()
+                if (now - lastDirectionTime > 30000) {
+                    val distance = (route.distance / 1000).toInt()
+                    tts.speak("${route.direction}. فاصله تا مقصد $distance کیلومتر")
+                    lastDirectionTime = now
+                }
+            }
+        }
         
         // بررسی دوربین سرعت
         val cameras = speedCameraDB.findNearby(location, 500f)
