@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "ir.navigator.persian.lite.app-merged_res-41:/layout_activity_main_complete.xml.flat",
+        "source": "ir.navigator.persian.lite.app-main-43:/layout/activity_main_complete.xml"
+    },
+    {
+        "merged": "ir.navigator.persian.lite.app-merged_res-41:/layout_activity_main.xml.flat",
+        "source": "ir.navigator.persian.lite.app-main-43:/layout/activity_main.xml"
+    }
+]

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ناوبری هوشمند</string>
+    <string name="start_tracking">شروع ردیابی</string>
+    <string name="stop_tracking">توقف ردیابی</string>
+    <style name="Theme.PersianNavigator" parent="Theme.Material3.DayNight">
+        <item name="colorPrimary">#2196F3</item>
+        <item name="colorPrimaryVariant">#1976D2</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+    </style>
+</resources>

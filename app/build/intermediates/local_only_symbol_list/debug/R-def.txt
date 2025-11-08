@@ -1,0 +1,13 @@
+R_DEF: Internal format may change without notice
+local
+id btnStart
+id tvAlerts
+id tvCameras
+id tvSpeed
+id tvStatus
+layout activity_main
+layout activity_main_complete
+string app_name
+string start_tracking
+string stop_tracking
+style Theme.PersianNavigator
