@@ -74,7 +74,13 @@ class NavigatorEngine(private val context: Context, private val lifecycleOwner: 
     }
     
     fun testVoiceAlert() {
-        tts.speak("سلام. سیستم هشدار صوتی فارسی فعال است")
+        // هشدارهای تست متنوع
+        val messages = listOf(
+            "سلام. سیستم هشدار صوتی فارسی فعال است. شروع به حرکت کنید",
+            "هشدار صوتی فارسی آماده است. رانندگی ایمن داشته باشید",
+            "سیستم ناوبری هوشمند فعال شد. در مسیر با شما هستیم"
+        )
+        tts.speak(messages.random(), ir.navigator.persian.lite.tts.Priority.URGENT)
     }
     
     fun stop() {

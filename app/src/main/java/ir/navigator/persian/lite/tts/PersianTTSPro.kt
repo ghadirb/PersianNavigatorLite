@@ -28,7 +28,13 @@ class PersianTTSPro(private val context: Context) {
     }
     
     fun speak(text: String, priority: Priority = Priority.NORMAL) {
-        if (!isReady) return
+        if (!isReady) {
+            // اگر TTS آماده نیست، صبر کنید
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                speak(text, priority)
+            }, 500)
+            return
+        }
         
         val queueMode = when (priority) {
             Priority.URGENT -> TextToSpeech.QUEUE_FLUSH

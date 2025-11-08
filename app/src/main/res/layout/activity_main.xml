@@ -113,6 +113,61 @@
             android:textSize="16sp"
             android:padding="8dp" />
 
+        <CheckBox
+            android:id="@+id/cbOverSpeed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="هشدار سرعت غیرمجاز جاده"
+            android:checked="true"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <!-- انتخاب نوع TTS -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="نوع صدا"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:textColor="#333333" />
+
+        <RadioGroup
+            android:id="@+id/rgTTSMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/rbOffline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="آفلاین (رایگان - صدای سیستم)"
+                android:checked="true"
+                android:textSize="16sp"
+                android:padding="8dp" />
+
+            <RadioButton
+                android:id="@+id/rbOnline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="آنلاین (حرفه‌ای - نیاز به اینترنت)"
+                android:textSize="16sp"
+                android:padding="8dp" />
+        </RadioGroup>
+
+        <!-- دکمه تست صدا -->
+        <Button
+            android:id="@+id/btnTestVoice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="تست هشدار صوتی"
+            android:backgroundTint="#9C27B0"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:padding="12dp" />
+
         <!-- آمار -->
         <TextView
             android:layout_width="match_parent"

@@ -8,7 +8,10 @@ import androidx.core.app.ActivityCompat
 import android.widget.Button
 import android.widget.TextView
 import android.widget.CheckBox
+import android.widget.RadioGroup
+import android.widget.RadioButton
 import android.view.View
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import ir.navigator.persian.lite.service.NavigationService
@@ -22,6 +25,7 @@ class MainActivity : AppCompatActivity() {
     // UI Elements
     private lateinit var btnStart: Button
     private lateinit var btnStop: Button
+    private lateinit var btnTestVoice: Button
     private lateinit var tvStatus: TextView
     private lateinit var tvSpeed: TextView
     private lateinit var cbVoiceAlerts: CheckBox
@@ -29,6 +33,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cbSpeedBump: CheckBox
     private lateinit var cbTraffic: CheckBox
     private lateinit var cbDangerousDriving: CheckBox
+    private lateinit var cbOverSpeed: CheckBox
+    private lateinit var rgTTSMode: RadioGroup
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +45,7 @@ class MainActivity : AppCompatActivity() {
         
         checkPermissions()
         setupUI()
+        checkServiceStatus()
         handleIntent(intent)
     }
     
@@ -58,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         // Initialize UI elements
         btnStart = findViewById(R.id.btnStart)
         btnStop = findViewById(R.id.btnStop)
+        btnTestVoice = findViewById(R.id.btnTestVoice)
         tvStatus = findViewById(R.id.tvStatus)
         tvSpeed = findViewById(R.id.tvSpeed)
         cbVoiceAlerts = findViewById(R.id.cbVoiceAlerts)
@@ -65,6 +73,8 @@ class MainActivity : AppCompatActivity() {
         cbSpeedBump = findViewById(R.id.cbSpeedBump)
         cbTraffic = findViewById(R.id.cbTraffic)
         cbDangerousDriving = findViewById(R.id.cbDangerousDriving)
+        cbOverSpeed = findViewById(R.id.cbOverSpeed)
+        rgTTSMode = findViewById(R.id.rgTTSMode)
         
         // Start button
         btnStart.setOnClickListener {
@@ -79,6 +89,24 @@ class MainActivity : AppCompatActivity() {
         btnStop.setOnClickListener {
             stopTracking()
         }
+        
+        // Test voice button
+        btnTestVoice.setOnClickListener {
+            testVoiceAlert()
+        }
+    }
+    
+    private fun testVoiceAlert() {
+        // تست هشدار صوتی فارسی
+        navigatorEngine.testVoiceAlert()
+        tvStatus.text = "در حال پخش هشدار تست..."
+        
+        // بعد از 3 ثانیه برگرداندن وضعیت
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            if (!isTracking) {
+                tvStatus.text = "آماده شروع"
+            }
+        }, 3000)
     }
     
     private fun startTracking() {
@@ -109,6 +137,22 @@ class MainActivity : AppCompatActivity() {
         btnStop.visibility = View.GONE
         tvStatus.text = "آماده شروع"
         tvSpeed.text = "سرعت: 0 km/h"
+    }
+    
+    private fun checkServiceStatus() {
+        // بررسی اگر Service در حال اجراست
+        val manager = getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (NavigationService::class.java.name == service.service.className) {
+                // Service در حال اجراست
+                isTracking = true
+                btnStart.text = "توقف موقت"
+                btnStart.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFFFFC107.toInt())
+                btnStop.visibility = View.VISIBLE
+                tvStatus.text = "در حال ردیابی..."
+                return
+            }
+        }
     }
     
     override fun onNewIntent(intent: Intent?) {
