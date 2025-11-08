@@ -1,28 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:gravity="center">
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/tvSpeed"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="سرعت: 0 km/h"
-        android:textSize="32sp"
-        android:textStyle="bold"
-        android:textColor="#2196F3" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <Button
-        android:id="@+id/btnStart"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="@string/start_tracking"
-        android:backgroundTint="#2196F3"
-        android:textColor="#FFFFFF" />
+        <!-- نمایش سرعت -->
+        <TextView
+            android:id="@+id/tvSpeed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="سرعت: 0 km/h"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#2196F3"
+            android:gravity="center"
+            android:padding="16dp" />
 
-</LinearLayout>
+        <!-- وضعیت ردیابی -->
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="آماده شروع"
+            android:textSize="18sp"
+            android:gravity="center"
+            android:textColor="#666666"
+            android:padding="8dp" />
+
+        <!-- دکمه شروع/توقف -->
+        <Button
+            android:id="@+id/btnStart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="شروع ردیابی"
+            android:backgroundTint="#4CAF50"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:padding="16dp" />
+
+        <!-- دکمه پایان ردیابی -->
+        <Button
+            android:id="@+id/btnStop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="پایان ردیابی"
+            android:backgroundTint="#F44336"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:visibility="gone" />
+
+        <!-- تنظیمات هشدارها -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="تنظیمات هشدارها"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:textColor="#333333" />
+
+        <CheckBox
+            android:id="@+id/cbVoiceAlerts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="هشدارهای صوتی فارسی"
+            android:checked="true"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <CheckBox
+            android:id="@+id/cbSpeedCamera"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="هشدار دوربین سرعت"
+            android:checked="true"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <CheckBox
+            android:id="@+id/cbSpeedBump"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="هشدار سرعت‌گیر"
+            android:checked="true"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <CheckBox
+            android:id="@+id/cbTraffic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="هشدار ترافیک"
+            android:checked="true"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <CheckBox
+            android:id="@+id/cbDangerousDriving"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="هشدار رانندگی خطرناک"
+            android:checked="true"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <!-- آمار -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="آمار"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:textColor="#333333" />
+
+        <TextView
+            android:id="@+id/tvStats"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="دوربین‌ها: 16\nسرعت‌گیرها: 5"
+            android:textSize="14sp"
+            android:padding="8dp"
+            android:textColor="#666666" />
+
+    </LinearLayout>
+</ScrollView>

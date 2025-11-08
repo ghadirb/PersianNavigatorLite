@@ -26,9 +26,17 @@ class NavigationService : Service() {
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForeground(NOTIFICATION_ID, createNotification())
-        navigatorEngine.startNavigation()
-        return START_STICKY
+        when (intent?.action) {
+            "STOP_NAVIGATION" -> {
+                stopSelf()
+                return START_NOT_STICKY
+            }
+            else -> {
+                startForeground(NOTIFICATION_ID, createNotification())
+                navigatorEngine.startNavigation()
+                return START_STICKY
+            }
+        }
     }
     
     private fun createNotificationChannel() {

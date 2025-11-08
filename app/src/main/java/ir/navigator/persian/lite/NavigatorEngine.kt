@@ -73,6 +73,10 @@ class NavigatorEngine(private val context: Context, private val lifecycleOwner: 
         return results[0]
     }
     
+    fun testVoiceAlert() {
+        tts.speak("سلام. سیستم هشدار صوتی فارسی فعال است")
+    }
+    
     fun stop() {
         tts.shutdown()
     }

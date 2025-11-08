@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import android.widget.Button
 import android.widget.TextView
+import android.widget.CheckBox
+import android.view.View
 import android.content.Intent
 import android.os.Build
 import ir.navigator.persian.lite.service.NavigationService
@@ -16,6 +18,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navigatorEngine: NavigatorEngine
     private lateinit var destinationManager: DestinationManager
     private var isTracking = false
+    
+    // UI Elements
+    private lateinit var btnStart: Button
+    private lateinit var btnStop: Button
+    private lateinit var tvStatus: TextView
+    private lateinit var tvSpeed: TextView
+    private lateinit var cbVoiceAlerts: CheckBox
+    private lateinit var cbSpeedCamera: CheckBox
+    private lateinit var cbSpeedBump: CheckBox
+    private lateinit var cbTraffic: CheckBox
+    private lateinit var cbDangerousDriving: CheckBox
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,19 +55,61 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun setupUI() {
-        val btnStart = findViewById<Button>(R.id.btnStart)
+        // Initialize UI elements
+        btnStart = findViewById(R.id.btnStart)
+        btnStop = findViewById(R.id.btnStop)
+        tvStatus = findViewById(R.id.tvStatus)
+        tvSpeed = findViewById(R.id.tvSpeed)
+        cbVoiceAlerts = findViewById(R.id.cbVoiceAlerts)
+        cbSpeedCamera = findViewById(R.id.cbSpeedCamera)
+        cbSpeedBump = findViewById(R.id.cbSpeedBump)
+        cbTraffic = findViewById(R.id.cbTraffic)
+        cbDangerousDriving = findViewById(R.id.cbDangerousDriving)
         
+        // Start button
         btnStart.setOnClickListener {
             if (!isTracking) {
-                navigatorEngine.startNavigation()
-                btnStart.text = "توقف ردیابی"
-                isTracking = true
+                startTracking()
             } else {
-                navigatorEngine.stop()
-                btnStart.text = getString(R.string.start_tracking)
-                isTracking = false
+                pauseTracking()
             }
         }
+        
+        // Stop button (end navigation)
+        btnStop.setOnClickListener {
+            stopTracking()
+        }
+    }
+    
+    private fun startTracking() {
+        navigatorEngine.startNavigation()
+        isTracking = true
+        btnStart.text = "توقف موقت"
+        btnStart.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFFFFC107.toInt())
+        btnStop.visibility = View.VISIBLE
+        tvStatus.text = "در حال ردیابی..."
+        startNavigationService()
+        
+        // تست هشدار صوتی
+        navigatorEngine.testVoiceAlert()
+    }
+    
+    private fun pauseTracking() {
+        isTracking = false
+        btnStart.text = "ادامه ردیابی"
+        btnStart.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF4CAF50.toInt())
+        tvStatus.text = "متوقف شده"
+    }
+    
+    private fun stopTracking() {
+        navigatorEngine.stop()
+        stopNavigationService()
+        isTracking = false
+        btnStart.text = "شروع ردیابی"
+        btnStart.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF4CAF50.toInt())
+        btnStop.visibility = View.GONE
+        tvStatus.text = "آماده شروع"
+        tvSpeed.text = "سرعت: 0 km/h"
     }
     
     override fun onNewIntent(intent: Intent?) {
