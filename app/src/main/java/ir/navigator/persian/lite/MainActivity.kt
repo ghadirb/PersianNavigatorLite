@@ -5,8 +5,8 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.textview.MaterialTextView
+import android.widget.Button
+import android.widget.TextView
 import android.content.Intent
 import android.os.Build
 import ir.navigator.persian.lite.service.NavigationService
