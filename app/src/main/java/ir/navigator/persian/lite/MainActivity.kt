@@ -5,54 +5,54 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textview.MaterialTextView
-import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     
-    private lateinit var locationTracker: LocationTracker
-    private lateinit var routeAnalyzer: RouteAnalyzer
-    private lateinit var tts: PersianTTS
+    private lateinit var navigatorEngine: NavigatorEngine
+    private var isTracking = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         
-        locationTracker = LocationTracker(this)
-        routeAnalyzer = RouteAnalyzer()
-        tts = PersianTTS(this)
+        navigatorEngine = NavigatorEngine(this, this)
         
         checkPermissions()
         setupUI()
     }
     
     private fun checkPermissions() {
+        val permissions = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.POST_NOTIFICATIONS
+        )
+        
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+            ActivityCompat.requestPermissions(this, permissions, 1)
         }
     }
     
     private fun setupUI() {
-        findViewById<MaterialButton>(R.id.btnStart).setOnClickListener {
-            startTracking()
-        }
-    }
-    
-    private fun startTracking() {
-        lifecycleScope.launch {
-            locationTracker.getLocationUpdates().collect { location ->
-                routeAnalyzer.addLocation(location)
-                updateUI(location.speed)
+        val btnStart = findViewById<MaterialButton>(R.id.btnStart)
+        
+        btnStart.setOnClickListener {
+            if (!isTracking) {
+                navigatorEngine.startNavigation()
+                btnStart.text = "توقف ردیابی"
+                isTracking = true
+            } else {
+                navigatorEngine.stop()
+                btnStart.text = getString(R.string.start_tracking)
+                isTracking = false
             }
         }
     }
     
-    private fun updateUI(speed: Float) {
-        findViewById<MaterialTextView>(R.id.tvSpeed).text = 
-            "سرعت: ${(speed * 3.6).toInt()} km/h"
+    override fun onDestroy() {
+        super.onDestroy()
+        navigatorEngine.stop()
     }
 }
