@@ -102,7 +102,6 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun stopTracking() {
-        navigatorEngine.stop()
         stopNavigationService()
         isTracking = false
         btnStart.text = "شروع ردیابی"
@@ -147,7 +146,6 @@ class MainActivity : AppCompatActivity() {
     
     override fun onDestroy() {
         super.onDestroy()
-        navigatorEngine.stop()
-        stopNavigationService()
+        // Service مستقل است و با بستن Activity متوقف نمی‌شود
     }
 }

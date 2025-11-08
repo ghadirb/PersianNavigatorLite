@@ -6,8 +6,13 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import ir.navigator.persian.lite.MainActivity
-import ir.navigator.persian.lite.NavigatorEngine
 import ir.navigator.persian.lite.R
+import ir.navigator.persian.lite.ai.*
+import ir.navigator.persian.lite.tts.PersianTTSPro
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.content.Context
 
 /**
  * ForegroundService برای اجرا در پس‌زمینه
@@ -15,14 +20,25 @@ import ir.navigator.persian.lite.R
  */
 class NavigationService : Service() {
     
-    private lateinit var navigatorEngine: NavigatorEngine
     private val NOTIFICATION_ID = 1001
     private val CHANNEL_ID = "navigation_service"
+    
+    // AI Modules
+    private lateinit var locationManager: LocationManager
+    private lateinit var tts: PersianTTSPro
+    private lateinit var speedCameraDB: SpeedCameraDB
+    private lateinit var trafficPredictor: TrafficPredictor
+    private var currentSpeed = 0
     
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        navigatorEngine = NavigatorEngine(this, MainActivity())
+        
+        // Initialize modules
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        tts = PersianTTSPro(this)
+        speedCameraDB = SpeedCameraDB()
+        trafficPredictor = TrafficPredictor()
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -33,7 +49,7 @@ class NavigationService : Service() {
             }
             else -> {
                 startForeground(NOTIFICATION_ID, createNotification())
-                navigatorEngine.startNavigation()
+                startLocationTracking()
                 return START_STICKY
             }
         }
@@ -61,18 +77,93 @@ class NavigationService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
+        // دکمه پایان ردیابی
+        val stopIntent = Intent(this, NavigationService::class.java).apply {
+            action = "STOP_NAVIGATION"
+        }
+        val stopPendingIntent = PendingIntent.getService(
+            this, 1, stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("ناوبری هوشمند فارسی")
-            .setContentText("در حال ردیابی...")
+            .setContentText("سرعت: $currentSpeed km/h")
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
+            .addAction(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                "پایان ردیابی",
+                stopPendingIntent
+            )
             .build()
+    }
+    
+    private fun startLocationTracking() {
+        try {
+            locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                1000L, // هر 1 ثانیه
+                10f,   // هر 10 متر
+                locationListener
+            )
+            
+            // تست هشدار صوتی
+            tts.speak("سلام. سیستم هشدار صوتی فارسی فعال است")
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+        }
+    }
+    
+    private val locationListener = object : LocationListener {
+        override fun onLocationChanged(location: Location) {
+            processLocation(location)
+        }
+        override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {}
+        override fun onProviderEnabled(provider: String) {}
+        override fun onProviderDisabled(provider: String) {}
+    }
+    
+    private fun processLocation(location: Location) {
+        // محاسبه سرعت
+        currentSpeed = (location.speed * 3.6).toInt()
+        
+        // آپدیت notification
+        val notification = createNotification()
+        val manager = getSystemService(NotificationManager::class.java)
+        manager?.notify(NOTIFICATION_ID, notification)
+        
+        // بررسی دوربین سرعت
+        val cameras = speedCameraDB.findNearby(location, 500f)
+        cameras.firstOrNull()?.let { camera ->
+            val distance = calculateDistance(location, camera)
+            if (distance < 500) {
+                tts.speak("دوربین سرعت در ${distance.toInt()} متر جلو")
+            }
+        }
+        
+        // بررسی سرعت غیرمجاز
+        cameras.firstOrNull()?.let { camera ->
+            if (currentSpeed > camera.limit) {
+                tts.speak("سرعت مجاز ${camera.limit} کیلومتر است. سرعت شما $currentSpeed")
+            }
+        }
+    }
+    
+    private fun calculateDistance(location: Location, camera: SpeedCamera): Float {
+        val results = FloatArray(1)
+        Location.distanceBetween(
+            location.latitude, location.longitude,
+            camera.lat, camera.lng, results
+        )
+        return results[0]
     }
     
     override fun onDestroy() {
         super.onDestroy()
-        navigatorEngine.stop()
+        locationManager.removeUpdates(locationListener)
+        tts.shutdown()
     }
     
     override fun onBind(intent: Intent?): IBinder? = null
