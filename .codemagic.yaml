@@ -1,0 +1,32 @@
+workflows:
+  android-build:
+    name: Persian Navigator Lite - Production Build
+    max_build_duration: 30
+    instance_type: mac_mini_m1
+    environment:
+      java: 17
+      android:
+        build_tools: 34.0.0
+        sdk_version: 34
+    scripts:
+      - name: Set up Gradle
+        script: | 
+          chmod +x gradlew
+          ./gradlew --version
+      - name: Build Debug APK
+        script: | 
+          ./gradlew assembleDebug
+      - name: Build Release APK
+        script: | 
+          ./gradlew assembleRelease
+    artifacts:
+      - app/build/outputs/**/*.apk
+    publishing:
+      email:
+        recipients:
+          - ghadir.baraty@gmail.com
+      slack:
+        webhook_url: $SLACK_WEBHOOK
+        channel: '#builds'
+        notify_on_success: true
+        notify_on_failure: true
