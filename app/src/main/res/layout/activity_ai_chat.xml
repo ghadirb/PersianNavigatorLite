@@ -124,7 +124,7 @@
         android:background="#FFFFFF"
         android:orientation="horizontal"
         android:padding="12dp"
-        android:elevation="4dp">
+        >
 
         <Button
             android:id="@+id/btnVoice"

@@ -10,6 +10,7 @@ import android.widget.TextView
 import android.widget.CheckBox
 import android.widget.RadioGroup
 import android.widget.RadioButton
+import android.widget.Toast
 import android.view.View
 import android.content.Context
 import android.content.Intent
@@ -17,6 +18,10 @@ import android.os.Build
 import ir.navigator.persian.lite.service.NavigationService
 import ir.navigator.persian.lite.navigation.DestinationSearchActivity
 import ir.navigator.persian.lite.navigation.Destination
+import ir.navigator.persian.lite.api.SecureKeys
+import ir.navigator.persian.lite.api.KeyActivationActivity
+import ir.navigator.persian.lite.ui.StatisticsActivity
+import ir.navigator.persian.lite.ui.AIChatActivity
 
 class MainActivity : AppCompatActivity() {
     
@@ -29,6 +34,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnStop: Button
     private lateinit var btnTestVoice: Button
     private lateinit var btnSelectDestination: Button
+    private lateinit var btnActivateKeys: Button
+    private lateinit var btnStatistics: Button
+    private lateinit var btnAIChat: Button
     private lateinit var tvStatus: TextView
     private lateinit var tvSpeed: TextView
     private lateinit var cbVoiceAlerts: CheckBox
@@ -70,6 +78,9 @@ class MainActivity : AppCompatActivity() {
         btnStop = findViewById(R.id.btnStop)
         btnTestVoice = findViewById(R.id.btnTestVoice)
         btnSelectDestination = findViewById(R.id.btnSelectDestination)
+        btnActivateKeys = findViewById(R.id.btnActivateKeys)
+        btnStatistics = findViewById(R.id.btnStatistics)
+        btnAIChat = findViewById(R.id.btnAIChat)
         tvStatus = findViewById(R.id.tvStatus)
         tvSpeed = findViewById(R.id.tvSpeed)
         cbVoiceAlerts = findViewById(R.id.cbVoiceAlerts)
@@ -102,6 +113,28 @@ class MainActivity : AppCompatActivity() {
         // Select destination button
         btnSelectDestination.setOnClickListener {
             openDestinationSearch()
+        }
+        
+        // Activate keys button
+        btnActivateKeys.setOnClickListener {
+            if (!SecureKeys.areKeysActivated()) {
+                val intent = Intent(this, KeyActivationActivity::class.java)
+                startActivity(intent)
+            } else {
+                Toast.makeText(this, "کلیدها قبلاً فعال شده‌اند", Toast.LENGTH_SHORT).show()
+            }
+        }
+        
+        // Statistics button
+        btnStatistics.setOnClickListener {
+            val intent = Intent(this, StatisticsActivity::class.java)
+            startActivity(intent)
+        }
+        
+        // AI Chat button
+        btnAIChat.setOnClickListener {
+            val intent = Intent(this, AIChatActivity::class.java)
+            startActivity(intent)
         }
     }
     

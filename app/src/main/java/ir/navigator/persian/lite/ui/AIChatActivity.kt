@@ -10,6 +10,7 @@ import ir.navigator.persian.lite.ai.AIAssistant
 import ir.navigator.persian.lite.ai.AIAction
 import kotlinx.coroutines.*
 import ir.navigator.persian.lite.navigation.DestinationSearchActivity
+import android.content.Intent
 
 /**
  * صفحه چت با دستیار هوش مصنوعی
