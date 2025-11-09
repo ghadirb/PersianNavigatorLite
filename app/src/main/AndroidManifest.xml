@@ -67,10 +67,15 @@
 
         <activity
             android:name=".ui.AIChatActivity"
-            android:exported="false"
+            android:exported="true"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize"
-            android:label="دستیار هوشمند" />
+            android:label="چت با هوش مصنوعی" />
+
+        <activity
+            android:name=".ui.SpeechTestActivity"
+            android:exported="true"
+            android:label="تست تشخیص صدا" />
 
         <service
             android:name=".service.NavigationService"

@@ -86,7 +86,7 @@ class NavigatorEngine(private val context: Context, private val lifecycleOwner: 
             "هشدار صوتی فارسی آماده است. رانندگی ایمن داشته باشید",
             "سیستم ناوبری هوشمند فعال شد. در مسیر با شما هستیم"
         )
-        tts.speak(messages.random(), ir.navigator.persian.lite.tts.Priority.URGENT)
+        tts.speak(messages.random(), AdvancedPersianTTS.Priority.URGENT)
     }
     
     fun stop() {

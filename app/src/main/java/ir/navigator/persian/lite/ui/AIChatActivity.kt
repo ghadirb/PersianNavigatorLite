@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import android.speech.RecognitionListener
 import android.speech.SpeechRecognizer
 import android.speech.RecognizerIntent
+import ir.navigator.persian.lite.speech.AdvancedSpeechRecognizer
 
 /**
  * صفحه چت با دستیار هوش مصنوعی
@@ -37,8 +38,8 @@ class AIChatActivity : AppCompatActivity() {
     
     private val chatScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
-    // تشخیص صدا
-    private var speechRecognizer: SpeechRecognizer? = null
+    // تشخیص صدا پیشرفته
+    private lateinit var advancedSpeechRecognizer: AdvancedSpeechRecognizer
     private var isListening = false
     private val RECORD_AUDIO_PERMISSION = 1
     
@@ -47,6 +48,7 @@ class AIChatActivity : AppCompatActivity() {
         setContentView(R.layout.activity_ai_chat)
         
         aiAssistant = AIAssistant(this)
+        advancedSpeechRecognizer = AdvancedSpeechRecognizer(this)
         setupUI()
         setupRecyclerView()
         
@@ -193,54 +195,45 @@ class AIChatActivity : AppCompatActivity() {
             return
         }
         
-        if (SpeechRecognizer.isRecognitionAvailable(this)) {
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
-            speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-                override fun onReadyForSpeech(params: Bundle?) {
-                    isListening = true
-                    btnVoice.text = "⏹️"
-                    Toast.makeText(this@AIChatActivity, "شروع به صحبت کنید...", Toast.LENGTH_SHORT).show()
-                }
-                
-                override fun onBeginningOfSpeech() {}
-                override fun onRmsChanged(rmsdB: Float) {}
-                override fun onBufferReceived(buffer: ByteArray?) {}
-                override fun onEndOfSpeech() {}
-                
-                override fun onError(error: Int) {
-                    isListening = false
-                    btnVoice.text = "🎤"
-                    Toast.makeText(this@AIChatActivity, "خطا در تشخیص صدا", Toast.LENGTH_SHORT).show()
-                }
-                
-                override fun onResults(results: Bundle?) {
-                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    if (!matches.isNullOrEmpty()) {
-                        etMessage.setText(matches[0])
-                        sendMessage()
-                    }
-                    isListening = false
-                    btnVoice.text = "🎤"
-                }
-                
-                override fun onPartialResults(partialResults: Bundle?) {}
-                override fun onEvent(eventType: Int, params: Bundle?) {}
-            })
-            
-            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fa-IR")
-                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+        val callback = object : AdvancedSpeechRecognizer.SpeechRecognitionCallback {
+            override fun onReadyForSpeech() {
+                isListening = true
+                btnVoice.text = "⏹️"
+                Toast.makeText(this@AIChatActivity, "شروع به صحبت کنید...", Toast.LENGTH_SHORT).show()
             }
             
-            speechRecognizer?.startListening(intent)
-        } else {
-            Toast.makeText(this, "تشخیص صدا در این دستگاه در دسترس نیست", Toast.LENGTH_SHORT).show()
+            override fun onBeginningOfSpeech() {}
+            override fun onRmsChanged(rmsdB: Float) {}
+            override fun onBufferReceived(buffer: ByteArray?) {}
+            override fun onEndOfSpeech() {}
+            
+            override fun onError(error: String) {
+                isListening = false
+                btnVoice.text = "🎤"
+                Toast.makeText(this@AIChatActivity, error, Toast.LENGTH_SHORT).show()
+            }
+            
+            override fun onResults(results: List<String>) {
+                if (results.isNotEmpty()) {
+                    etMessage.setText(results[0])
+                    sendMessage()
+                }
+                isListening = false
+                btnVoice.text = "🎤"
+            }
+            
+            override fun onPartialResults(partialResults: List<String>) {
+                // نمایش نتایج جزئی در صورت نیاز
+            }
+            
+            override fun onEvent(eventType: Int, params: Bundle?) {}
         }
+        
+        advancedSpeechRecognizer.startListening(callback)
     }
     
     private fun stopListening() {
-        speechRecognizer?.stopListening()
+        advancedSpeechRecognizer.stopListening()
         isListening = false
         btnVoice.text = "🎤"
     }
@@ -258,7 +251,7 @@ class AIChatActivity : AppCompatActivity() {
     
     override fun onDestroy() {
         super.onDestroy()
-        speechRecognizer?.destroy()
+        advancedSpeechRecognizer.destroy()
         chatScope.cancel()
     }
 }

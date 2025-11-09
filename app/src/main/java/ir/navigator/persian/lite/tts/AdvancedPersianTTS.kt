@@ -54,15 +54,11 @@ class AdvancedPersianTTS(private val context: Context) {
             try {
                 val modelFile = "tts/haaniye/fa-haaniye_low.onnx"
                 val configPath = "tts/haaniye/fa-haaniye_low.onnx.json"
-<<<<<<< HEAD
                 val tokensPath = "tts/haaniye/tokens.txt"
-=======
->>>>>>> 90e68ba (Advanced TTS with Haaniye Model & Online Traffic)
                 
                 // بررسی وجود فایل‌های مدل
                 val modelExists = checkAssetExists(modelFile)
                 val configExists = checkAssetExists(configPath)
-<<<<<<< HEAD
                 val tokensExists = checkAssetExists(tokensPath)
                 
                 Log.d("AdvancedTTS", "بررسی مدل هانیه:")
@@ -87,25 +83,10 @@ class AdvancedPersianTTS(private val context: Context) {
                 Log.e("AdvancedTTS", "خطا در بررسی مدل هانیه: ${e.message}")
                 isHaaniyeAvailable = false
                 useSystemTTS = true
-=======
-                
-                if (modelExists && configExists) {
-                    isHaaniyeAvailable = true
-                    Log.d("AdvancedTTS", "مدل هانیه در دسترس است")
-                    
-                    // در نسخه واقعی، مدل ONNX بارگذاری می‌شود
-                    // فعلاً از سیستم TTS استفاده می‌کنیم
-                } else {
-                    Log.w("AdvancedTTS", "مدل هانیه یافت نشد، از سیستم TTS استفاده می‌شود")
-                }
-            } catch (e: Exception) {
-                Log.e("AdvancedTTS", "خطا در بررسی مدل هانیه: ${e.message}")
->>>>>>> 90e68ba (Advanced TTS with Haaniye Model & Online Traffic)
             }
         }
     }
     
-<<<<<<< HEAD
     private fun initializeHaaniyeModel() {
         try {
             // در نسخه واقعی، مدل ONNX بارگذاری می‌شود
@@ -118,8 +99,6 @@ class AdvancedPersianTTS(private val context: Context) {
         }
     }
     
-=======
->>>>>>> 90e68ba (Advanced TTS with Haaniye Model & Online Traffic)
     private fun checkAssetExists(path: String): Boolean {
         return try {
             context.assets.open(path).use { it.available() > 0 }
@@ -136,6 +115,7 @@ class AdvancedPersianTTS(private val context: Context) {
             Log.d("AdvancedTTS", "🎤 استفاده از مدل هانیه برای صداسازی")
             speakWithHaaniye(text, priority)
         } else {
+            Log.d("AdvancedTTS", "🔊 استفاده از System TTS برای صداسازی")
             speakWithSystemTTS(text, priority)
         }
     }
@@ -161,7 +141,6 @@ class AdvancedPersianTTS(private val context: Context) {
     private fun speakWithHaaniye(text: String, priority: Priority) {
         ttsScope.launch {
             try {
-<<<<<<< HEAD
                 Log.i("AdvancedTTS", "🎤 شروع صداسازی با مدل هانیه: '$text'")
                 
                 // شبیه‌سازی پردازش مدل هانیه
@@ -191,17 +170,6 @@ class AdvancedPersianTTS(private val context: Context) {
                 Log.d("AdvancedTTS", "✅ صداسازی با مدل هانیه تکمیل شد: $text")
             } catch (e: Exception) {
                 Log.e("AdvancedTTS", "❌ خطا در مدل هانیه، استفاده از System TTS: ${e.message}")
-=======
-                // در نسخه واقعی، با استفاده از مدل ONNX صدا تولید می‌شود
-                // فعلاً به سیستم TTS فallback می‌کنیم
-                withContext(Dispatchers.Main) {
-                    speakWithSystemTTS(text, priority)
-                }
-                
-                Log.d("AdvancedTTS", "پخش با مدل هانیه: $text")
-            } catch (e: Exception) {
-                Log.e("AdvancedTTS", "خطا در مدل هانیه، استفاده از System TTS: ${e.message}")
->>>>>>> 90e68ba (Advanced TTS with Haaniye Model & Online Traffic)
                 withContext(Dispatchers.Main) {
                     speakWithSystemTTS(text, priority)
                 }

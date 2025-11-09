@@ -1,8 +1,11 @@
 package ir.navigator.persian.lite.ui
 
 import android.os.Bundle
+import android.content.DialogInterface
+import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AlertDialog
 import ir.navigator.persian.lite.R
 import ir.navigator.persian.lite.statistics.DrivingStatistics
 
@@ -27,9 +30,22 @@ class StatisticsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_statistics)
         
-        drivingStats = DrivingStatistics(this)
-        setupUI()
-        loadStatistics()
+        try {
+            Log.d("StatisticsActivity", "شروع onCreate...")
+            
+            drivingStats = DrivingStatistics(this)
+            Log.d("StatisticsActivity", "DrivingStatistics مقداردهی شد")
+            
+            setupUI()
+            Log.d("StatisticsActivity", "UI تنظیم شد")
+            
+            loadStatistics()
+            Log.d("StatisticsActivity", "✅ StatisticsActivity با موفقیت ایجاد شد")
+        } catch (e: Exception) {
+            Log.e("StatisticsActivity", "خطا در onCreate: ${e.message}", e)
+            Toast.makeText(this, "خطا در بارگذاری صفحه آمار: ${e.message}", Toast.LENGTH_LONG).show()
+            finish() // بستن صفحه در صورت خطا
+        }
     }
     
     private fun setupUI() {
@@ -53,26 +69,73 @@ class StatisticsActivity : AppCompatActivity() {
     }
     
     private fun loadStatistics() {
-        val stats = drivingStats.getFormattedStats()
-        tvTotalDistance.text = stats["distance"]
-        tvTotalTime.text = stats["time"]
-        tvAverageSpeed.text = stats["averageSpeed"]
-        tvMaxSpeed.text = stats["maxSpeed"]
-        tvOverSpeedCount.text = stats["overSpeedCount"]
-        tvCameraAlerts.text = stats["cameraAlerts"]
-        tvBumpAlerts.text = stats["bumpAlerts"]
+        try {
+            Log.d("StatisticsActivity", "شروع بارگذاری آمار...")
+            
+            if (!::drivingStats.isInitialized) {
+                Log.e("StatisticsActivity", "drivingStats مقداردهی نشده است")
+                Toast.makeText(this, "خطا در بارگذاری آمار", Toast.LENGTH_SHORT).show()
+                return
+            }
+            
+            val stats = drivingStats.getFormattedStats()
+            Log.d("StatisticsActivity", "آمار دریافت شد: $stats")
+            
+            // بررسی null بودن مقادیر
+            tvTotalDistance.text = stats["distance"] ?: "0"
+            tvTotalTime.text = stats["time"] ?: "0"
+            tvAverageSpeed.text = stats["averageSpeed"] ?: "0"
+            tvMaxSpeed.text = stats["maxSpeed"] ?: "0"
+            tvOverSpeedCount.text = stats["overSpeedCount"] ?: "0"
+            tvCameraAlerts.text = stats["cameraAlerts"] ?: "0"
+            tvBumpAlerts.text = stats["bumpAlerts"] ?: "0"
+            
+            Log.d("StatisticsActivity", "✅ آمار با موفقیت بارگذاری شد")
+        } catch (e: Exception) {
+            Log.e("StatisticsActivity", "خطا در بارگذاری آمار: ${e.message}", e)
+            Toast.makeText(this, "خطا در بارگذاری آمار: ${e.message}", Toast.LENGTH_LONG).show()
+            
+            // مقادیر پیش‌فرض
+            tvTotalDistance.text = "0"
+            tvTotalTime.text = "0"
+            tvAverageSpeed.text = "0"
+            tvMaxSpeed.text = "0"
+            tvOverSpeedCount.text = "0"
+            tvCameraAlerts.text = "0"
+            tvBumpAlerts.text = "0"
+        }
     }
     
     private fun resetStatistics() {
-        AlertDialog.Builder(this)
-            .setTitle("بازنشانی آمار")
-            .setMessage("آیا از بازنشانی تمام آمار رانندگی اطمینان دارید؟")
-            .setPositiveButton("بله") { _, _ ->
-                drivingStats.resetStats()
-                loadStatistics()
-                Toast.makeText(this, "آمار با موفقیت بازنشانی شد", Toast.LENGTH_SHORT).show()
+        try {
+            Log.d("StatisticsActivity", "شروع بازنشانی آمار...")
+            
+            if (!::drivingStats.isInitialized) {
+                Log.e("StatisticsActivity", "drivingStats مقداردهی نشده است")
+                Toast.makeText(this, "خطا: آمار در دسترس نیست", Toast.LENGTH_SHORT).show()
+                return
             }
-            .setNegativeButton("خیر", null)
-            .show()
+            
+            AlertDialog.Builder(this)
+                .setTitle("بازنشانی آمار")
+                .setMessage("آیا از بازنشانی تمام آمار رانندگی اطمینان دارید؟")
+                .setPositiveButton("بله") { dialog: DialogInterface, which: Int ->
+                    try {
+                        Log.d("StatisticsActivity", "کاربر بازنشانی را تایید کرد")
+                        drivingStats.resetStats()
+                        loadStatistics()
+                        Toast.makeText(this, "آمار با موفقیت بازنشانی شد", Toast.LENGTH_SHORT).show()
+                        Log.d("StatisticsActivity", "✅ آمار با موفقیت بازنشانی شد")
+                    } catch (e: Exception) {
+                        Log.e("StatisticsActivity", "خطا در بازنشانی آمار: ${e.message}", e)
+                        Toast.makeText(this, "خطا در بازنشانی آمار: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+                .setNegativeButton("خیر", null)
+                .show()
+        } catch (e: Exception) {
+            Log.e("StatisticsActivity", "خطا در نمایش دیالوگ بازنشانی: ${e.message}", e)
+            Toast.makeText(this, "خطا: ${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
 }

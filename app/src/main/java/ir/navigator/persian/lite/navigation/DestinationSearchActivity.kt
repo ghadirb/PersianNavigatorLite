@@ -1,6 +1,7 @@
 package ir.navigator.persian.lite.navigation
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import ir.navigator.persian.lite.R
@@ -20,6 +21,7 @@ class DestinationSearchActivity : AppCompatActivity() {
     private lateinit var etSearch: EditText
     private lateinit var lvResults: ListView
     private lateinit var btnStartNavigation: Button
+    private lateinit var tvStatus: TextView
     
     private var selectedDestination: Destination? = null
     private lateinit var geocoder: Geocoder
@@ -53,17 +55,21 @@ class DestinationSearchActivity : AppCompatActivity() {
         etSearch = findViewById(R.id.etSearch)
         lvResults = findViewById(R.id.lvResults)
         btnStartNavigation = findViewById(R.id.btnStartNavigation)
+        tvStatus = findViewById(R.id.tvStatus)
         
         // نمایش پیام راهنما
-        updateResults(defaultDestinations)
+        tvStatus.text = "🔍 برای جستجو تایپ کنید..."
+        updateResults(emptyList()) // لیست خالی در ابتدا
         
-        // جستجوی واقعی با Geocoder
+        // جستجوی واقعی با Geocoder و OpenStreetMap
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                val query = s.toString()
-                if (query.isEmpty()) {
-                    updateResults(defaultDestinations)
+                val query = s.toString().trim()
+                if (query.length < 2) {
+                    tvStatus.text = "🔍 برای جستجو حداقل 2 حرف وارد کنید..."
+                    updateResults(emptyList())
                 } else {
+                    tvStatus.text = "🔍 در حال جستجو..."
                     searchDestinations(query)
                 }
             }
@@ -105,7 +111,7 @@ class DestinationSearchActivity : AppCompatActivity() {
     }
     
     /**
-     * جستجوی واقعی مقاصد با Geocoder
+     * جستجوی واقعی مقاصد با Geocoder و OpenStreetMap
      */
     private fun searchDestinations(query: String) {
         searchJob?.cancel()
@@ -113,44 +119,122 @@ class DestinationSearchActivity : AppCompatActivity() {
             try {
                 if (!::geocoder.isInitialized) return@launch
                 
-                val addresses = geocoder.getFromLocationName(query, 10)
-                if (addresses != null && addresses.isNotEmpty()) {
-                    val destinations = addresses.map { address ->
-                        val name = if (address.featureName != null) {
-                            "${address.featureName}, ${address.thoroughfare ?: ""}"
-                        } else {
-                            address.getAddressLine(0) ?: "مکان نامشخص"
+                val allDestinations = mutableListOf<Destination>()
+                
+                // 1. جستجو با Geocoder (داخلی اندروید)
+                try {
+                    val addresses = geocoder.getFromLocationName(query, 5)
+                    if (addresses != null && addresses.isNotEmpty()) {
+                        val geocoderResults = addresses.map { address ->
+                            val name = if (address.featureName != null) {
+                                "${address.featureName}, ${address.thoroughfare ?: ""}"
+                            } else {
+                                address.getAddressLine(0) ?: "مکان نامشخص"
+                            }
+                            Destination(
+                                name = name,
+                                latitude = address.latitude,
+                                longitude = address.longitude,
+                                address = address.getAddressLine(0) ?: ""
+                            )
                         }
-                        Destination(
-                            name = name,
-                            lat = address.latitude,
-                            lng = address.longitude,
-                            address = address.getAddressLine(0) ?: ""
+                        allDestinations.addAll(geocoderResults)
+                    }
+                } catch (e: Exception) {
+                    Log.w("DestinationSearch", "Geocoder خطا داد: ${e.message}")
+                }
+                
+                // 2. جستجو با OpenStreetMap Nominatim API
+                try {
+                    val osmResults = searchWithOpenStreetMap(query)
+                    allDestinations.addAll(osmResults)
+                } catch (e: Exception) {
+                    Log.w("DestinationSearch", "OpenStreetMap خطا داد: ${e.message}")
+                }
+                
+                // 3. حذف نتایج تکراری و مرتب‌سازی
+                val uniqueDestinations = allDestinations
+                    .distinctBy { "${it.latitude}_${it.longitude}" }
+                    .take(10) // حداکثر 10 نتیجه
+                
+                withContext(Dispatchers.Main) {
+                    if (uniqueDestinations.isNotEmpty()) {
+                        updateResults(uniqueDestinations)
+                        tvStatus.text = "✅ ${uniqueDestinations.size} نتیجه یافت شد"
+                    } else {
+                        tvStatus.text = "❌ نتیجه‌ای یافت نشد"
+                        updateResults(emptyList())
+                    }
+                }
+                
+            } catch (e: Exception) {
+                Log.e("DestinationSearch", "خطا در جستجو: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    tvStatus.text = "❌ خطا در جستجو: ${e.message}"
+                    updateResults(emptyList())
+                }
+            }
+        }
+    }
+    
+    /**
+     * جستجو با OpenStreetMap Nominatim API
+     */
+    private suspend fun searchWithOpenStreetMap(query: String): List<Destination> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val encodedQuery = java.net.URLEncoder.encode(query, "UTF-8")
+                val url = "https://nominatim.openstreetmap.org/search?format=json&q=$encodedQuery&limit=5&addressdetails=1&accept-language=fa"
+                
+                val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.setRequestProperty("User-Agent", "PersianNavigatorLite/1.0")
+                connection.connectTimeout = 10000
+                connection.readTimeout = 10000
+                
+                if (connection.responseCode == 200) {
+                    val response = connection.inputStream.bufferedReader().readText()
+                    val jsonArray = org.json.JSONArray(response)
+                    val results = mutableListOf<Destination>()
+                    
+                    for (i in 0 until jsonArray.length()) {
+                        val item = jsonArray.getJSONObject(i)
+                        val lat = item.getDouble("lat")
+                        val lon = item.getDouble("lon")
+                        val displayName = item.getString("display_name")
+                        
+                        // استخراج نام کوتاه‌تر
+                        val name = if (item.has("address")) {
+                            val address = item.getJSONObject("address")
+                            when {
+                                address.has("road") && address.has("city") -> 
+                                    "${address.getString("road")}, ${address.getString("city")}"
+                                address.has("road") -> address.getString("road")
+                                address.has("city") -> address.getString("city")
+                                address.has("town") -> address.getString("town")
+                                else -> displayName.split(",").first()
+                            }
+                        } else {
+                            displayName.split(",").first()
+                        }
+                        
+                        results.add(
+                            Destination(
+                                name = name.trim(),
+                                latitude = lat,
+                                longitude = lon,
+                                address = displayName
+                            )
                         )
                     }
                     
-                    withContext(Dispatchers.Main) {
-                        updateResults(destinations)
-                    }
+                    results
                 } else {
-                    // اگر نتیجه‌ای نبود، مقاصد پیش‌فرض فیلتر شده را نشان بده
-                    val filtered = defaultDestinations.filter {
-                        it.name.contains(query, ignoreCase = true) ||
-                        it.address.contains(query, ignoreCase = true)
-                    }
-                    withContext(Dispatchers.Main) {
-                        updateResults(filtered)
-                    }
+                    emptyList()
                 }
             } catch (e: Exception) {
-                // در صورت خطا، مقاصد پیش‌فرض را نشان بده
-                val filtered = defaultDestinations.filter {
-                    it.name.contains(query, ignoreCase = true) ||
-                    it.address.contains(query, ignoreCase = true)
-                }
-                withContext(Dispatchers.Main) {
-                    updateResults(filtered)
-                }
+                Log.e("DestinationSearch", "OpenStreetMap API خطا: ${e.message}")
+                emptyList()
             }
         }
     }
