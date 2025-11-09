@@ -57,6 +57,9 @@ class DestinationSearchActivity : AppCompatActivity() {
                     searchDestinations(query)
                 }
             }
+                    searchDestinations(query)
+                }
+            }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
@@ -84,40 +87,7 @@ class DestinationSearchActivity : AppCompatActivity() {
         }
     }
     
-    private fun showSearchGuide() {
-        tvStatus.text = "🌍 آماده جستجو در تمام ایران و جهان"
-        
-        val guideMessages = listOf(
-            "🔍 برای جستجو نام مکان را وارد کنید",
-            "📍 مثال: میدان آزادی، بیمارستان، رستوران",
-            "🌍 جستجو در تمام ایران و جهان",
-            "🏢 جستجو ادارات، فروشگاه‌ها، مراکز درمانی",
-            "🚩 حداقل 2 حرف برای شروع جستجو"
-        )
-        
-        val adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_list_item_1,
-            guideMessages
-        )
-        lvResults.adapter = adapter
-        btnStartNavigation.isEnabled = false
-        btnStartNavigation.text = "ابتدا مقصد را انتخاب کنید"
-    }
-    
     private fun updateResults(destinations: List<Destination>) {
-        if (destinations.isEmpty()) {
-            val noResults = listOf("❌ نتیجه‌ای یافت نشد", "🔍 کلیدواژه دیگری را امتحان کنید")
-            val adapter = ArrayAdapter(
-                this,
-                android.R.layout.simple_list_item_1,
-                noResults
-            )
-            lvResults.adapter = adapter
-            btnStartNavigation.isEnabled = false
-            return
-        }
-        
         val adapter = ArrayAdapter(
             this,
             android.R.layout.simple_list_item_2,
@@ -128,7 +98,7 @@ class DestinationSearchActivity : AppCompatActivity() {
     }
     
     /**
-     * جستجوی واقعی مقاصد در تمام ایران و جهان
+     * جستجوی واقعی مقاصد با Geocoder و OpenStreetMap
      */
     private fun searchDestinations(query: String) {
         searchJob?.cancel()
@@ -136,68 +106,122 @@ class DestinationSearchActivity : AppCompatActivity() {
             try {
                 if (!::geocoder.isInitialized) return@launch
                 
-                // نمایش وضعیت جستجو
-                withContext(Dispatchers.Main) {
-                    tvStatus.text = "🔍 در حال جستجو: $query"
-                    val searching = listOf("⏳ در حال جستجو در سراسر جهان...", "📍 لطفا صبر کنید...")
-                    val adapter = ArrayAdapter(
-                        this@DestinationSearchActivity,
-                        android.R.layout.simple_list_item_1,
-                        searching
-                    )
-                    lvResults.adapter = adapter
-                }
+                val allDestinations = mutableListOf<Destination>()
                 
-                // جستجوی گسترده با نتایج بیشتر
-                val addresses = geocoder.getFromLocationName(query, 20)
-                if (addresses != null && addresses.isNotEmpty()) {
-                    // حذف نتایج تکراری و مرتب‌سازی
-                    val uniqueDestinations = addresses.mapNotNull { address ->
-                        val name = when {
-                            address.featureName != null && address.thoroughfare != null -> 
-                                "${address.featureName}, ${address.thoroughfare}"
-                            address.featureName != null -> address.featureName
-                            address.getAddressLine(0) != null -> address.getAddressLine(0)
-                            else -> null
-                        }
-                        
-                        name?.let {
+                // 1. جستجو با Geocoder (داخلی اندروید)
+                try {
+                    val addresses = geocoder.getFromLocationName(query, 5)
+                    if (addresses != null && addresses.isNotEmpty()) {
+                        val geocoderResults = addresses.map { address ->
+                            val name = if (address.featureName != null) {
+                                "${address.featureName}, ${address.thoroughfare ?: ""}"
+                            } else {
+                                address.getAddressLine(0) ?: "مکان نامشخص"
+                            }
                             Destination(
-                                name = it,
+                                name = name,
                                 latitude = address.latitude,
                                 longitude = address.longitude,
                                 address = address.getAddressLine(0) ?: ""
                             )
                         }
-                    }.distinctBy { it.name }
-                    
-                    withContext(Dispatchers.Main) {
-                        tvStatus.text = "✅ ${uniqueDestinations.size} نتیجه یافت شد"
-                        updateResults(uniqueDestinations)
+                        allDestinations.addAll(geocoderResults)
                     }
-                } else {
-                    // هیچ نتیجه‌ای یافت نشد
-                    withContext(Dispatchers.Main) {
-                        tvStatus.text = "❌ هیچ نتیجه‌ای یافت نشد"
+                } catch (e: Exception) {
+                    Log.w("DestinationSearch", "Geocoder خطا داد: ${e.message}")
+                }
+                
+                // 2. جستجو با OpenStreetMap Nominatim API
+                try {
+                    val osmResults = searchWithOpenStreetMap(query)
+                    allDestinations.addAll(osmResults)
+                } catch (e: Exception) {
+                    Log.w("DestinationSearch", "OpenStreetMap خطا داد: ${e.message}")
+                }
+                
+                // 3. حذف نتایج تکراری و مرتب‌سازی
+                val uniqueDestinations = allDestinations
+                    .distinctBy { "${it.latitude}_${it.longitude}" }
+                    .take(10) // حداکثر 10 نتیجه
+                
+                withContext(Dispatchers.Main) {
+                    if (uniqueDestinations.isNotEmpty()) {
+                        updateResults(uniqueDestinations)
+                        tvStatus.text = "✅ ${uniqueDestinations.size} نتیجه یافت شد"
+                    } else {
+                        tvStatus.text = "❌ نتیجه‌ای یافت نشد"
                         updateResults(emptyList())
                     }
                 }
+                
             } catch (e: Exception) {
-                // خطا در جستجو
+                Log.e("DestinationSearch", "خطا در جستجو: ${e.message}")
                 withContext(Dispatchers.Main) {
-                    tvStatus.text = "❌ خطا در جستجو"
-                    val errorMessages = listOf(
-                        "❌ خطا در جستجو", 
-                        "🔄 اتصال اینترنت را بررسی کنید",
-                        "🔍 دوباره تلاش کنید"
-                    )
-                    val adapter = ArrayAdapter(
-                        this@DestinationSearchActivity,
-                        android.R.layout.simple_list_item_1,
-                        errorMessages
-                    )
-                    lvResults.adapter = adapter
+                    tvStatus.text = "❌ خطا در جستجو: ${e.message}"
+                    updateResults(emptyList())
                 }
+            }
+        }
+    }
+    
+    /**
+     * جستجو با OpenStreetMap Nominatim API
+     */
+    private suspend fun searchWithOpenStreetMap(query: String): List<Destination> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val encodedQuery = java.net.URLEncoder.encode(query, "UTF-8")
+                val url = "https://nominatim.openstreetmap.org/search?format=json&q=$encodedQuery&limit=5&addressdetails=1&accept-language=fa"
+                
+                val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.setRequestProperty("User-Agent", "PersianNavigatorLite/1.0")
+                connection.connectTimeout = 10000
+                connection.readTimeout = 10000
+                
+                if (connection.responseCode == 200) {
+                    val response = connection.inputStream.bufferedReader().readText()
+                    val jsonArray = org.json.JSONArray(response)
+                    val results = mutableListOf<Destination>()
+                    
+                    for (i in 0 until jsonArray.length()) {
+                        val item = jsonArray.getJSONObject(i)
+                        val lat = item.getDouble("lat")
+                        val lon = item.getDouble("lon")
+                        val displayName = item.getString("display_name")
+                        
+                        // استخراج نام کوتاه‌تر
+                        val name = if (item.has("address")) {
+                            val address = item.getJSONObject("address")
+                            when {
+                                address.has("road") && address.has("city") -> 
+                                    "${address.getString("road")}, ${address.getString("city")}"
+                                address.has("road") -> address.getString("road")
+                                address.has("city") -> address.getString("city")
+                                address.has("town") -> address.getString("town")
+                                else -> displayName.split(",").first()
+                            }
+                        } else {
+                            displayName.split(",").first()
+                        }
+                        
+                        results.add(
+                            Destination(
+                                name = name.trim(),
+                                latitude = lat,
+                                longitude = lon,
+                                address = displayName
+                            )
+                        )
+                    }
+                    
+                    results
+                } else {
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                Log.e("DestinationSearch", "OpenStreetMap API خطا: ${e.message}")
+                emptyList()
             }
         }
     }
@@ -238,9 +262,9 @@ class DestinationSearchActivity : AppCompatActivity() {
                 if (lat != null && lng != null) {
                     return Destination(
                         "مقصد انتخابی",
-                        latitude = lat,
-                        longitude = lng,
-                        address = "از Google Maps"
+                        lat,
+                        lng,
+                        "از Google Maps"
                     )
                 }
             }
