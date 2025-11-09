@@ -20,25 +20,14 @@ class DestinationSearchActivity : AppCompatActivity() {
     private lateinit var etSearch: EditText
     private lateinit var lvResults: ListView
     private lateinit var btnStartNavigation: Button
+    private lateinit var tvStatus: TextView
     
     private var selectedDestination: Destination? = null
     private lateinit var geocoder: Geocoder
     private val searchScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var searchJob: Job? = null
     
-    // مقاصد پیش‌فرض برای نمایش اولیه
-    private val defaultDestinations = listOf(
-        Destination("میدان آزادی تهران", latitude = 35.6892, longitude = 51.3890, address = "میدان آزادی، تهران"),
-        Destination("برج میلاد", latitude = 35.7447, longitude = 51.3753, address = "برج میلاد، تهران"),
-        Destination("میدان نقش جهان اصفهان", latitude = 32.6546, longitude = 51.6680, address = "میدان نقش جهان، اصفهان"),
-        Destination("حرم امام رضا", latitude = 36.2879, longitude = 59.6160, address = "حرم مطهر، مشهد"),
-        Destination("دروازه قرآن شیراز", latitude = 29.5563, longitude = 52.5798, address = "دروازه قرآن، شیراز"),
-        Destination("برج آزادی تبریز", latitude = 38.0800, longitude = 46.2919, address = "برج آزادی، تبریز"),
-        Destination("کاخ گلستان", latitude = 35.6794, longitude = 51.4208, address = "کاخ گلستان، تهران"),
-        Destination("پل خواجو اصفهان", latitude = 32.6380, longitude = 51.6680, address = "پل خواجو، اصفهان"),
-        Destination("ارگ کریمخان", latitude = 29.6100, longitude = 52.5400, address = "ارگ کریمخان، شیراز"),
-        Destination("دریاچه ارومیه", latitude = 37.5500, longitude = 45.3167, address = "دریاچه ارومیه")
-    )
+    // هیچ مقصد پیش‌فرضی - جستجوی واقعی در تمام ایران و جهان
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,17 +42,18 @@ class DestinationSearchActivity : AppCompatActivity() {
         etSearch = findViewById(R.id.etSearch)
         lvResults = findViewById(R.id.lvResults)
         btnStartNavigation = findViewById(R.id.btnStartNavigation)
+        tvStatus = findViewById(R.id.tvStatus)
         
-        // نمایش پیام راهنما
-        updateResults(defaultDestinations)
+        // نمایش پیام راهنما به جای مقاصد پیش‌فرض
+        showSearchGuide()
         
         // جستجوی واقعی با Geocoder
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 val query = s.toString()
                 if (query.isEmpty()) {
-                    updateResults(defaultDestinations)
-                } else {
+                    showSearchGuide()
+                } else if (query.length >= 2) {
                     searchDestinations(query)
                 }
             }
@@ -94,7 +84,40 @@ class DestinationSearchActivity : AppCompatActivity() {
         }
     }
     
+    private fun showSearchGuide() {
+        tvStatus.text = "🌍 آماده جستجو در تمام ایران و جهان"
+        
+        val guideMessages = listOf(
+            "🔍 برای جستجو نام مکان را وارد کنید",
+            "📍 مثال: میدان آزادی، بیمارستان، رستوران",
+            "🌍 جستجو در تمام ایران و جهان",
+            "🏢 جستجو ادارات، فروشگاه‌ها، مراکز درمانی",
+            "🚩 حداقل 2 حرف برای شروع جستجو"
+        )
+        
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_list_item_1,
+            guideMessages
+        )
+        lvResults.adapter = adapter
+        btnStartNavigation.isEnabled = false
+        btnStartNavigation.text = "ابتدا مقصد را انتخاب کنید"
+    }
+    
     private fun updateResults(destinations: List<Destination>) {
+        if (destinations.isEmpty()) {
+            val noResults = listOf("❌ نتیجه‌ای یافت نشد", "🔍 کلیدواژه دیگری را امتحان کنید")
+            val adapter = ArrayAdapter(
+                this,
+                android.R.layout.simple_list_item_1,
+                noResults
+            )
+            lvResults.adapter = adapter
+            btnStartNavigation.isEnabled = false
+            return
+        }
+        
         val adapter = ArrayAdapter(
             this,
             android.R.layout.simple_list_item_2,
@@ -105,7 +128,7 @@ class DestinationSearchActivity : AppCompatActivity() {
     }
     
     /**
-     * جستجوی واقعی مقاصد با Geocoder
+     * جستجوی واقعی مقاصد در تمام ایران و جهان
      */
     private fun searchDestinations(query: String) {
         searchJob?.cancel()
@@ -113,43 +136,67 @@ class DestinationSearchActivity : AppCompatActivity() {
             try {
                 if (!::geocoder.isInitialized) return@launch
                 
-                val addresses = geocoder.getFromLocationName(query, 10)
+                // نمایش وضعیت جستجو
+                withContext(Dispatchers.Main) {
+                    tvStatus.text = "🔍 در حال جستجو: $query"
+                    val searching = listOf("⏳ در حال جستجو در سراسر جهان...", "📍 لطفا صبر کنید...")
+                    val adapter = ArrayAdapter(
+                        this@DestinationSearchActivity,
+                        android.R.layout.simple_list_item_1,
+                        searching
+                    )
+                    lvResults.adapter = adapter
+                }
+                
+                // جستجوی گسترده با نتایج بیشتر
+                val addresses = geocoder.getFromLocationName(query, 20)
                 if (addresses != null && addresses.isNotEmpty()) {
-                    val destinations = addresses.map { address ->
-                        val name = if (address.featureName != null) {
-                            "${address.featureName}, ${address.thoroughfare ?: ""}"
-                        } else {
-                            address.getAddressLine(0) ?: "مکان نامشخص"
+                    // حذف نتایج تکراری و مرتب‌سازی
+                    val uniqueDestinations = addresses.mapNotNull { address ->
+                        val name = when {
+                            address.featureName != null && address.thoroughfare != null -> 
+                                "${address.featureName}, ${address.thoroughfare}"
+                            address.featureName != null -> address.featureName
+                            address.getAddressLine(0) != null -> address.getAddressLine(0)
+                            else -> null
                         }
-                        Destination(
-                            name = name,
-                            latitude = address.latitude,
-                            longitude = address.longitude,
-                            address = address.getAddressLine(0) ?: ""
-                        )
-                    }
+                        
+                        name?.let {
+                            Destination(
+                                name = it,
+                                latitude = address.latitude,
+                                longitude = address.longitude,
+                                address = address.getAddressLine(0) ?: ""
+                            )
+                        }
+                    }.distinctBy { it.name }
                     
                     withContext(Dispatchers.Main) {
-                        updateResults(destinations)
+                        tvStatus.text = "✅ ${uniqueDestinations.size} نتیجه یافت شد"
+                        updateResults(uniqueDestinations)
                     }
                 } else {
-                    // اگر نتیجه‌ای نبود، مقاصد پیش‌فرض فیلتر شده را نشان بده
-                    val filtered = defaultDestinations.filter {
-                        it.name.contains(query, ignoreCase = true) ||
-                        it.address.contains(query, ignoreCase = true)
-                    }
+                    // هیچ نتیجه‌ای یافت نشد
                     withContext(Dispatchers.Main) {
-                        updateResults(filtered)
+                        tvStatus.text = "❌ هیچ نتیجه‌ای یافت نشد"
+                        updateResults(emptyList())
                     }
                 }
             } catch (e: Exception) {
-                // در صورت خطا، مقاصد پیش‌فرض را نشان بده
-                val filtered = defaultDestinations.filter {
-                    it.name.contains(query, ignoreCase = true) ||
-                    it.address.contains(query, ignoreCase = true)
-                }
+                // خطا در جستجو
                 withContext(Dispatchers.Main) {
-                    updateResults(filtered)
+                    tvStatus.text = "❌ خطا در جستجو"
+                    val errorMessages = listOf(
+                        "❌ خطا در جستجو", 
+                        "🔄 اتصال اینترنت را بررسی کنید",
+                        "🔍 دوباره تلاش کنید"
+                    )
+                    val adapter = ArrayAdapter(
+                        this@DestinationSearchActivity,
+                        android.R.layout.simple_list_item_1,
+                        errorMessages
+                    )
+                    lvResults.adapter = adapter
                 }
             }
         }

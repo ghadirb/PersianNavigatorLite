@@ -27,14 +27,17 @@
         android:background="@android:drawable/edit_text"
         android:layout_marginBottom="16dp" />
 
-    <!-- راهنما -->
+    <!-- وضعیت جستجو -->
     <TextView
+        android:id="@+id/tvStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="مقاصد محبوب یا جستجو کنید"
+        android:text="🌍 جستجوی جهانی - نام مکان را وارد کنید"
         android:textSize="14sp"
         android:textColor="#666666"
-        android:padding="8dp" />
+        android:padding="8dp"
+        android:gravity="center"
+        android:background="#F5F5F5" />
 
     <!-- لیست نتایج -->
     <ListView
