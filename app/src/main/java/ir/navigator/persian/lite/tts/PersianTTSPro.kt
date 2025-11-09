@@ -22,9 +22,22 @@ class PersianTTSPro(private val context: Context) {
     private fun initializeTTS() {
         tts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                val result = tts?.setLanguage(Locale("fa", "IR"))
+                // تلاش برای زبان فارسی
+                var result = tts?.setLanguage(Locale("fa", "IR"))
+                
+                // اگر فارسی پشتیبانی نشود، از انگلیسی استفاده کن
+                if (result == TextToSpeech.LANG_MISSING_DATA || 
+                    result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    result = tts?.setLanguage(Locale.US)
+                    android.util.Log.w("PersianTTS", "فارسی پشتیبانی نمی‌شود، از انگلیسی استفاده می‌شود")
+                }
+                
                 isReady = result != TextToSpeech.LANG_MISSING_DATA && 
                          result != TextToSpeech.LANG_NOT_SUPPORTED
+                         
+                android.util.Log.d("PersianTTS", "TTS آماده شد: $isReady")
+            } else {
+                android.util.Log.e("PersianTTS", "خطا در مقداردهی اولیه TTS: $status")
             }
         }
     }

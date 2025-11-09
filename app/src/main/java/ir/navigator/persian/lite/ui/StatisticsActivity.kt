@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import ir.navigator.persian.lite.R
+import ir.navigator.persian.lite.statistics.DrivingStatistics
 
 /**
  * صفحه آمار و گزارش رانندگی
@@ -18,11 +19,15 @@ class StatisticsActivity : AppCompatActivity() {
     private lateinit var tvCameraAlerts: TextView
     private lateinit var tvBumpAlerts: TextView
     private lateinit var btnBack: Button
+    private lateinit var btnReset: Button
+    
+    private lateinit var drivingStats: DrivingStatistics
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_statistics)
         
+        drivingStats = DrivingStatistics(this)
         setupUI()
         loadStatistics()
     }
@@ -36,20 +41,38 @@ class StatisticsActivity : AppCompatActivity() {
         tvCameraAlerts = findViewById(R.id.tvCameraAlerts)
         tvBumpAlerts = findViewById(R.id.tvBumpAlerts)
         btnBack = findViewById(R.id.btnBack)
+        btnReset = findViewById(R.id.btnReset)
         
         btnBack.setOnClickListener {
             finish()
         }
+        
+        btnReset.setOnClickListener {
+            resetStatistics()
+        }
     }
     
     private fun loadStatistics() {
-        // آمارهای نمونه - در نسخه واقعی از دیتابیس خوانده می‌شود
-        tvTotalDistance.text = "125.5 کیلومتر"
-        tvTotalTime.text = "2 ساعت و 15 دقیقه"
-        tvAverageSpeed.text = "55.8 کیلومتر بر ساعت"
-        tvMaxSpeed.text = "95 کیلومتر بر ساعت"
-        tvOverSpeedCount.text = "3 بار"
-        tvCameraAlerts.text = "12 هشدار"
-        tvBumpAlerts.text = "8 هشدار"
+        val stats = drivingStats.getFormattedStats()
+        tvTotalDistance.text = stats["distance"]
+        tvTotalTime.text = stats["time"]
+        tvAverageSpeed.text = stats["averageSpeed"]
+        tvMaxSpeed.text = stats["maxSpeed"]
+        tvOverSpeedCount.text = stats["overSpeedCount"]
+        tvCameraAlerts.text = stats["cameraAlerts"]
+        tvBumpAlerts.text = stats["bumpAlerts"]
+    }
+    
+    private fun resetStatistics() {
+        AlertDialog.Builder(this)
+            .setTitle("بازنشانی آمار")
+            .setMessage("آیا از بازنشانی تمام آمار رانندگی اطمینان دارید؟")
+            .setPositiveButton("بله") { _, _ ->
+                drivingStats.resetStats()
+                loadStatistics()
+                Toast.makeText(this, "آمار با موفقیت بازنشانی شد", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("خیر", null)
+            .show()
     }
 }

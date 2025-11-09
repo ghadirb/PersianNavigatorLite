@@ -57,18 +57,14 @@ class DestinationSearchActivity : AppCompatActivity() {
         // نمایش پیام راهنما
         updateResults(defaultDestinations)
         
-        // جستجو
+        // جستجوی واقعی با Geocoder
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 val query = s.toString()
                 if (query.isEmpty()) {
                     updateResults(defaultDestinations)
                 } else {
-                    val filtered = defaultDestinations.filter {
-                        it.name.contains(query, ignoreCase = true) ||
-                        it.address.contains(query, ignoreCase = true)
-                    }
-                    updateResults(filtered)
+                    searchDestinations(query)
                 }
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -106,6 +102,57 @@ class DestinationSearchActivity : AppCompatActivity() {
             destinations
         )
         lvResults.adapter = adapter
+    }
+    
+    /**
+     * جستجوی واقعی مقاصد با Geocoder
+     */
+    private fun searchDestinations(query: String) {
+        searchJob?.cancel()
+        searchJob = searchScope.launch {
+            try {
+                if (!::geocoder.isInitialized) return@launch
+                
+                val addresses = geocoder.getFromLocationName(query, 10)
+                if (addresses != null && addresses.isNotEmpty()) {
+                    val destinations = addresses.map { address ->
+                        val name = if (address.featureName != null) {
+                            "${address.featureName}, ${address.thoroughfare ?: ""}"
+                        } else {
+                            address.getAddressLine(0) ?: "مکان نامشخص"
+                        }
+                        Destination(
+                            name = name,
+                            lat = address.latitude,
+                            lng = address.longitude,
+                            address = address.getAddressLine(0) ?: ""
+                        )
+                    }
+                    
+                    withContext(Dispatchers.Main) {
+                        updateResults(destinations)
+                    }
+                } else {
+                    // اگر نتیجه‌ای نبود، مقاصد پیش‌فرض فیلتر شده را نشان بده
+                    val filtered = defaultDestinations.filter {
+                        it.name.contains(query, ignoreCase = true) ||
+                        it.address.contains(query, ignoreCase = true)
+                    }
+                    withContext(Dispatchers.Main) {
+                        updateResults(filtered)
+                    }
+                }
+            } catch (e: Exception) {
+                // در صورت خطا، مقاصد پیش‌فرض را نشان بده
+                val filtered = defaultDestinations.filter {
+                    it.name.contains(query, ignoreCase = true) ||
+                    it.address.contains(query, ignoreCase = true)
+                }
+                withContext(Dispatchers.Main) {
+                    updateResults(filtered)
+                }
+            }
+        }
     }
     
     /**

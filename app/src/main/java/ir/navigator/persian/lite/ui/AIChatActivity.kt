@@ -11,6 +11,13 @@ import ir.navigator.persian.lite.ai.AIAction
 import kotlinx.coroutines.*
 import ir.navigator.persian.lite.navigation.DestinationSearchActivity
 import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import android.speech.RecognitionListener
+import android.speech.SpeechRecognizer
+import android.speech.RecognizerIntent
 
 /**
  * صفحه چت با دستیار هوش مصنوعی
@@ -29,6 +36,11 @@ class AIChatActivity : AppCompatActivity() {
     private val chatMessages = mutableListOf<ChatMessage>()
     
     private val chatScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    
+    // تشخیص صدا
+    private var speechRecognizer: SpeechRecognizer? = null
+    private var isListening = false
+    private val RECORD_AUDIO_PERMISSION = 1
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,8 +67,7 @@ class AIChatActivity : AppCompatActivity() {
         }
         
         btnVoice.setOnClickListener {
-            // TODO: پیاده‌سازی ورودی صوتی
-            Toast.makeText(this, "ورودی صوتی به زودی اضافه می‌شود", Toast.LENGTH_SHORT).show()
+            toggleVoiceInput()
         }
         
         btnBack.setOnClickListener {
@@ -166,8 +177,88 @@ class AIChatActivity : AppCompatActivity() {
         chatAdapter.notifyItemInserted(chatMessages.size - 1)
     }
     
+    private fun toggleVoiceInput() {
+        if (isListening) {
+            stopListening()
+        } else {
+            startListening()
+        }
+    }
+    
+    private fun startListening() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) 
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, 
+                arrayOf(Manifest.permission.RECORD_AUDIO), RECORD_AUDIO_PERMISSION)
+            return
+        }
+        
+        if (SpeechRecognizer.isRecognitionAvailable(this)) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+            speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+                override fun onReadyForSpeech(params: Bundle?) {
+                    isListening = true
+                    btnVoice.text = "⏹️"
+                    Toast.makeText(this@AIChatActivity, "شروع به صحبت کنید...", Toast.LENGTH_SHORT).show()
+                }
+                
+                override fun onBeginningOfSpeech() {}
+                override fun onRmsChanged(rmsdB: Float) {}
+                override fun onBufferReceived(buffer: ByteArray?) {}
+                override fun onEndOfSpeech() {}
+                
+                override fun onError(error: Int) {
+                    isListening = false
+                    btnVoice.text = "🎤"
+                    Toast.makeText(this@AIChatActivity, "خطا در تشخیص صدا", Toast.LENGTH_SHORT).show()
+                }
+                
+                override fun onResults(results: Bundle?) {
+                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    if (!matches.isNullOrEmpty()) {
+                        etMessage.setText(matches[0])
+                        sendMessage()
+                    }
+                    isListening = false
+                    btnVoice.text = "🎤"
+                }
+                
+                override fun onPartialResults(partialResults: Bundle?) {}
+                override fun onEvent(eventType: Int, params: Bundle?) {}
+            })
+            
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fa-IR")
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            }
+            
+            speechRecognizer?.startListening(intent)
+        } else {
+            Toast.makeText(this, "تشخیص صدا در این دستگاه در دسترس نیست", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun stopListening() {
+        speechRecognizer?.stopListening()
+        isListening = false
+        btnVoice.text = "🎤"
+    }
+    
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == RECORD_AUDIO_PERMISSION) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startListening()
+            } else {
+                Toast.makeText(this, "اجازه دسترسی به میکروفون لازم است", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    
     override fun onDestroy() {
         super.onDestroy()
+        speechRecognizer?.destroy()
         chatScope.cancel()
     }
 }
