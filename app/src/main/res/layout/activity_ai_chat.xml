@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F5F5F5">
+
+    <!-- هدر -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#2196F3"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="←"
+            android:textSize="20sp"
+            android:textColor="#FFFFFF"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="🤖 دستیار هوشمند"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:gravity="center" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:indeterminateTint="#FFFFFF"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- لیست پیام‌ها -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp"
+        android:clipToPadding="false" />
+
+    <!-- پیشنهادات سریع -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:padding="8dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnSuggestion1"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="مسیریابی به مقصد"
+                android:textSize="12sp"
+                android:background="#E3F2FD"
+                android:textColor="#1976D2"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btnSuggestion2"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="بررسی ترافیک"
+                android:textSize="12sp"
+                android:background="#E3F2FD"
+                android:textColor="#1976D2"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btnSuggestion3"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="نزدیک‌ترین پمپ بنزین"
+                android:textSize="12sp"
+                android:background="#E3F2FD"
+                android:textColor="#1976D2"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btnSuggestion4"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="سرعت مجاز جاده"
+                android:textSize="12sp"
+                android:background="#E3F2FD"
+                android:textColor="#1976D2"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btnSuggestion5"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="وضعیت آب و هوا"
+                android:textSize="12sp"
+                android:background="#E3F2FD"
+                android:textColor="#1976D2" />
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
+    <!-- ورودی پیام -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:elevation="4dp">
+
+        <Button
+            android:id="@+id/btnVoice"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="🎤"
+            android:textSize="20sp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:layout_marginEnd="8dp" />
+
+        <EditText
+            android:id="@+id/etMessage"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:hint="پیام خود را بنویسید..."
+            android:textSize="16sp"
+            android:background="#F0F0F0"
+            android:padding="12dp"
+            android:layout_marginEnd="8dp"
+            android:inputType="textMultiLine"
+            android:maxLines="3" />
+
+        <Button
+            android:id="@+id/btnSend"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="→"
+            android:textSize="20sp"
+            android:textColor="#FFFFFF"
+            android:background="#2196F3" />
+
+    </LinearLayout>
+
+</LinearLayout>
