@@ -33,7 +33,8 @@ class SpeedCameraDB {
         // شیراز
         SpeedCamera(29.5918, 52.5836, 70, "زند"),
         SpeedCamera(29.6100, 52.5320, 60, "چمران")
-    )
+        ))
+    }
     
     fun findNearby(location: Location, radius: Float = 500f): List<SpeedCamera> {
         return cameras.filter { camera ->

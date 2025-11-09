@@ -26,8 +26,8 @@ class DestinationSearchActivity : AppCompatActivity() {
     private val searchScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var searchJob: Job? = null
     
-    // مقاصد پیش‌فرض حذف شد - فقط جستجوی واقعی
-    private val emptyList = listOf<Destination>()
+    // مقاصد پیش‌فرض برای نمایش اولیه
+    private val defaultDestinations = listOf(
         Destination("میدان آزادی تهران", 35.6892, 51.3890, "میدان آزادی، تهران"),
         Destination("برج میلاد", 35.7447, 51.3753, "برج میلاد، تهران"),
         Destination("میدان نقش جهان اصفهان", 32.6546, 51.6680, "میدان نقش جهان، اصفهان"),
@@ -55,16 +55,16 @@ class DestinationSearchActivity : AppCompatActivity() {
         btnStartNavigation = findViewById(R.id.btnStartNavigation)
         
         // نمایش پیام راهنما
-        updateResults(emptyList)
+        updateResults(defaultDestinations)
         
         // جستجو
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 val query = s.toString()
                 if (query.isEmpty()) {
-                    updateResults(popularDestinations)
+                    updateResults(defaultDestinations)
                 } else {
-                    val filtered = popularDestinations.filter {
+                    val filtered = defaultDestinations.filter {
                         it.name.contains(query, ignoreCase = true) ||
                         it.address.contains(query, ignoreCase = true)
                     }
