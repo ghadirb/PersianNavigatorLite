@@ -5,8 +5,6 @@ import android.location.Location
 import android.util.Log
 import ir.navigator.persian.lite.api.SecureKeys
 import ir.navigator.persian.lite.navigation.Destination
-import ir.navigator.persian.lite.navigation.DestinationManager
-import ir.navigator.persian.lite.service.NavigationService
 import kotlinx.coroutines.*
 import org.json.JSONObject
 import java.net.URL
@@ -18,9 +16,9 @@ import java.net.URL
 class AIAssistant(private val context: Context) {
     
     private val apiScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val destinationManager = DestinationManager(context)
     private var currentLocation: Location? = null
     private var currentSpeed: Int = 0
+    private var currentDestination: Destination? = null
     
     /**
      * پردازش دستور کاربر
@@ -59,7 +57,7 @@ class AIAssistant(private val context: Context) {
         وضعیت فعلی:
         - موقعیت: ${currentLocation?.latitude ?: "نامشخص"}, ${currentLocation?.longitude ?: "نامشخص"}
         - سرعت فعلی: $currentSpeed km/h
-        - مقصد فعلی: ${destinationManager.getDestination()?.name ?: "تنظیم نشده"}
+        - مقصد فعلی: ${currentDestination?.name ?: "تنظیم نشده"}
         
         دستور کاربر: $command
         
@@ -195,6 +193,13 @@ class AIAssistant(private val context: Context) {
     }
     
     /**
+     * تنظیم مقصد فعلی
+     */
+    fun setDestination(destination: Destination?) {
+        currentDestination = destination
+    }
+    
+    /**
      * دریافت پیشنهادات هوشمند
      */
     suspend fun getSmartSuggestions(): List<String> {
@@ -210,7 +215,7 @@ class AIAssistant(private val context: Context) {
                 
                 - موقعیت: ${currentLocation?.latitude ?: "نامشخص"}, ${currentLocation?.longitude ?: "نامشخص"}
                 - سرعت: $currentSpeed km/h
-                - مقصد: ${destinationManager.getDestination()?.name ?: "تنظیم نشده"}
+                - مقصد: ${currentDestination?.name ?: "تنظیم نشده"}
                 
                 3 پیشنهاد کوتاه و مفید ارائه دهید.
                 """.trimIndent()
