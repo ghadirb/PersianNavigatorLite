@@ -7,6 +7,10 @@ import ir.navigator.persian.lite.R
 import android.content.Intent
 import android.text.Editable
 import android.text.TextWatcher
+import android.location.Geocoder
+import android.location.Address
+import kotlinx.coroutines.*
+import java.util.Locale
 
 /**
  * صفحه جستجو و انتخاب مقصد
@@ -18,9 +22,12 @@ class DestinationSearchActivity : AppCompatActivity() {
     private lateinit var btnStartNavigation: Button
     
     private var selectedDestination: Destination? = null
+    private lateinit var geocoder: Geocoder
+    private val searchScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var searchJob: Job? = null
     
-    // مقاصد پیش‌فرض (شهرهای اصلی ایران)
-    private val popularDestinations = listOf(
+    // مقاصد پیش‌فرض حذف شد - فقط جستجوی واقعی
+    private val emptyList = listOf<Destination>()
         Destination("میدان آزادی تهران", 35.6892, 51.3890, "میدان آزادی، تهران"),
         Destination("برج میلاد", 35.7447, 51.3753, "برج میلاد، تهران"),
         Destination("میدان نقش جهان اصفهان", 32.6546, 51.6680, "میدان نقش جهان، اصفهان"),
@@ -37,6 +44,7 @@ class DestinationSearchActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_destination_search)
         
+        geocoder = Geocoder(this, Locale("fa", "IR"))
         setupUI()
         handleSharedDestination()
     }
@@ -46,8 +54,8 @@ class DestinationSearchActivity : AppCompatActivity() {
         lvResults = findViewById(R.id.lvResults)
         btnStartNavigation = findViewById(R.id.btnStartNavigation)
         
-        // نمایش مقاصد پیش‌فرض
-        updateResults(popularDestinations)
+        // نمایش پیام راهنما
+        updateResults(emptyList)
         
         // جستجو
         etSearch.addTextChangedListener(object : TextWatcher {

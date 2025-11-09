@@ -12,6 +12,8 @@ class PersianTTSPro(private val context: Context) {
     
     private var tts: TextToSpeech? = null
     private var isReady = false
+    private var lastSpeakTime = 0L
+    private val MIN_INTERVAL = 5000L
     
     init {
         initializeTTS()
@@ -28,20 +30,17 @@ class PersianTTSPro(private val context: Context) {
     }
     
     fun speak(text: String, priority: Priority = Priority.NORMAL) {
+        val now = System.currentTimeMillis()
+        if (priority != Priority.URGENT && now - lastSpeakTime < MIN_INTERVAL) return
+        
         if (!isReady) {
-            // اگر TTS آماده نیست، صبر کنید
-            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                speak(text, priority)
-            }, 500)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ speak(text, priority) }, 1000)
             return
         }
         
-        val queueMode = when (priority) {
-            Priority.URGENT -> TextToSpeech.QUEUE_FLUSH
-            Priority.NORMAL -> TextToSpeech.QUEUE_ADD
-        }
-        
+        val queueMode = if (priority == Priority.URGENT) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD
         tts?.speak(text, queueMode, null, null)
+        lastSpeakTime = now
     }
     
     fun speakSpeedWarning(speed: Int) {

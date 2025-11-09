@@ -5,7 +5,9 @@ import android.location.Location
 data class SpeedCamera(val lat: Double, val lng: Double, val limit: Int, val name: String = "")
 
 class SpeedCameraDB {
-    private val cameras = listOf(
+    private val cameras = mutableListOf<SpeedCamera>().apply {
+        addAll(SpeedCameraDBExpanded.getAllCameras())
+        addAll(listOf(
         // تهران - بزرگراه‌های اصلی
         SpeedCamera(35.6892, 51.3890, 80, "آزادی"),
         SpeedCamera(35.7219, 51.3347, 60, "ولیعصر"),
