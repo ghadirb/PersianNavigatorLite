@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         
         navigatorEngine = NavigatorEngine(this, this)
         destinationManager = DestinationManager(this)
+        SecureKeys.init(this)
         
         checkPermissions()
         setupUI()

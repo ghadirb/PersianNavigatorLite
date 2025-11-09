@@ -52,6 +52,25 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.StatisticsActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:label="آمار رانندگی" />
+
+        <activity
+            android:name=".api.KeyActivationActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:label="فعال‌سازی کلیدها" />
+
+        <activity
+            android:name=".ui.AIChatActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize"
+            android:label="دستیار هوشمند" />
+
         <service
             android:name=".service.NavigationService"
             android:enabled="true"
