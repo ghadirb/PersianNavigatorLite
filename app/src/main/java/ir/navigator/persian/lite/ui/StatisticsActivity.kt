@@ -1,8 +1,10 @@
 package ir.navigator.persian.lite.ui
 
 import android.os.Bundle
+import android.content.DialogInterface
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AlertDialog
 import ir.navigator.persian.lite.R
 import ir.navigator.persian.lite.statistics.DrivingStatistics
 
@@ -67,7 +69,7 @@ class StatisticsActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("بازنشانی آمار")
             .setMessage("آیا از بازنشانی تمام آمار رانندگی اطمینان دارید؟")
-            .setPositiveButton("بله") { _, _ ->
+            .setPositiveButton("بله") { dialog: DialogInterface, which: Int ->
                 drivingStats.resetStats()
                 loadStatistics()
                 Toast.makeText(this, "آمار با موفقیت بازنشانی شد", Toast.LENGTH_SHORT).show()

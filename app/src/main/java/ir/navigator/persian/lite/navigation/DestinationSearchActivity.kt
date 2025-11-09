@@ -28,16 +28,16 @@ class DestinationSearchActivity : AppCompatActivity() {
     
     // مقاصد پیش‌فرض برای نمایش اولیه
     private val defaultDestinations = listOf(
-        Destination("میدان آزادی تهران", 35.6892, 51.3890, "میدان آزادی، تهران"),
-        Destination("برج میلاد", 35.7447, 51.3753, "برج میلاد، تهران"),
-        Destination("میدان نقش جهان اصفهان", 32.6546, 51.6680, "میدان نقش جهان، اصفهان"),
-        Destination("حرم امام رضا", 36.2879, 59.6160, "حرم مطهر، مشهد"),
-        Destination("دروازه قرآن شیراز", 29.5563, 52.5798, "دروازه قرآن، شیراز"),
-        Destination("برج آزادی تبریز", 38.0800, 46.2919, "برج آزادی، تبریز"),
-        Destination("کاخ گلستان", 35.6794, 51.4208, "کاخ گلستان، تهران"),
-        Destination("پل خواجو اصفهان", 32.6380, 51.6680, "پل خواجو، اصفهان"),
-        Destination("ارگ کریمخان", 29.6100, 52.5400, "ارگ کریمخان، شیراز"),
-        Destination("دریاچه ارومیه", 37.5500, 45.3167, "دریاچه ارومیه")
+        Destination("میدان آزادی تهران", latitude = 35.6892, longitude = 51.3890, address = "میدان آزادی، تهران"),
+        Destination("برج میلاد", latitude = 35.7447, longitude = 51.3753, address = "برج میلاد، تهران"),
+        Destination("میدان نقش جهان اصفهان", latitude = 32.6546, longitude = 51.6680, address = "میدان نقش جهان، اصفهان"),
+        Destination("حرم امام رضا", latitude = 36.2879, longitude = 59.6160, address = "حرم مطهر، مشهد"),
+        Destination("دروازه قرآن شیراز", latitude = 29.5563, longitude = 52.5798, address = "دروازه قرآن، شیراز"),
+        Destination("برج آزادی تبریز", latitude = 38.0800, longitude = 46.2919, address = "برج آزادی، تبریز"),
+        Destination("کاخ گلستان", latitude = 35.6794, longitude = 51.4208, address = "کاخ گلستان، تهران"),
+        Destination("پل خواجو اصفهان", latitude = 32.6380, longitude = 51.6680, address = "پل خواجو، اصفهان"),
+        Destination("ارگ کریمخان", latitude = 29.6100, longitude = 52.5400, address = "ارگ کریمخان، شیراز"),
+        Destination("دریاچه ارومیه", latitude = 37.5500, longitude = 45.3167, address = "دریاچه ارومیه")
     )
     
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -123,8 +123,8 @@ class DestinationSearchActivity : AppCompatActivity() {
                         }
                         Destination(
                             name = name,
-                            lat = address.latitude,
-                            lng = address.longitude,
+                            latitude = address.latitude,
+                            longitude = address.longitude,
                             address = address.getAddressLine(0) ?: ""
                         )
                     }
@@ -191,9 +191,9 @@ class DestinationSearchActivity : AppCompatActivity() {
                 if (lat != null && lng != null) {
                     return Destination(
                         "مقصد انتخابی",
-                        lat,
-                        lng,
-                        "از Google Maps"
+                        latitude = lat,
+                        longitude = lng,
+                        address = "از Google Maps"
                     )
                 }
             }
