@@ -5,7 +5,7 @@ import android.location.Location
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import ir.navigator.persian.lite.ai.*
-import ir.navigator.persian.lite.tts.PersianTTSPro
+import ir.navigator.persian.lite.tts.AdvancedPersianTTS
 import ir.navigator.persian.lite.ui.AlertOverlay
 import kotlinx.coroutines.launch
 
@@ -21,7 +21,7 @@ class NavigatorEngine(private val context: Context, private val lifecycleOwner: 
     private val speedCameraDB = SpeedCameraDB()
     private val trafficPredictor = TrafficPredictor()
     private val routeLearning = RouteLearning()
-    private val tts = PersianTTSPro(context)
+    private val tts = AdvancedPersianTTS(context)
     private val alertOverlay = AlertOverlay(context)
     
     fun startNavigation() {
@@ -52,8 +52,14 @@ class NavigatorEngine(private val context: Context, private val lifecycleOwner: 
             alertOverlay.showSpeedCamera(distance.toInt())
         }
         
-        // 4. پیش‌بینی ترافیک
-        val traffic = trafficPredictor.predictTraffic(location)
+        // 4. پیش‌بینی ترافیک (آفلاین و آنلاین)
+        val apiKey = ir.navigator.persian.lite.api.SecureKeys.getOpenAIKey()
+        val traffic = if (apiKey != null) {
+            trafficPredictor.predictTrafficWithAPI(location, apiKey)
+        } else {
+            trafficPredictor.predictTraffic(location)
+        }
+        
         if (traffic == TrafficLevel.HEAVY) {
             tts.speakTraffic()
             alertOverlay.showTrafficAlert()
@@ -85,5 +91,6 @@ class NavigatorEngine(private val context: Context, private val lifecycleOwner: 
     
     fun stop() {
         tts.shutdown()
+        trafficPredictor.cleanup()
     }
 }
