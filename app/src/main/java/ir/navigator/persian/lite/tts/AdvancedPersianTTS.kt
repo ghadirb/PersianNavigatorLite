@@ -10,6 +10,9 @@ import android.os.Handler
 import android.os.Looper
 import org.json.JSONObject
 import android.media.MediaPlayer
+import ir.navigator.persian.lite.tts.NavigationAlert
+import ir.navigator.persian.lite.tts.SpeedAlert
+import ir.navigator.persian.lite.tts.GeneralAlert
 
 /**
  * TTS فارسی پیشرفته با مدل هانیه
@@ -74,6 +77,147 @@ class AdvancedPersianTTS(private val context: Context) {
         
         Log.i("AdvancedTTS", "🌐 استفاده از TTS آنلاین: '$text'")
         onlineTTSManager?.speakOnline(text, priority)
+    }
+    
+    /**
+     * پخش هشدارهای ناوبری با فایل‌های واقعی
+     */
+    fun playNavigationAlert(alertType: NavigationAlert) {
+        Log.i("AdvancedTTS", "🧭 پخش هشدار ناوبری: $alertType")
+        
+        val fileName = when (alertType) {
+            NavigationAlert.TURN_LEFT -> "turn_left"
+            NavigationAlert.TURN_RIGHT -> "turn_right"
+            NavigationAlert.TURN_LEFT_SOON -> "soon_turn_left"
+            NavigationAlert.TURN_RIGHT_SOON -> "soon_turn_right"
+            NavigationAlert.TURN_LEFT_100M -> "turn_left_100m"
+            NavigationAlert.TURN_RIGHT_100M -> "turn_right_100m"
+            NavigationAlert.TURN_LEFT_200M -> "turn_left_200m"
+            NavigationAlert.TURN_RIGHT_200M -> "turn_right_200m"
+            NavigationAlert.TURN_LEFT_500M -> "turn_left_500m"
+            NavigationAlert.TURN_RIGHT_500M -> "turn_right_500m"
+            NavigationAlert.CONTINUE_ROUTE -> "continue_route"
+            NavigationAlert.MAKE_U_TURN -> "make_u_turn"
+            NavigationAlert.U_TURN_100M -> "u_turn_100m"
+            NavigationAlert.U_TURN_300M -> "u_turn_300m"
+            NavigationAlert.ROUNDABOUT_EXIT_1 -> "roundabout_exit_1"
+            NavigationAlert.ROUNDABOUT_EXIT_2 -> "roundabout_exit_2"
+            NavigationAlert.ROUNDABOUT_EXIT_3 -> "roundabout_exit_3"
+            NavigationAlert.DESTINATION_ARRIVED -> "destination_arrived"
+        }
+        
+        // تلاش برای پخش فایل واقعی
+        if (playSpecificAudioFile(fileName)) {
+            Log.i("AdvancedTTS", "✅ هشدار ناوبری با فایل واقعی پخش شد: $alertType")
+            return
+        }
+        
+        // فال‌بک به TTS
+        val message = when (alertType) {
+            NavigationAlert.TURN_LEFT -> "به چپ بپیچید"
+            NavigationAlert.TURN_RIGHT -> "به راست بپیچید"
+            NavigationAlert.TURN_LEFT_SOON -> "به زودی به چپ بپیچید"
+            NavigationAlert.TURN_RIGHT_SOON -> "به زودی به راست بپیچید"
+            NavigationAlert.TURN_LEFT_100M -> "در 100 متر به چپ بپیچید"
+            NavigationAlert.TURN_RIGHT_100M -> "در 100 متر به راست بپیچید"
+            NavigationAlert.TURN_LEFT_200M -> "در 200 متر به چپ بپیچید"
+            NavigationAlert.TURN_RIGHT_200M -> "در 200 متر به راست بپیچید"
+            NavigationAlert.TURN_LEFT_500M -> "در 500 متر به چپ بپیچید"
+            NavigationAlert.TURN_RIGHT_500M -> "در 500 متر به راست بپیچید"
+            NavigationAlert.CONTINUE_ROUTE -> "مسیر را ادامه دهید"
+            NavigationAlert.MAKE_U_TURN -> "دور بزنید"
+            NavigationAlert.U_TURN_100M -> "صد متر دیگر دور بزنید"
+            NavigationAlert.U_TURN_300M -> "سیصد متر دیگر دور بزنید"
+            NavigationAlert.ROUNDABOUT_EXIT_1 -> "در میدان از خروجی اول خارج شوید"
+            NavigationAlert.ROUNDABOUT_EXIT_2 -> "در میدان از خروجی دوم خارج شوید"
+            NavigationAlert.ROUNDABOUT_EXIT_3 -> "در میدان از خروجی سوم خارج شوید"
+            NavigationAlert.DESTINATION_ARRIVED -> "به مقصد رسیدید"
+        }
+        
+        Log.w("AdvancedTTS", "⚠️ استفاده از فال‌بک TTS برای: $message")
+        speak(message, Priority.NORMAL)
+    }
+    
+    /**
+     * پخش هشدارهای سرعت با فایل‌های واقعی
+     */
+    fun playSpeedAlert(alertType: SpeedAlert) {
+        Log.i("AdvancedTTS", "🚗 پخش هشدار سرعت: $alertType")
+        
+        val fileName = when (alertType) {
+            SpeedAlert.REDUCE_SPEED -> "reduce_speed"
+            SpeedAlert.SPEEDING_DANGER -> "speeding_danger"
+            SpeedAlert.SPEED_CAMERA -> "speed_camera"
+            SpeedAlert.SPEED_LIMIT_ATTENTION -> "speed_limit_attention"
+            SpeedAlert.SPEED_LIMIT_30 -> "speed_limit_30"
+            SpeedAlert.SPEED_LIMIT_60 -> "speed_limit_60"
+            SpeedAlert.SPEED_LIMIT_80 -> "speed_limit_80"
+            SpeedAlert.SPEED_LIMIT_90 -> "speed_limit_90"
+            SpeedAlert.SPEED_LIMIT_110 -> "speed_limit_110"
+            SpeedAlert.SPEED_LIMIT_120 -> "speed_limit_120"
+        }
+        
+        // تلاش برای پخش فایل واقعی
+        if (playSpecificAudioFile(fileName)) {
+            Log.i("AdvancedTTS", "✅ هشدار سرعت با فایل واقعی پخش شد: $alertType")
+            return
+        }
+        
+        // فال‌بک به TTS
+        val message = when (alertType) {
+            SpeedAlert.REDUCE_SPEED -> "سرعت خود را کاهش دهید"
+            SpeedAlert.SPEEDING_DANGER -> "خطر! سرعت غیر مجاز"
+            SpeedAlert.SPEED_CAMERA -> "دوربین کنترل سرعت"
+            SpeedAlert.SPEED_LIMIT_ATTENTION -> "توجه به محدودیت سرعت"
+            SpeedAlert.SPEED_LIMIT_30 -> "محدودیت سرعت 30 کیلومتر"
+            SpeedAlert.SPEED_LIMIT_60 -> "محدودیت سرعت 60 کیلومتر"
+            SpeedAlert.SPEED_LIMIT_80 -> "محدودیت سرعت 80 کیلومتر"
+            SpeedAlert.SPEED_LIMIT_90 -> "محدودیت سرعت 90 کیلومتر"
+            SpeedAlert.SPEED_LIMIT_110 -> "محدودیت سرعت 110 کیلومتر"
+            SpeedAlert.SPEED_LIMIT_120 -> "محدودیت سرعت 120 کیلومتر"
+        }
+        
+        Log.w("AdvancedTTS", "⚠️ استفاده از فال‌بک TTS برای: $message")
+        speak(message, Priority.HIGH)
+    }
+    
+    /**
+     * پخش هشدارهای عمومی با فایل‌های واقعی
+     */
+    fun playGeneralAlert(alertType: GeneralAlert) {
+        Log.i("AdvancedTTS", "📢 پخش هشدار عمومی: $alertType")
+        
+        val fileName = when (alertType) {
+            GeneralAlert.DANGER_AHEAD -> "danger_ahead"
+            GeneralAlert.STOP_AHEAD -> "stop_ahead"
+            GeneralAlert.HEAVY_TRAFFIC -> "heavy_traffic"
+            GeneralAlert.ALTERNATIVE_ROUTE -> "alternative_route"
+            GeneralAlert.DELAY_10_MIN -> "delay_10_min"
+            GeneralAlert.FUEL_STATION_1KM -> "fuel_station_1km"
+            GeneralAlert.FUEL_STATION_5KM -> "fuel_station_5km"
+            GeneralAlert.PARKING_NEARBY -> "parking_nearby"
+        }
+        
+        // تلاش برای پخش فایل واقعی
+        if (playSpecificAudioFile(fileName)) {
+            Log.i("AdvancedTTS", "✅ هشدار عمومی با فایل واقعی پخش شد: $alertType")
+            return
+        }
+        
+        // فال‌بک به TTS
+        val message = when (alertType) {
+            GeneralAlert.DANGER_AHEAD -> "احتیاط! خطر در پیش است"
+            GeneralAlert.STOP_AHEAD -> "ایستگاه توقف در پیش است"
+            GeneralAlert.HEAVY_TRAFFIC -> "ترافیک سنگین در پیش است"
+            GeneralAlert.ALTERNATIVE_ROUTE -> "مسیر جایگزین پیشنهاد می شود"
+            GeneralAlert.DELAY_10_MIN -> "تأخیر در مسیر 10 دقیقه"
+            GeneralAlert.FUEL_STATION_1KM -> "سوخت گیری در 1 کیلومتری"
+            GeneralAlert.FUEL_STATION_5KM -> "سوخت گیری در 5 کیلومتری"
+            GeneralAlert.PARKING_NEARBY -> "پارکینگ در نزدیکی شما"
+        }
+        
+        Log.w("AdvancedTTS", "⚠️ استفاده از فال‌بک TTS برای: $message")
+        speak(message, Priority.HIGH)
     }
     
     private fun initializeSystemTTS() {
@@ -306,7 +450,7 @@ class AdvancedPersianTTS(private val context: Context) {
      * تست صدای TTS با راه‌حل‌های جایگزین فارسی
      */
     fun testVoice() {
-        Log.i("AdvancedTTS", "🔊 شروع تست صدای فارسی با راه‌حل‌های جایگزین...")
+        Log.i("AdvancedTTS", "🔊 شروع تست صدای فارسی با 3 حالت...")
         
         try {
             // بررسی اولیه وضعیت TTS
@@ -316,18 +460,205 @@ class AdvancedPersianTTS(private val context: Context) {
                 return
             }
             
-            // تست اصلی با فارسی
-            val persianMessage = "تست هشدار صوتی فارسی"
+            // تست 3 حالت مختلف
+            testThreeModeSystem()
+            
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در تست صدا: ${e.message}")
+            Toast.makeText(context, "❌ خطا در تست صدا", Toast.LENGTH_LONG).show()
+        }
+    }
+    
+    /**
+     * تست سیستم 4 حالته: آفلاین TTS، آفلاین فایل صوتی، مدل هانیه، آنلاین OpenAI
+     */
+    private fun testThreeModeSystem() {
+        Log.i("AdvancedTTS", "🎯 تست سیستم 4 حالته...")
+        
+        ttsScope.launch {
+            try {
+                // حالت 1: تست فایل صوتی آفلاین (بهترین کیفیت)
+                Log.i("AdvancedTTS", "📱 حالت 1: تست فایل صوتی آفلاین...")
+                if (playSpecificAudioFile("test_alert")) {
+                    Log.i("AdvancedTTS", "✅ حالت 1 (فایل آفلاین) کار می‌کند")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "✅ فایل صوتی آفلاین کار می‌کند", Toast.LENGTH_SHORT).show()
+                    }
+                    delay(3000)
+                } else {
+                    Log.w("AdvancedTTS", "❌ حالت 1 (فایل آفلاین) کار نمی‌کند")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "❌ فایل صوتی آفلاین کار نمی‌کند", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                
+                // حالت 2: تست مدل هانیه
+                Log.i("AdvancedTTS", "🎤 حالت 2: تست مدل هانیه...")
+                if (isHaaniyeAvailable && !useSystemTTS) {
+                    speakWithHaaniye("تست مدل هانیه", Priority.NORMAL)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "✅ مدل هانیه فعال است", Toast.LENGTH_SHORT).show()
+                    }
+                    delay(3000)
+                } else {
+                    Log.w("AdvancedTTS", "❌ حالت 2 (مدل هانیه) غیرفعال است")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "❌ مدل هانیه غیرفعال است", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                
+                // حالت 3: تست TTS فارسی آفلاین
+                Log.i("AdvancedTTS", "🔊 حالت 3: تست TTS فارسی آفلاین...")
+                trySpeakPersian("تست TTS فارسی آفلاین")
+                delay(3000)
+                
+                // حالت 4: تست TTS آنلاین OpenAI
+                Log.i("AdvancedTTS", "🌐 حالت 4: تست TTS آنلاین OpenAI...")
+                val isOnlineAvailable = onlineTTSManager?.isOnlineAvailable() == true
+                if (isOnlineAvailable) {
+                    speakOnline("تست هوشمند OpenAI TTS فارسی", Priority.NORMAL)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "✅ OpenAI TTS آنلاین فعال است", Toast.LENGTH_SHORT).show()
+                    }
+                    delay(5000) // زمان بیشتر برای OpenAI
+                } else {
+                    Log.w("AdvancedTTS", "❌ حالت 4 (OpenAI آنلاین) غیرفعال است")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "❌ OpenAI TTS غیرفعال است - کلید API لازم", Toast.LENGTH_LONG).show()
+                    }
+                }
+                
+                // خلاصه وضعیت
+                withContext(Dispatchers.Main) {
+                    showSystemStatus()
+                }
+                
+            } catch (e: Exception) {
+                Log.e("AdvancedTTS", "❌ خطا در تست 4 حالته: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "❌ خطا در تست سیستم", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+    
+    /**
+     * نمایش وضعیت سیستم 4 حالته
+     */
+    private fun showSystemStatus() {
+        val status = StringBuilder()
+        status.append("🎵 وضعیت سیستم صوتی هوشمند:\n")
+        
+        // بررسی فایل‌های صوتی آفلاین
+        val hasAudioFiles = checkAudioFilesAvailability()
+        status.append("📱 فایل‌های صوتی آفلاین: ${if (hasAudioFiles) "✅ موجود" else "❌ موجود نیست"}\n")
+        
+        // بررسی مدل هانیه
+        status.append("🎤 مدل هانیه: ${if (isHaaniyeAvailable && !useSystemTTS) "✅ فعال" else "❌ غیرفعال"}\n")
+        
+        // بررسی TTS فارسی سیستم
+        val hasPersianTTS = checkPersianTTSAvailability()
+        status.append("🔊 TTS فارسی سیستم: ${if (hasPersianTTS) "✅ موجود" else "❌ موجود نیست"}\n")
+        
+        // بررسی حالت آنلاین OpenAI
+        val isOnlineAvailable = onlineTTSManager?.isOnlineAvailable() == true
+        status.append("🌐 OpenAI TTS آنلاین: ${if (isOnlineAvailable) "✅ فعال" else "❌ غیرفعال"}\n")
+        
+        // توصیه هوشمند
+        status.append("\n💡 توصیه هوشمند: ")
+        when {
+            hasAudioFiles -> status.append("از فایل‌های صوتی آفلاین استفاده کنید (بهترین کیفیت)")
+            isHaaniyeAvailable && !useSystemTTS -> status.append("از مدل هانیه استفاده کنید (کیفیت عالی)")
+            isOnlineAvailable -> status.append("از OpenAI TTS آنلاین استفاده کنید (هوشمند)")
+            hasPersianTTS -> status.append("از TTS فارسی سیستم استفاده کنید")
+            else -> status.append("TTS فارسی را نصب کنید یا کلید OpenAI را فعال کنید")
+        }
+        
+        Log.i("AdvancedTTS", status.toString())
+        Toast.makeText(context, status.toString(), Toast.LENGTH_LONG).show()
+    }
+    
+    /**
+     * بررسی وجود فایل‌های صوتی
+     */
+    private fun checkAudioFilesAvailability(): Boolean {
+        val testFiles = listOf("test_alert", "turn_left", "turn_right", "danger_ahead")
+        return testFiles.any { fileName ->
+            val resourceId = context.resources.getIdentifier(fileName, "raw", context.packageName)
+            resourceId != 0
+        }
+    }
+    
+    /**
+     * بررسی وجود TTS فارسی
+     */
+    private fun checkPersianTTSAvailability(): Boolean {
+        return try {
+            val langResult = systemTTS?.setLanguage(Locale("fa", "IR"))
+            langResult != TextToSpeech.LANG_MISSING_DATA && langResult != TextToSpeech.LANG_NOT_SUPPORTED
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    /**
+     * تست صحبت با فارسی با مدیریت خطا و مدل هانیه
+     */
+    private fun trySpeakPersian(message: String) {
+        try {
+            Log.i("AdvancedTTS", "🔊 تلاش برای صحبت با فارسی: '$message'")
+            
+            // اولویت 1: مدل هانیه (اگر موجود باشد)
+            if (isHaaniyeAvailable && !useSystemTTS) {
+                Log.i("AdvancedTTS", "🎤 استفاده از مدل هانیه برای: $message")
+                speakWithHaaniye(message, Priority.NORMAL)
+                return
+            }
             
             // تنظیم زبان فارسی
             val langResult = systemTTS?.setLanguage(Locale("fa", "IR"))
             Log.i("AdvancedTTS", "🌐 تنظیم زبان فارسی: نتیجه=$langResult")
             
-            // اگر فارسی پشتیبانی شود، استفاده از TTS عادی
+            // اولویت 2: TTS فارسی سیستم
             if (langResult != TextToSpeech.LANG_MISSING_DATA && langResult != TextToSpeech.LANG_NOT_SUPPORTED) {
                 // تنظیمات بهینه برای فارسی
                 systemTTS?.setSpeechRate(0.85f)
                 systemTTS?.setPitch(0.95f)
+                
+                val persianResult = systemTTS?.speak(
+                    message,
+                    TextToSpeech.QUEUE_FLUSH,
+                    null,
+                    "test_fa_" + System.currentTimeMillis()
+                )
+                
+                Log.i("AdvancedTTS", "📢 تست فارسی با TTS: نتیجه=$persianResult")
+                
+                when (persianResult) {
+                    TextToSpeech.SUCCESS -> {
+                        Log.i("AdvancedTTS", "✅ صدای فارسی با موفقیت ارسال شد")
+                        Toast.makeText(context, "✅ در حال پخش: $message", Toast.LENGTH_SHORT).show()
+                    }
+                    TextToSpeech.ERROR -> {
+                        Log.e("AdvancedTTS", "❌ خطا در پخش فارسی - استفاده از راه‌حل جایگزین...")
+                        playPersianAudioFallback()
+                    }
+                    else -> {
+                        Log.w("AdvancedTTS", "⚠️ نتیجه نامشخص: $persianResult - استفاده از راه‌حل جایگزین...")
+                        playPersianAudioFallback()
+                    }
+                }
+            } else {
+                // فارسی پشتیبانی نمی‌شود - استفاده از راه‌حل‌های جایگزین
+                Log.w("AdvancedTTS", "⚠️ فارسی پشتیبانی نمی‌شود - استفاده از راه‌حل‌های جایگزین...")
+                playPersianAudioFallback()
+            }
+            
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در تست صدا: ${e.message}", e)
+            playPersianAudioFallback()
+        }
+    }
                 
                 val persianResult = systemTTS?.speak(
                     persianMessage,
@@ -428,14 +759,15 @@ class AdvancedPersianTTS(private val context: Context) {
         return try {
             Log.i("AdvancedTTS", "🎵 تلاش برای پخش فایل صوتی واقعی...")
             
+            // استفاده از فایل تست واقعی که تبدیل کردیم
             val resourceId = context.resources.getIdentifier(
-                "persian_alert", 
+                "test_alert", 
                 "raw", 
                 context.packageName
             )
             
             if (resourceId == 0) {
-                Log.w("AdvancedTTS", "❌ فایل persian_alert.mp3 پیدا نشد")
+                Log.w("AdvancedTTS", "❌ فایل test_alert.wav پیدا نشد")
                 return false
             }
             
@@ -444,22 +776,67 @@ class AdvancedPersianTTS(private val context: Context) {
             mediaPlayer?.let { player ->
                 player.setOnCompletionListener {
                     player.release()
-                    Log.i("AdvancedTTS", "✅ پخش فایل صوتی تمام شد")
+                    Log.i("AdvancedTTS", "✅ پخش فایل صوتی واقعی تمام شد")
                 }
                 player.setOnErrorListener { _, _, _ ->
                     player.release()
-                    Log.e("AdvancedTTS", "❌ خطا در پخش فایل صوتی")
+                    Log.e("AdvancedTTS", "❌ خطا در پخش فایل صوتی واقعی")
                     false
                 }
                 player.start()
+                Log.i("AdvancedTTS", "🎵 فایل صوتی واقعی با موفقیت شروع به پخش کرد")
                 return true
             } ?: run {
-                Log.e("AdvancedTTS", "❌ ایجاد MediaPlayer ناموفق بود")
+                Log.e("AdvancedTTS", "❌ ایجاد MediaPlayer برای فایل واقعی ناموفق بود")
                 return false
             }
             
         } catch (e: Exception) {
-            Log.e("AdvancedTTS", "❌ خطا در پخش فایل صوتی: ${e.message}")
+            Log.e("AdvancedTTS", "❌ خطا در پخش فایل صوتی واقعی: ${e.message}")
+            false
+        }
+    }
+    
+    /**
+     * پخش فایل صوتی خاص بر اساس نام
+     */
+    private fun playSpecificAudioFile(fileName: String): Boolean {
+        return try {
+            Log.i("AdvancedTTS", "🎵 تلاش برای پخش فایل صوتی: $fileName")
+            
+            val resourceId = context.resources.getIdentifier(
+                fileName, 
+                "raw", 
+                context.packageName
+            )
+            
+            if (resourceId == 0) {
+                Log.w("AdvancedTTS", "❌ فایل $fileName پیدا نشد")
+                return false
+            }
+            
+            // پخش فایل صوتی با MediaPlayer
+            val mediaPlayer = MediaPlayer.create(context, resourceId)
+            mediaPlayer?.let { player ->
+                player.setOnCompletionListener {
+                    player.release()
+                    Log.i("AdvancedTTS", "✅ پخش فایل $fileName تمام شد")
+                }
+                player.setOnErrorListener { _, _, _ ->
+                    player.release()
+                    Log.e("AdvancedTTS", "❌ خطا در پخش فایل $fileName")
+                    false
+                }
+                player.start()
+                Log.i("AdvancedTTS", "🎵 فایل $fileName با موفقیت شروع به پخش کرد")
+                return true
+            } ?: run {
+                Log.e("AdvancedTTS", "❌ ایجاد MediaPlayer برای $fileName ناموفق بود")
+                return false
+            }
+            
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در پخش فایل $fileName: ${e.message}")
             false
         }
     }
@@ -649,12 +1026,119 @@ class AdvancedPersianTTS(private val context: Context) {
     }
     
     fun testVoiceAlert() {
-        val testMessages = listOf(
-            "سلام. سیستم هشدار صوتی فارسی فعال است",
-            "سیستم ناوبری هوشمند آماده به کار است",
-            "هشدارهای صوتی با موفقیت فعال شدند"
-        )
-        speak(testMessages.random(), Priority.URGENT)
+        Log.i("AdvancedTTS", "🎯 شروع تست هشدارهای هوشمند...")
+        
+        ttsScope.launch {
+            try {
+                // تست هشدارهای مختلف با سیستم 4 حالته
+                val testAlerts = listOf(
+                    "خطر در پیش است، احتیاط کنید",
+                    "سرعت خود را کاهش دهید",
+                    "در 500 متر به راست بپیچید",
+                    "به مقصد رسیدید"
+                )
+                
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "🚀 شروع تست هشدارهای هوشمند...", Toast.LENGTH_SHORT).show()
+                }
+                
+                testAlerts.forEachIndexed { index, alert ->
+                    Log.i("AdvancedTTS", "📢 تست هشدار ${index + 1}: $alert")
+                    
+                    // تست با اولویت‌های مختلف
+                    val priority = when (index) {
+                        0 -> Priority.URGENT    // خطر
+                        1 -> Priority.HIGH      // سرعت
+                        2 -> Priority.NORMAL    // ناوبری
+                        else -> Priority.LOW     // اطلاع‌رسانی
+                    }
+                    
+                    // استفاده از سیستم هوشمند 4 حالته
+                    speak(alert, priority)
+                    delay(4000) // فاصله بین هشدارها
+                }
+                
+                // تست خاص OpenAI TTS
+                if (onlineTTSManager?.isOnlineAvailable() == true) {
+                    Log.i("AdvancedTTS", "🤖 تست هشدار هوشمند با OpenAI...")
+                    speakOnline("تست هشدار هوشمند تولید شده توسط OpenAI", Priority.HIGH)
+                    
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "🤖 OpenAI TTS تست شد", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "✅ تست هشدارهای هوشمند تمام شد", Toast.LENGTH_LONG).show()
+                }
+                
+            } catch (e: Exception) {
+                Log.e("AdvancedTTS", "❌ خطا در تست هشدارها: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "❌ خطا در تست هشدارها", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+    
+    /**
+     * تست هشدارهای ناوبری با enum‌های تعریف شده
+     */
+    fun testNavigationAlerts() {
+        Log.i("AdvancedTTS", "🧭 تست هشدارهای ناوبری...")
+        
+        ttsScope.launch {
+            try {
+                val navigationAlerts = listOf(
+                    NavigationAlert.TURN_LEFT,
+                    NavigationAlert.TURN_RIGHT,
+                    NavigationAlert.TURN_LEFT_500M,
+                    NavigationAlert.DESTINATION_ARRIVED
+                )
+                
+                navigationAlerts.forEach { alert ->
+                    playNavigationAlert(alert)
+                    delay(3000)
+                }
+                
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "✅ تست ناوبری تمام شد", Toast.LENGTH_SHORT).show()
+                }
+                
+            } catch (e: Exception) {
+                Log.e("AdvancedTTS", "❌ خطا در تست ناوبری: ${e.message}")
+            }
+        }
+    }
+    
+    /**
+     * تست هشدارهای سرعت با enum‌های تعریف شده
+     */
+    fun testSpeedAlerts() {
+        Log.i("AdvancedTTS", "🚗 تست هشدارهای سرعت...")
+        
+        ttsScope.launch {
+            try {
+                val speedAlerts = listOf(
+                    SpeedAlert.REDUCE_SPEED,
+                    SpeedAlert.SPEEDING_DANGER,
+                    SpeedAlert.SPEED_LIMIT_60,
+                    SpeedAlert.SPEED_CAMERA
+                )
+                
+                speedAlerts.forEach { alert ->
+                    playSpeedAlert(alert)
+                    delay(3000)
+                }
+                
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "✅ تست سرعت تمام شد", Toast.LENGTH_SHORT).show()
+                }
+                
+            } catch (e: Exception) {
+                Log.e("AdvancedTTS", "❌ خطا در تست سرعت: ${e.message}")
+            }
+        }
     }
     
     fun setTTSEngine(useSystem: Boolean) {

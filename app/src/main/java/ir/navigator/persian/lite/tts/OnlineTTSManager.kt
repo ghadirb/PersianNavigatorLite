@@ -9,16 +9,24 @@ import java.io.FileOutputStream
 import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import ir.navigator.persian.lite.api.SecureKeys
+import org.json.JSONObject
 
 /**
  * مدیر TTS آنلاین برای هشدارهای فارسی
- * استفاده از سرویس‌های آنلاین برای تولید صدای فارسی با کیفیت بالا
+ * استفاده از OpenAI TTS برای تولید صدای فارسی با کیفیت بالا
  */
 class OnlineTTSManager(private val context: Context) {
     
     private val ttsScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var isOnlineMode = false
     private val cacheDir = File(context.cacheDir, "tts_cache")
+    
+    companion object {
+        private const val OPENAI_TTS_URL = "https://api.openai.com/v1/audio/speech"
+        private const val MODEL = "tts-1" // یا tts-1-hd برای کیفیت بالاتر
+        private const val VOICE = "alloy" // صداها: alloy, echo, fable, onyx, nova, shimmer
+    }
     
     init {
         // ایجاد پوشه کش برای فایل‌های صوتی
@@ -71,80 +79,133 @@ class OnlineTTSManager(private val context: Context) {
     }
     
     /**
-     * تولید فایل صوتی آنلاین
+     * تولید فایل صوتی آنلاین با OpenAI TTS
      */
     private suspend fun generateOnlineAudio(text: String): File? {
         return try {
-            // در اینجا می‌توان از API واقعی استفاده کرد
-            // فعلاً یک فایل شبیه‌سازی شده ایجاد می‌کنیم
+            Log.i("OnlineTTS", "🎙️ شروع تولید صدا با OpenAI TTS...")
+            
+            // بررسی کلید API
+            val apiKey = SecureKeys.getOpenAIKey()
+            if (apiKey == null || apiKey.isEmpty()) {
+                Log.e("OnlineTTS", "❌ کلید OpenAI API یافت نشد")
+                return null
+            }
             
             val fileName = "online_${text.hashCode()}.mp3"
             val audioFile = File(cacheDir, fileName)
             
-            // شبیه‌سازی دانلود فایل صوتی
-            withContext(Dispatchers.IO) {
-                // در عمل اینجا باید API واقعی فراخوانی شود
-                // مثلاً با Lovo AI یا Google Cloud TTS
-                
-                simulateAudioDownload(audioFile)
+            // اگر فایل از قبل در کش وجود دارد، استفاده مجدد
+            if (audioFile.exists()) {
+                Log.i("OnlineTTS", "✅ استفاده از فایل کش شده: $fileName")
+                return audioFile
             }
             
-            if (audioFile.exists() && audioFile.length() > 0) {
-                Log.i("OnlineTTS", "✅ فایل صوتی آنلاین تولید شد: ${audioFile.name}")
-                audioFile
-            } else {
-                null
+            // ساخت درخواست برای OpenAI TTS
+            val requestBody = JSONObject().apply {
+                put("model", MODEL)
+                put("input", text)
+                put("voice", VOICE)
+                put("response_format", "mp3")
+                put("speed", 1.0)
+            }.toString()
+            
+            withContext(Dispatchers.IO) {
+                Log.i("OnlineTTS", "📡 ارسال درخواست به OpenAI TTS...")
+                
+                val url = URL(OPENAI_TTS_URL)
+                val connection = url.openConnection()
+                connection as java.net.HttpURLConnection
+                
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Authorization", "Bearer $apiKey")
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.doOutput = true
+                
+                // ارسال درخواست
+                connection.outputStream.use { output ->
+                    output.write(requestBody.toByteArray(Charsets.UTF_8))
+                }
+                
+                // بررسی پاسخ
+                val responseCode = connection.responseCode
+                Log.i("OnlineTTS", "📨 کد پاسخ OpenAI: $responseCode")
+                
+                if (responseCode == 200) {
+                    // دانلود فایل صوتی
+                    connection.inputStream.use { input ->
+                        FileOutputStream(audioFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    
+                    Log.i("OnlineTTS", "✅ فایل صوتی با موفقیت دانلود شد: ${audioFile.absolutePath}")
+                    audioFile
+                } else {
+                    val errorResponse = connection.errorStream?.bufferedReader()?.readText()
+                    Log.e("OnlineTTS", "❌ خطا در OpenAI TTS: $responseCode - $errorResponse")
+                    null
+                }
             }
             
         } catch (e: Exception) {
-            Log.e("OnlineTTS", "❌ خطا در تولید فایل صوتی: ${e.message}")
+            Log.e("OnlineTTS", "❌ خطا در تولید صدا آنلاین: ${e.message}", e)
             null
         }
     }
+    }
     
     /**
-     * شبیه‌سازی دانلود فایل صوتی (در عمل با API واقعی جایگزین شود)
+     * پخش فایل صوتی با MediaPlayer
      */
-    private suspend fun simulateAudioDownload(audioFile: File) {
-        try {
-            // شبیه‌سازی تاخیر دانلود
-            delay(2000)
-            
-            // ایجاد یک فایل خالی به عنوان شبیه‌سازی
-            // در عمل اینجا باید فایل صوتی واقعی دانلود شود
-            audioFile.createNewFile()
-            
-            Log.i("OnlineTTS", "📥 شبیه‌سازی دانلود فایل صوتی تکمیل شد")
-            
-        } catch (e: Exception) {
-            Log.e("OnlineTTS", "❌ خطا در شبیه‌سازی دانلود: ${e.message}")
+    private suspend fun playAudioFile(audioFile: File) {
+        withContext(Dispatchers.Main) {
+            try {
+                val mediaPlayer = MediaPlayer().apply {
+                    setDataSource(audioFile.absolutePath)
+                    prepare()
+                    setOnCompletionListener {
+                        release()
+                        Log.i("OnlineTTS", "✅ پخش فایل آنلاین تمام شد")
+                    }
+                    setOnErrorListener { _, _, _ ->
+                        release()
+                        Log.e("OnlineTTS", "❌ خطا در پخش فایل آنلاین")
+                        false
+                    }
+                }
+                
+                mediaPlayer.start()
+                Log.i("OnlineTTS", "🎵 شروع پخش فایل صوتی آنلاین")
+                
+            } catch (e: Exception) {
+                Log.e("OnlineTTS", "❌ خطا در پخش فایل صوتی: ${e.message}", e)
+            }
         }
     }
     
     /**
-     * پخش فایل صوتی
+     * پاک‌سازی کش
      */
-    private fun playAudioFile(audioFile: File) {
+    fun clearCache() {
         try {
-            val mediaPlayer = MediaPlayer().apply {
-                setDataSource(audioFile.absolutePath)
-                prepare()
-                start()
-                
-                setOnCompletionListener {
-                    release()
-                    Log.i("OnlineTTS", "✅ پخش فایل صوتی آنلاین تمام شد")
-                }
-                
-                setOnErrorListener { _, _, _ ->
-                    release()
-                    Log.e("OnlineTTS", "❌ خطا در پخش فایل صوتی آنلاین")
-                    false
+            cacheDir.listFiles()?.forEach { file ->
+                if (file.delete()) {
+                    Log.i("OnlineTTS", "🗑️ فایل کش حذف شد: ${file.name}")
                 }
             }
-            
+            Log.i("OnlineTTS", "✅ کش با موفقیت پاک‌سازی شد")
         } catch (e: Exception) {
-            Log.e("OnlineTTS", "❌ خطا در پخش فایل صوتی: ${e.message}")
+            Log.e("OnlineTTS", "❌ خطا در پاک‌سازی کش: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * بررسی وضعیت آنلاین
+     */
+    fun isOnlineAvailable(): Boolean {
+        return isOnlineMode && SecureKeys.getOpenAIKey()?.isNotEmpty() == true
+    }
         }
     }
     
@@ -158,6 +219,7 @@ class OnlineTTSManager(private val context: Context) {
                     Log.i("OnlineTTS", "🗑️ فایل کش حذف شد: ${file.name}")
                 }
             }
+            Log.i("OnlineTTS", "✅ کش با موفقیت پاک‌سازی شد")
         } catch (e: Exception) {
             Log.e("OnlineTTS", "❌ خطا در تمیز کردن کش: ${e.message}")
         }
