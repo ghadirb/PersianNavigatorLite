@@ -147,11 +147,23 @@ class MainActivity : AppCompatActivity() {
             openDestinationSearch()
         }
         
-        // Activate keys button
+        // Activate keys button - Manual activation (backup)
         btnActivateKeys.setOnClickListener {
             if (!SecureKeys.areKeysActivated()) {
-                val intent = Intent(this, KeyActivationActivity::class.java)
-                startActivity(intent)
+                // تلاش مجدد برای فعال‌سازی خودکار
+                mainScope.launch {
+                    try {
+                        Toast.makeText(this@MainActivity, "در حال فعال‌سازی مجدد کلیدها...", Toast.LENGTH_SHORT).show()
+                        val result = SecureKeys.autoActivateKeys()
+                        if (result.isSuccess) {
+                            Toast.makeText(this@MainActivity, "✅ کلیدها با موفقیت فعال شدند", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this@MainActivity, "❌ خطا در فعال‌سازی کلیدها", Toast.LENGTH_LONG).show()
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(this@MainActivity, "❌ خطا: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
             } else {
                 Toast.makeText(this, "کلیدها قبلاً فعال شده‌اند", Toast.LENGTH_SHORT).show()
             }

@@ -3,14 +3,15 @@ package ir.navigator.persian.lite.navigation
 import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import ir.navigator.persian.lite.R
 import android.content.Intent
-import android.text.Editable
 import android.text.TextWatcher
+import android.text.Editable
 import android.location.Geocoder
-import android.location.Address
 import kotlinx.coroutines.*
-import java.util.Locale
+import ir.navigator.persian.lite.R
+import ir.navigator.persian.lite.model.Destination
+import ir.navigator.persian.lite.navigation.Destination
+import android.util.Log
 
 /**
  * صفحه جستجو و انتخاب مقصد
