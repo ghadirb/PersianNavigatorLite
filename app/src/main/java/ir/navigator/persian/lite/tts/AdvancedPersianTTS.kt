@@ -13,6 +13,8 @@ import android.media.MediaPlayer
 import ir.navigator.persian.lite.tts.NavigationAlert
 import ir.navigator.persian.lite.tts.SpeedAlert
 import ir.navigator.persian.lite.tts.GeneralAlert
+import ir.navigator.persian.lite.tts.SmartAIAssistant
+import ir.navigator.persian.lite.tts.SmartAlertType
 
 /**
  * TTS فارسی پیشرفته با مدل هانیه
@@ -30,10 +32,15 @@ class AdvancedPersianTTS(private val context: Context) {
     private var onlineTTSManager: OnlineTTSManager? = null
     private var isOnlineModeEnabled = false
     
+    // دستیار هوشمند AI
+    private var smartAIAssistant: SmartAIAssistant? = null
+    private var isSmartModeEnabled = false
+    
     init {
         initializeSystemTTS()
         checkHaaniyeModel()
         initializeOnlineTTS()
+        initializeSmartAI()
     }
     
     /**
@@ -45,6 +52,22 @@ class AdvancedPersianTTS(private val context: Context) {
             Log.i("AdvancedTTS", "✅ TTS آنلاین مقداردهی شد")
         } catch (e: Exception) {
             Log.e("AdvancedTTS", "❌ خطا در مقداردهی TTS آنلاین: ${e.message}")
+        }
+    }
+    
+    /**
+     * مقداردهی اولیه دستیار هوشمند AI
+     */
+    private fun initializeSmartAI() {
+        try {
+            smartAIAssistant = SmartAIAssistant(context)
+            
+            // اتصال دستیار هوشمند به سیستم‌های TTS
+            smartAIAssistant?.setTTSSystems(this, onlineTTSManager ?: return)
+            
+            Log.i("AdvancedTTS", "✅ دستیار هوشمند AI مقداردهی شد")
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در مقداردهی دستیار هوشمند: ${e.message}")
         }
     }
     
@@ -64,6 +87,24 @@ class AdvancedPersianTTS(private val context: Context) {
         isOnlineModeEnabled = false
         onlineTTSManager?.disableOnlineMode()
         Log.i("AdvancedTTS", "❌ حالت آنلاین غیرفعال شد")
+    }
+    
+    /**
+     * فعال‌سازی حالت هوشمند AI با اولویت OpenAI
+     */
+    fun enableSmartMode() {
+        isSmartModeEnabled = true
+        smartAIAssistant?.enableSmartMode()
+        Log.i("AdvancedTTS", "🧠 حالت هوشمند AI با اولویت OpenAI فعال شد")
+    }
+    
+    /**
+     * غیرفعال‌سازی حالت هوشمند AI
+     */
+    fun disableSmartMode() {
+        isSmartModeEnabled = false
+        smartAIAssistant?.disableSmartMode()
+        Log.i("AdvancedTTS", "🔒 حالت هوشمند AI غیرفعال شد")
     }
     
     /**
@@ -442,32 +483,6 @@ class AdvancedPersianTTS(private val context: Context) {
                 withContext(Dispatchers.Main) {
                     speakWithSystemTTS(text, priority)
                 }
-            }
-        }
-    }
-    
-    /**
-     * تست صدای TTS با راه‌حل‌های جایگزین فارسی
-     */
-    fun testVoice() {
-        Log.i("AdvancedTTS", "🔊 شروع تست صدای فارسی با 3 حالت...")
-        
-        try {
-            // بررسی اولیه وضعیت TTS
-            if (systemTTS == null) {
-                Log.e("AdvancedTTS", "❌ System TTS مقداردهی نشده - ایجاد جدید...")
-                createNewTTSInstance()
-                return
-            }
-            
-            // تست 3 حالت مختلف
-            testThreeModeSystem()
-            
-        } catch (e: Exception) {
-            Log.e("AdvancedTTS", "❌ خطا در تست صدا: ${e.message}")
-            Toast.makeText(context, "❌ خطا در تست صدا", Toast.LENGTH_LONG).show()
-        }
-    }
     
     /**
      * تست سیستم 4 حالته: آفلاین TTS، آفلاین فایل صوتی، مدل هانیه، آنلاین OpenAI
@@ -1160,6 +1175,148 @@ class AdvancedPersianTTS(private val context: Context) {
     fun shutdown() {
         ttsScope.cancel()
         systemTTS?.shutdown()
+        smartAIAssistant?.cleanup()
+        onlineTTSManager?.cleanup()
+    }
+    
+    /**
+     * تولید هشدار هوشمند با AI (اولویت با OpenAI)
+     */
+    fun generateSmartAlert(
+        alertType: SmartAlertType,
+        contextData: Map<String, Any> = emptyMap(),
+        priority: Priority = Priority.NORMAL
+    ) {
+        if (!isSmartModeEnabled) {
+            Log.w("AdvancedTTS", "⚠️ حالت هوشمند AI فعال نیست")
+            // fallback به سیستم معمولی
+            speak(getOfflineSmartMessage(alertType, contextData), priority)
+            return
+        }
+        
+        Log.i("AdvancedTTS", "🤖 تولید هشدار هوشمند: ${alertType.persianName}")
+        smartAIAssistant?.generateSmartAlert(alertType, contextData, priority)
+    }
+    
+    /**
+     * هشدار ترافیک هوشمند
+     */
+    fun alertTrafficAnalysis(trafficCondition: String, delayMinutes: Int, priority: Priority = Priority.HIGH) {
+        val context = mapOf(
+            "traffic_condition" to trafficCondition,
+            "delay_minutes" to delayMinutes
+        )
+        generateSmartAlert(SmartAlertType.TRAFFIC_ANALYSIS, context, priority)
+    }
+    
+    /**
+     * هشدار آب‌وهوای هوشمند
+     */
+    fun alertWeatherCondition(weather: String, visibility: String, dangerLevel: String, priority: Priority = Priority.HIGH) {
+        val context = mapOf(
+            "weather" to weather,
+            "visibility" to visibility,
+            "danger_level" to dangerLevel
+        )
+        generateSmartAlert(SmartAlertType.WEATHER_ALERT, context, priority)
+    }
+    
+    /**
+     * یادآوری سوخت هوشمند
+     */
+    fun alertFuelReminder(fuelPercent: Int, distanceToStation: Int, priority: Priority = Priority.NORMAL) {
+        val context = mapOf(
+            "fuel_percent" to fuelPercent,
+            "distance_to_station" to distanceToStation
+        )
+        generateSmartAlert(SmartAlertType.FUEL_REMINDER, context, priority)
+    }
+    
+    /**
+     * هشدار خستگی هوشمند
+     */
+    fun alertFatigueDetection(drivingHours: Int, currentTime: String, fatigueLevel: String, priority: Priority = Priority.HIGH) {
+        val context = mapOf(
+            "driving_hours" to drivingHours,
+            "current_time" to currentTime,
+            "fatigue_level" to fatigueLevel
+        )
+        generateSmartAlert(SmartAlertType.FATIGUE_DETECTION, context, priority)
+    }
+    
+    /**
+     * پیشنهاد مسیر هوشمند
+     */
+    fun alertRouteOptimization(currentRouteTime: Int, alternativeRouteTime: Int, timeSaving: Int, priority: Priority = Priority.NORMAL) {
+        val context = mapOf(
+            "current_route_time" to currentRouteTime,
+            "alternative_route_time" to alternativeRouteTime,
+            "time_saving" to timeSaving
+        )
+        generateSmartAlert(SmartAlertType.ROUTE_OPTIMIZATION, context, priority)
+    }
+    
+    /**
+     * تست کامل حالت هوشمند
+     */
+    fun testSmartMode() {
+        Log.i("AdvancedTTS", "🧠 شروع تست حالت هوشمند AI...")
+        
+        ttsScope.launch {
+            try {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "🤖 تست حالت هوشمند AI شروع شد...", Toast.LENGTH_SHORT).show()
+                }
+                
+                // تست انواع هشدارهای هوشمند
+                alertTrafficAnalysis("ترافیک سنگین", 15, Priority.HIGH)
+                delay(4000)
+                
+                alertWeatherCondition("بارانی", "کم", "متوسط", Priority.HIGH)
+                delay(4000)
+                
+                alertFuelReminder(20, 5, Priority.NORMAL)
+                delay(4000)
+                
+                alertFatigueDetection(3, "14:30", "زیاد", Priority.HIGH)
+                delay(4000)
+                
+                alertRouteOptimization(45, 30, 15, Priority.NORMAL)
+                
+                // نمایش وضعیت نهایی
+                val status = smartAIAssistant?.getAssistantStatus()
+                withContext(Dispatchers.Main) {
+                    val message = """
+                        🤖 وضعیت دستیار هوشمند:
+                        حالت هوشمند: ${if (status?.isSmartModeEnabled == true) "✅ فعال" else "❌ غیرفعال"}
+                        وضعیت آنلاین: ${if (status?.isOnlineAvailable == true) "✅ فعال" else "❌ غیرفعال"}
+                        حالت فعلی: ${status?.currentMode ?: "نامشخص"}
+                    """.trimIndent()
+                    
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                    Log.i("AdvancedTTS", message)
+                }
+                
+            } catch (e: Exception) {
+                Log.e("AdvancedTTS", "❌ خطا در تست حالت هوشمند: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "❌ خطا در تست حالت هوشمند", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+    
+    /**
+     * دریافت پیام آفلاین برای هشدارهای هوشمند
+     */
+    private fun getOfflineSmartMessage(alertType: SmartAlertType, contextData: Map<String, Any>): String {
+        return when (alertType) {
+            SmartAlertType.TRAFFIC_ANALYSIS -> "ترافیک سنگین در پیش است، احتیاط کنید"
+            SmartAlertType.WEATHER_ALERT -> "شرایط جوی نامساعد، رانندگی با احتیاط"
+            SmartAlertType.FUEL_REMINDER -> "سوخت کافی ندارید، پمپ بنزین نزدیک است"
+            SmartAlertType.FATIGUE_DETECTION -> "احساس خستگی می‌کنید، لطفاً استراحت کنید"
+            SmartAlertType.ROUTE_OPTIMIZATION -> "مسیر بهتری موجود است، پیشنهاد می‌شود"
+        }
     }
     
     enum class Priority {
