@@ -245,7 +245,7 @@ class AIAssistant(private val context: Context) {
         // استخراج کلمات کلیدی به عنوان مقصد
         val words = command.split(Regex("\\s+"))
         for (word in words) {
-            if (word.length > 3 && !word.lowercase() in listOf("مسیر", "برو", "به", "از", "تا", "و", "در", "را")) {
+            if (word.length > 3 && word.lowercase() !in listOf("مسیر", "برو", "به", "از", "تا", "و", "در", "را")) {
                 Log.i("AIAssistant", "✅ مقصد از کلمات کلیدی: '$word'")
                 return word
             }
