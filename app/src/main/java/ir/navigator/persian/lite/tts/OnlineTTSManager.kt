@@ -52,151 +52,118 @@ class OnlineTTSManager(private val context: Context) {
     }
     
     /**
-     * تولید و پخش صدای آنلاین
+     * تولید و پخش صدا آنلاین
      */
     fun speakOnline(text: String, priority: Priority = Priority.NORMAL) {
-        if (!isOnlineMode) {
-            Log.w("OnlineTTS", "⚠️ حالت آنلاین فعال نیست")
+        if (!isOnlineAvailable()) {
+            Log.w("OnlineTTS", "⚠️ حالت آنلاین در دسترس نیست")
             return
         }
         
         ttsScope.launch {
             try {
-                Log.i("OnlineTTS", "🌐 تولید صدای آنلاین برای: '$text'")
+                Log.i("OnlineTTS", "🌐 شروع تولید صدا آنلاین: '$text'")
                 
+                // تولید فایل صوتی با OpenAI
                 val audioFile = generateOnlineAudio(text)
+                
                 if (audioFile != null && audioFile.exists()) {
+                    // پخش فایل صوتی
                     playAudioFile(audioFile)
-                    Log.i("OnlineTTS", "✅ صدای آنلاین با موفقیت پخش شد")
+                    Log.i("OnlineTTS", "✅ صدا آنلاین با موفقیت پخش شد")
                 } else {
-                    Log.e("OnlineTTS", "❌ تولید صدای آنلاین ناموفق بود")
+                    Log.e("OnlineTTS", "❌ خطا در تولید فایل صوتی آنلاین")
                 }
                 
             } catch (e: Exception) {
-                Log.e("OnlineTTS", "❌ خطا در تولید صدای آنلاین: ${e.message}", e)
+                Log.e("OnlineTTS", "❌ خطا در پخش صدا آنلاین: ${e.message}", e)
             }
         }
     }
     
     /**
-     * تولید فایل صوتی آنلاین با OpenAI TTS
+     * تولید فایل صوتی با OpenAI TTS
      */
     private suspend fun generateOnlineAudio(text: String): File? {
-        return try {
-            Log.i("OnlineTTS", "🎙️ شروع تولید صدا با OpenAI TTS...")
-            
-            // بررسی کلید API
-            val apiKey = SecureKeys.getOpenAIKey()
-            if (apiKey == null || apiKey.isEmpty()) {
-                Log.e("OnlineTTS", "❌ کلید OpenAI API یافت نشد")
-                return null
-            }
-            
-            val fileName = "online_${text.hashCode()}.mp3"
-            val audioFile = File(cacheDir, fileName)
-            
-            // اگر فایل از قبل در کش وجود دارد، استفاده مجدد
-            if (audioFile.exists()) {
-                Log.i("OnlineTTS", "✅ استفاده از فایل کش شده: $fileName")
-                return audioFile
-            }
-            
-            // ساخت درخواست برای OpenAI TTS
-            val requestBody = JSONObject().apply {
-                put("model", MODEL)
-                put("input", text)
-                put("voice", VOICE)
-                put("response_format", "mp3")
-                put("speed", 1.0)
-            }.toString()
-            
-            withContext(Dispatchers.IO) {
-                Log.i("OnlineTTS", "📡 ارسال درخواست به OpenAI TTS...")
+        return withContext(Dispatchers.IO) {
+            try {
+                val apiKey = SecureKeys.getOpenAIKey()
+                if (apiKey.isNullOrEmpty()) {
+                    Log.e("OnlineTTS", "❌ کلید OpenAI یافت نشد")
+                    return@withContext null
+                }
                 
+                // ایجاد درخواست HTTP
                 val url = URL(OPENAI_TTS_URL)
-                val connection = url.openConnection()
-                connection as java.net.HttpURLConnection
-                
+                val connection = url.openConnection() as java.net.HttpURLConnection
                 connection.requestMethod = "POST"
                 connection.setRequestProperty("Authorization", "Bearer $apiKey")
                 connection.setRequestProperty("Content-Type", "application/json")
                 connection.doOutput = true
                 
+                // ساخت بدنه درخواست
+                val requestBody = JSONObject().apply {
+                    put("model", MODEL)
+                    put("input", text)
+                    put("voice", VOICE)
+                    put("response_format", "mp3")
+                }.toString()
+                
                 // ارسال درخواست
-                connection.outputStream.use { output ->
-                    output.write(requestBody.toByteArray(Charsets.UTF_8))
-                }
+                val outputStream = connection.outputStream
+                outputStream.write(requestBody.toByteArray(Charsets.UTF_8))
+                outputStream.flush()
+                outputStream.close()
                 
                 // بررسی پاسخ
                 val responseCode = connection.responseCode
-                Log.i("OnlineTTS", "📨 کد پاسخ OpenAI: $responseCode")
-                
                 if (responseCode == 200) {
-                    // دانلود فایل صوتی
-                    connection.inputStream.use { input ->
-                        FileOutputStream(audioFile).use { output ->
-                            input.copyTo(output)
-                        }
-                    }
+                    // خواندن فایل صوتی
+                    val inputStream = connection.inputStream
+                    val fileName = "online_${text.hashCode()}.mp3"
+                    val audioFile = File(cacheDir, fileName)
                     
-                    Log.i("OnlineTTS", "✅ فایل صوتی با موفقیت دانلود شد: ${audioFile.absolutePath}")
-                    audioFile
+                    // ذخیره فایل صوتی در کش
+                    val fileOutputStream = FileOutputStream(audioFile)
+                    inputStream.copyTo(fileOutputStream)
+                    fileOutputStream.close()
+                    inputStream.close()
+                    
+                    Log.i("OnlineTTS", "✅ فایل صوتی آنلاین تولید شد: ${audioFile.absolutePath}")
+                    return@withContext audioFile
                 } else {
-                    val errorResponse = connection.errorStream?.bufferedReader()?.readText()
-                    Log.e("OnlineTTS", "❌ خطا در OpenAI TTS: $responseCode - $errorResponse")
-                    null
+                    Log.e("OnlineTTS", "❌ خطا در API OpenAI: $responseCode")
+                    return@withContext null
                 }
+                
+            } catch (e: Exception) {
+                Log.e("OnlineTTS", "❌ خطا در تولید صدا آنلاین: ${e.message}", e)
+                return@withContext null
+            }
+        }
+    }
+    
+    /**
+     * پخش فایل صوتی
+     */
+    private fun playAudioFile(audioFile: File) {
+        try {
+            val mediaPlayer = MediaPlayer().apply {
+                setDataSource(audioFile.absolutePath)
+                prepare()
+                start()
+            }
+            
+            Log.i("OnlineTTS", "🎵 فایل صوتی در حال پخش: ${audioFile.name}")
+            
+            // آزادسازی منابع بعد از پخش
+            mediaPlayer.setOnCompletionListener {
+                it.release()
+                Log.i("OnlineTTS", "✅ پخش فایل صوتی تمام شد")
             }
             
         } catch (e: Exception) {
-            Log.e("OnlineTTS", "❌ خطا در تولید صدا آنلاین: ${e.message}", e)
-            null
-        }
-    }
-    }
-    
-    /**
-     * پخش فایل صوتی با MediaPlayer
-     */
-    private suspend fun playAudioFile(audioFile: File) {
-        withContext(Dispatchers.Main) {
-            try {
-                val mediaPlayer = MediaPlayer().apply {
-                    setDataSource(audioFile.absolutePath)
-                    prepare()
-                    setOnCompletionListener {
-                        release()
-                        Log.i("OnlineTTS", "✅ پخش فایل آنلاین تمام شد")
-                    }
-                    setOnErrorListener { _, _, _ ->
-                        release()
-                        Log.e("OnlineTTS", "❌ خطا در پخش فایل آنلاین")
-                        false
-                    }
-                }
-                
-                mediaPlayer.start()
-                Log.i("OnlineTTS", "🎵 شروع پخش فایل صوتی آنلاین")
-                
-            } catch (e: Exception) {
-                Log.e("OnlineTTS", "❌ خطا در پخش فایل صوتی: ${e.message}", e)
-            }
-        }
-    }
-    
-    /**
-     * پاک‌سازی کش
-     */
-    fun clearCache() {
-        try {
-            cacheDir.listFiles()?.forEach { file ->
-                if (file.delete()) {
-                    Log.i("OnlineTTS", "🗑️ فایل کش حذف شد: ${file.name}")
-                }
-            }
-            Log.i("OnlineTTS", "✅ کش با موفقیت پاک‌سازی شد")
-        } catch (e: Exception) {
-            Log.e("OnlineTTS", "❌ خطا در پاک‌سازی کش: ${e.message}", e)
+            Log.e("OnlineTTS", "❌ خطا در پخش فایل صوتی: ${e.message}", e)
         }
     }
     
