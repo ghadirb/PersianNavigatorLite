@@ -9,9 +9,9 @@ import android.text.Editable
 import android.location.Geocoder
 import kotlinx.coroutines.*
 import ir.navigator.persian.lite.R
-import ir.navigator.persian.lite.model.Destination
 import ir.navigator.persian.lite.navigation.Destination
 import android.util.Log
+import java.util.Locale
 
 /**
  * صفحه جستجو و انتخاب مقصد

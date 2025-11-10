@@ -6,7 +6,6 @@ import android.util.Log
 import android.widget.Toast
 import kotlinx.coroutines.*
 import java.util.*
-import ir.navigator.persian.lite.BuildConfig
 import android.os.Handler
 import org.json.JSONObject
 
