@@ -26,14 +26,27 @@ class AIAssistant(private val context: Context) {
     suspend fun processUserCommand(command: String): AIResponse {
         return withContext(Dispatchers.IO) {
             try {
-                val apiKey = SecureKeys.getOpenAIKey()
-                if (apiKey == null) {
+                // بررسی وضعیت کلیدها
+                if (!SecureKeys.areKeysActivated()) {
+                    Log.w("AIAssistant", "کلیدهای API فعال نیستند")
                     return@withContext AIResponse(
-                        text = "کلیدهای API فعال نیستند. لطفا ابتدا کلیدها را فعال کنید.",
+                        text = "⚠️ کلیدهای هوش مصنوعی فعال نیستند. لطفاً دکمه فعال‌سازی کلیدها را بزنید.",
                         action = null,
                         isSuccessful = false
                     )
                 }
+                
+                val apiKey = SecureKeys.getOpenAIKey()
+                if (apiKey == null) {
+                    Log.e("AIAssistant", "کلید API دریافت نشد")
+                    return@withContext AIResponse(
+                        text = "❌ خطا در دریافت کلید API. لطفاً برنامه را ری‌استارت کنید.",
+                        action = null,
+                        isSuccessful = false
+                    )
+                }
+                
+                Log.i("AIAssistant", "🤖 پردازش دستور با کلید معتبر: ${apiKey.take(10)}...")
                 
                 val prompt = buildCommandPrompt(command)
                 val response = callOpenAI(apiKey, prompt)

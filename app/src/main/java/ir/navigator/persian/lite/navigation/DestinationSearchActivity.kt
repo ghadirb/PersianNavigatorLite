@@ -184,26 +184,65 @@ class DestinationSearchActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
-                // خطا در جستجو - نمایش اطلاعات دقیق‌تر
+                // خطا در جستجو - مدیریت انواع خطا
                 withContext(Dispatchers.Main) {
                     Log.e("DestinationSearch", "خطا در جستجو: ${e.message}", e)
-                    tvStatus.text = "❌ خطا: ${e.message}"
-                    val errorMessages = listOf(
-                        "❌ خطا در جستجو: ${e.message}", 
-                        "📍 در حال تلاش مجدد با روش دیگر...",
-                        "🔍 لطفا کلیدواژه دقیق‌تری وارد کنید"
-                    )
-                    val adapter = ArrayAdapter(
-                        this@DestinationSearchActivity,
-                        android.R.layout.simple_list_item_1,
-                        errorMessages
-                    )
-                    lvResults.adapter = adapter
                     
-                    // تلاش مجدد با جستجوی ساده‌تر
-                    tryAlternativeSearch(query)
+                    val errorMessage = when {
+                        e.message?.contains("PERMISSION_DENIED", true) == true ||
+                        e.message?.contains("403", true) == true -> {
+                            "❌ خطا: دسترسی به سرویس جستجو مسدود است. از جستجوی آفلاین استفاده می‌شود..."
+                        }
+                        e.message?.contains("NETWORK", true) == true ||
+                        e.message?.contains("timeout", true) == true -> {
+                            "❌ خطا: مشکل در اتصال اینترنت. از جستجوی آفلاین استفاده می‌شود..."
+                        }
+                        else -> {
+                            "❌ خطا: ${e.message}"
+                        }
+                    }
+                    
+                    tvStatus.text = errorMessage
+                    
+                    // نمایش مقاصد پیش‌فرض در صورت خطا
+                    showOfflineDestinations(query)
                 }
             }
+        }
+    }
+    
+    /**
+     * نمایش مقاصد آفلاین در صورت خطا
+     */
+    private fun showOfflineDestinations(query: String) {
+        // مقاصد پیش‌فرض و مهم ایران
+        val offlineDestinations = listOf(
+            Destination("میدان آزادی تهران", 35.6892, 51.3890, "تهران، میدان آزادی"),
+            Destination("برج میلاد تهران", 35.7448, 51.3741, "تهران، برج میلاد"),
+            Destination("میدان انقلاب تهران", 35.7012, 51.4219, "تهران، میدان انقلاب"),
+            Destination("حرم امام رضا مشهد", 36.2655, 59.6122, "مشهد، حرم امام رضا"),
+            Destination("میدان نقشه جهان اصفهان", 32.6437, 51.6720, "اصفهان، میدان نقشه جهان"),
+            Destination("سی و سه پل اصفهان", 32.6504, 51.6746, "اصفهان، سی و سه پل"),
+            Destination("ارگ کرمان", 30.2839, 57.0834, "کرمان، ارگ بم"),
+            Destination("بازار بزرگ تبریز", 38.0962, 46.2919, "تبریز، بازار بزرگ"),
+            Destination("سد دز", 32.4536, 48.4538, "خوزستان، سد دز"),
+            Destination("کاخ گلستان تهران", 35.6881, 51.4254, "تهران، کاخ گلستان"),
+            Destination("پارک لاله تهران", 35.7146, 51.4054, "تهران، پارک لاله"),
+            Destination("فرودگاه امام خمینی", 35.4162, 51.1519, "تهران، فرودگاه امام خمینی"),
+            Destination("دانشگاه تهران", 35.6961, 51.4231, "تهران، دانشگاه تهران"),
+            Destination("بیمارستان سینا تهران", 35.7225, 51.3886, "تهران، بیمارستان سینا"),
+            Destination("ایستگاه راه‌آهن تهران", 35.6980, 51.4110, "تهران، ایستگاه راه‌آهن")
+        ).filter { 
+            it.name.contains(query, ignoreCase = true) || 
+            it.address.contains(query, ignoreCase = true)
+        }.take(10)
+        
+        if (offlineDestinations.isNotEmpty()) {
+            tvStatus.text = "📍 ${offlineDestinations.size} مقصد آفلاین یافت شد"
+            updateResults(offlineDestinations)
+        } else {
+            tvStatus.text = "📍 مقاصد پیشنهادی آفلاین:"
+            updateResults(offlineDestinations.take(5))
         }
     }
     

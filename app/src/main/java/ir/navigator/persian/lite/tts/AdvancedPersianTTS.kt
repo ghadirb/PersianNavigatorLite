@@ -205,6 +205,70 @@ class AdvancedPersianTTS(private val context: Context) {
         }
     }
     
+    /**
+     * تست صدای TTS با پیام کوتاه
+     */
+    fun testVoice() {
+        ttsScope.launch {
+            try {
+                Log.i("AdvancedTTS", "🔊 شروع تست صدا...")
+                
+                if (systemTTS == null) {
+                    Log.e("AdvancedTTS", "❌ System TTS مقداردهی نشده است")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "خطا: سرویس صوت آماده نیست", Toast.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
+                
+                if (!isSystemReady) {
+                    Log.w("AdvancedTTS", "⏳ System TTS هنوز آماده نیست، منتظر می‌مانیم...")
+                    delay(3000) // صبر 3 ثانیه برای آماده شدن
+                    
+                    if (!isSystemReady) {
+                        Log.e("AdvancedTTS", "❌ System TTS پس از انتظار هم آماده نشد")
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "خطا: سرویس صوت پاسخ نمی‌دهد", Toast.LENGTH_LONG).show()
+                        }
+                        return@launch
+                    }
+                }
+                
+                withContext(Dispatchers.Main) {
+                    // تنظیمات بهینه برای تست صدا
+                    systemTTS?.setSpeechRate(0.9f)
+                    systemTTS?.setPitch(1.0f)
+                    
+                    // تنظیم زبان فارسی با فال‌بک انگلیسی
+                    val langResult = systemTTS?.setLanguage(Locale("fa", "IR"))
+                    if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Log.w("AdvancedTTS", "⚠️ فارسی پشتیبانی نمی‌شود، از انگلیسی استفاده می‌شود")
+                        systemTTS?.setLanguage(Locale.US)
+                    }
+                    
+                    // تست با پیام کوتاه و واضح
+                    val testMessage = "تست صدای سیستم"
+                    val result = systemTTS?.speak(testMessage, TextToSpeech.QUEUE_FLUSH, null, "test_voice")
+                    
+                    Log.d("AdvancedTTS", "نتیجه تست صدا: $result")
+                    
+                    if (result == TextToSpeech.ERROR) {
+                        Log.e("AdvancedTTS", "❌ خطا در پخش تست صدا")
+                        Toast.makeText(context, "❌ خطا در پخش صدا", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Log.i("AdvancedTTS", "✅ تست صدا با موفقیت پخش شد")
+                        Toast.makeText(context, "✅ تست صدا پخش شد", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("AdvancedTTS", "❌ خطا در تست صدا: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "❌ خطا در تست صدا: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+    
     fun speakSpeedWarning(speed: Int) {
         val message = when {
             speed > 120 -> "خطر! سرعت شما $speed کیلومتر است. فورا کاهش دهید"

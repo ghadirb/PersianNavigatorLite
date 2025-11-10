@@ -39,11 +39,18 @@ class StatisticsActivity : AppCompatActivity() {
             
             // مقداردهی اولیه آمار رانندگان با try-catch جداگانه
             try {
+                Log.d("StatisticsActivity", "شروع مقداردهی DrivingStatistics...")
                 drivingStats = DrivingStatistics(this)
-                Log.d("StatisticsActivity", "DrivingStatistics مقداردهی شد")
+                Log.d("StatisticsActivity", "DrivingStatistics با موفقیت مقداردهی شد")
                 
-                loadStatistics()
-                Log.d("StatisticsActivity", "آمار بارگذاری شد")
+                // بارگذاری آمار با مدیریت خطا
+                try {
+                    loadStatistics()
+                    Log.d("StatisticsActivity", "آمار با موفقیت بارگذاری شد")
+                } catch (loadError: Exception) {
+                    Log.e("StatisticsActivity", "خطا در بارگذاری آمار: ${loadError.message}", loadError)
+                    showDefaultStatistics()
+                }
             } catch (statsError: Exception) {
                 Log.e("StatisticsActivity", "خطا در مقداردهی آمار: ${statsError.message}", statsError)
                 // نمایش مقادیر پیش‌فرض در صورت خطا

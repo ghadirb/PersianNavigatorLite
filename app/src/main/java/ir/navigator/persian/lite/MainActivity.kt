@@ -206,9 +206,19 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun testVoiceAlert() {
-        // تست هشدار صوتی فارسی
-        navigatorEngine.testVoiceAlert()
-        tvStatus.text = "در حال پخش هشدار تست..."
+        // تست هشدار صوتی فارسی با TTS مستقیم
+        try {
+            tvStatus.text = "🔊 در حال تست صدای سیستم..."
+            
+            // استفاده مستقیم از TTS برای تست
+            val advancedTTS = ir.navigator.persian.lite.tts.AdvancedPersianTTS(this)
+            advancedTTS.testVoice()
+            
+        } catch (e: Exception) {
+            Log.e("MainActivity", "خطا در تست صدا: ${e.message}")
+            tvStatus.text = "❌ خطا در تست صدا: ${e.message}"
+            Toast.makeText(this, "خطا در تست صدا", Toast.LENGTH_SHORT).show()
+        }
         
         // بعد از 3 ثانیه برگرداندن وضعیت
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
