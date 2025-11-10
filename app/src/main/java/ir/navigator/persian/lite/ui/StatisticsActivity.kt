@@ -1,10 +1,16 @@
 package ir.navigator.persian.lite.ui
 
 import android.os.Bundle
-import android.content.DialogInterface
+import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
+import android.widget.LinearLayout
+import android.graphics.Color
+import android.view.Gravity
+import ir.navigator.persian.lite.statistics.DrivingStatistics
 import android.util.Log
-import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Handler
+import android.os.Looper
 import androidx.appcompat.app.AlertDialog
 import ir.navigator.persian.lite.R
 import ir.navigator.persian.lite.statistics.DrivingStatistics
@@ -24,65 +30,126 @@ class StatisticsActivity : AppCompatActivity() {
     private lateinit var btnBack: Button
     private lateinit var btnReset: Button
     
-    private lateinit var drivingStats: DrivingStatistics
+    private var drivingStats: DrivingStatistics? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_statistics)
         
         try {
-            Log.d("StatisticsActivity", "🚀 شروع onCreate امن...")
+            Log.d("StatisticsActivity", "🚀 شروع onCreate فوق امن...")
             
+            // setContentView با امنیت کامل
+            setContentView(R.layout.activity_statistics)
+            Log.d("StatisticsActivity", "✅ Layout با موفقیت تنظیم شد")
+            
+        } catch (layoutError: Exception) {
+            Log.e("StatisticsActivity", "❌ خطا در تنظیم Layout: ${layoutError.message}", layoutError)
+            // ایجاد UI ساده به صورت برنامه‌نویسی
+            createEmergencyUI()
+            return
+        }
+        
+        try {
             // مقداردهی اولیه UI با امنیت کامل
+            setupUI()
+            Log.d("StatisticsActivity", "✅ UI با موفقیت تنظیم شد")
+        } catch (uiError: Exception) {
+            Log.e("StatisticsActivity", "❌ خطا در تنظیم UI: ${uiError.message}", uiError)
+            createEmergencyUI()
+            return
+        }
+        
+        // نمایش آمار پیش‌فرض فوری (100% امن)
+        showImmediateDefaultStats()
+        
+        // تلاش برای ایجاد آمار واقعی با تاخیر زیاد
+        Handler(Looper.getMainLooper()).postDelayed({
             try {
-                setupUI()
-                Log.d("StatisticsActivity", "✅ UI با موفقیت تنظیم شد")
-            } catch (uiError: Exception) {
-                Log.e("StatisticsActivity", "❌ خطا در تنظیم UI: ${uiError.message}", uiError)
-                // نمایش پیام خطا و ادامه با UI پایه
-                Toast.makeText(this, "خطا در تنظیم صفحه", Toast.LENGTH_SHORT).show()
-            }
-            
-            // نمایش آمار پیش‌فرض فوری (بدون هیچ نمونه‌ای)
-            showImmediateDefaultStats()
-            
-            // تلاش برای ایجاد آمار واقعی در پس‌زمینه
-            try {
-                Thread {
-                    try {
-                        Log.d("StatisticsActivity", "🔄 تلاش برای ایجاد آمار واقعی...")
-                        drivingStats = DrivingStatistics(this)
-                        
-                        runOnUiThread {
-                            try {
-                                loadStatistics()
-                                Log.d("StatisticsActivity", "✅ آمار واقعی بارگذاری شد")
-                            } catch (loadError: Exception) {
-                                Log.e("StatisticsActivity", "⚠️ خطا در بارگذاری: ${loadError.message}")
-                                // آمار پیش‌فرض قبلاً نمایش داده شده
-                            }
-                        }
-                    } catch (statsError: Exception) {
-                        Log.e("StatisticsActivity", "⚠️ خطا در ایجاد آمار: ${statsError.message}")
-                        // آمار پیش‌فرض قبلاً نمایش داده شده
-                    }
-                }.start()
-                
-            } catch (threadError: Exception) {
-                Log.e("StatisticsActivity", "❌ خطا در ایجاد Thread: ${threadError.message}")
+                Log.d("StatisticsActivity", "🔄 تلاش برای ایجاد آمار واقعی...")
+                drivingStats = DrivingStatistics(this)
+                loadStatisticsSafely()
+                Log.d("StatisticsActivity", "✅ آمار واقعی با موفقیت بارگذاری شد")
+            } catch (statsError: Exception) {
+                Log.e("StatisticsActivity", "⚠️ خطا در ایجاد آمار: ${statsError.message}")
                 // آمار پیش‌فرض قبلاً نمایش داده شده
             }
+        }, 3000) // 3 ثانیه تاخیر برای اطمینان
+        
+        Log.d("StatisticsActivity", "✅ StatisticsActivity با موفقیت ایجاد شد")
+    }
+    
+    /**
+     * ایجاد UI اضطراری در صورت خطا
+     */
+    private fun createEmergencyUI() {
+        try {
+            Log.d("StatisticsActivity", "🆘 ایجاد UI اضطراری...")
             
-            Log.d("StatisticsActivity", "✅ StatisticsActivity با موفقیت ایجاد شد")
-            
-        } catch (e: Exception) {
-            Log.e("StatisticsActivity", "❌ خطا در onCreate: ${e.message}", e)
-            Toast.makeText(this, "خطا در بارگذاری صفحه آمار", Toast.LENGTH_LONG).show()
-            
-            // بستن صفحه فقط در صورت خطای بحرانی
-            if (e is OutOfMemoryError || e is StackOverflowError) {
-                finish()
+            val layout = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(32, 32, 32, 32)
+                setBackgroundColor(Color.WHITE)
             }
+            
+            val title = TextView(this).apply {
+                text = "📊 آمار رانندگی"
+                textSize = 24f
+                setTextColor(Color.BLACK)
+                gravity = Gravity.CENTER
+                setPadding(0, 0, 0, 32)
+            }
+            
+            val message = TextView(this).apply {
+                text = "• مسافت: 0.0 کیلومتر\n• زمان: 0 ساعت\n• سرعت متوسط: 0 کیلومتر بر ساعت\n• حداکثر سرعت: 0 کیلومتر بر ساعت\n\nبرای بازگشت به عقب دکمه بازگشت را بزنید."
+                textSize = 16f
+                setTextColor(Color.GRAY)
+                gravity = Gravity.CENTER
+            }
+            
+            layout.addView(title)
+            layout.addView(message)
+            
+            setContentView(layout)
+            Log.d("StatisticsActivity", "✅ UI اضطراری با موفقیت ایجاد شد")
+            
+        } catch (emergencyError: Exception) {
+            Log.e("StatisticsActivity", "❌ خطا در UI اضطراری: ${emergencyError.message}", emergencyError)
+            // آخرین راه‌حل: صفحه سفید با پیام
+            val textView = TextView(this).apply {
+                text = "خطا در بارگذاری صفحه آمار\nلطفاً به عقب برگردید"
+                textSize = 18f
+                setTextColor(Color.RED)
+                gravity = Gravity.CENTER
+            }
+            setContentView(textView)
+        }
+    }
+    
+    /**
+     * بارگذاری امن آمار
+     */
+    private fun loadStatisticsSafely() {
+        try {
+            val stats = drivingStats?.getCurrentStats()
+            if (stats != null) {
+                runOnUiThread {
+                    try {
+                        tvTotalDistance.text = "${String.format("%.1f", stats.totalDistance)} کیلومتر"
+                        tvTotalTime.text = "${stats.totalTimeHours} ساعت ${stats.totalTimeMinutes} دقیقه"
+                        tvAverageSpeed.text = "${stats.averageSpeed} کیلومتر بر ساعت"
+                        tvMaxSpeed.text = "${stats.maxSpeed} کیلومتر بر ساعت"
+                        tvOverSpeedCount.text = "${stats.overSpeedCount} بار"
+                        tvCameraAlerts.text = "${stats.cameraAlerts} بار"
+                        tvBumpAlerts.text = "${stats.bumpAlerts} بار"
+                        
+                        Toast.makeText(this, "✅ آمار واقعی بارگذاری شد", Toast.LENGTH_SHORT).show()
+                    } catch (uiError: Exception) {
+                        Log.e("StatisticsActivity", "خطا در به‌روزرسانی UI: ${uiError.message}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("StatisticsActivity", "خطا در loadStatisticsSafely: ${e.message}")
         }
     }
     
