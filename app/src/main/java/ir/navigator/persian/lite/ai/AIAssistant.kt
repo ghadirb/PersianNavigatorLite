@@ -94,7 +94,7 @@ class AIAssistant(private val context: Context) {
                 val destination = extractDestination(command)
                 AIResponse(
                     text = "در حال جستجوی مسیر به $destination...",
-                    action = AIAction.SetDestination(destination),
+                    action = AIAction.SetDestination(destination, 35.6892, 51.3890),
                     isSuccessful = true
                 )
             }
@@ -108,7 +108,7 @@ class AIAssistant(private val context: Context) {
             lowerCommand.contains("هوا") || lowerCommand.contains("آب و هوا") -> {
                 AIResponse(
                     text = "در حال دریافت اطلاعات آب و هوا...",
-                    action = AIAction.ShowMessage("اطلاعات آب و هوا در حال دریافت است"),
+                    action = AIAction.GetWeather,
                     isSuccessful = true
                 )
             }
