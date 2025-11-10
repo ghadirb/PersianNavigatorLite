@@ -149,11 +149,34 @@ class DestinationSearchActivity : AppCompatActivity() {
                     lvResults.adapter = adapter
                 }
                 
-                // جستجوی گسترده با نتایج بیشتر
-                val addresses = geocoder.getFromLocationName(query, 20)
-                if (addresses != null && addresses.isNotEmpty()) {
+                // جستجوی گسترده با نتایج بیشتر و کلیدواژه‌های مختلف
+                val searchQueries = listOf(
+                    query,
+                    "$query ایران",
+                    "$query Tehran",
+                    "$query تهران",
+                    "$query Mashhad",
+                    "$query مشهد",
+                    "$query Isfahan",
+                    "$query اصفهان"
+                )
+                
+                var allAddresses = mutableListOf<android.location.Address>()
+                
+                for (searchQuery in searchQueries) {
+                    try {
+                        val addresses = geocoder.getFromLocationName(searchQuery, 10)
+                        if (addresses != null) {
+                            allAddresses.addAll(addresses)
+                        }
+                    } catch (e: Exception) {
+                        Log.w("DestinationSearch", "خطا در جستجوی '$searchQuery': ${e.message}")
+                    }
+                }
+                
+                if (allAddresses.isNotEmpty()) {
                     // حذف نتایج تکراری و مرتب‌سازی
-                    val uniqueDestinations = addresses.mapNotNull { address ->
+                    val uniqueDestinations = allAddresses.mapNotNull { address ->
                         val name = when {
                             address.featureName != null && address.thoroughfare != null -> 
                                 "${address.featureName}, ${address.thoroughfare}"
@@ -170,17 +193,17 @@ class DestinationSearchActivity : AppCompatActivity() {
                                 address = address.getAddressLine(0) ?: ""
                             )
                         }
-                    }.distinctBy { it.name }
+                    }.distinctBy { it.name }.take(15) // محدود به 15 نتیجه برتر
                     
                     withContext(Dispatchers.Main) {
                         tvStatus.text = "✅ ${uniqueDestinations.size} نتیجه یافت شد"
                         updateResults(uniqueDestinations)
                     }
                 } else {
-                    // هیچ نتیجه‌ای یافت نشد
+                    // هیچ نتیجه‌ای یافت نشد - نمایش مقاصد پیشنهادی
                     withContext(Dispatchers.Main) {
-                        tvStatus.text = "❌ هیچ نتیجه‌ای یافت نشد"
-                        updateResults(emptyList())
+                        tvStatus.text = "❌ هیچ نتیجه‌ای یافت نشد - مقاصد پیشنهادی:"
+                        showSuggestedDestinations(query)
                     }
                 }
             } catch (e: Exception) {
@@ -209,6 +232,38 @@ class DestinationSearchActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+    
+    /**
+     * نمایش مقاصد پیشنهادی بر اساس جستجو
+     */
+    private fun showSuggestedDestinations(query: String) {
+        val suggestions = when {
+            query.contains("رستوران", true) -> listOf(
+                Destination("رستوران شاندیز تهران", 35.7542, 51.4121, "تهران، رستوران شاندیز"),
+                Destination("رستوران نایب اصفهان", 32.6546, 51.6676, "اصفهان، رستوران نایب"),
+                Destination("رستوران سنتی مشهد", 36.2869, 59.6159, "مشهد، رستوران سنتی")
+            )
+            query.contains("بیمارستان", true) -> listOf(
+                Destination("بیمارستان سینا تهران", 35.7225, 51.3886, "تهران، بیمارستان سینا"),
+                Destination("بیمارستان امیر اصفهان", 32.6546, 51.6676, "اصفهان، بیمارستان امیر"),
+                Destination("بیمارستان قائم مشهد", 36.2869, 59.6159, "مشهد، بیمارستان قائم")
+            )
+            query.contains("فرودگاه", true) -> listOf(
+                Destination("فرودگاه امام خمینی", 35.4162, 51.1519, "تهران، فرودگاه امام خمینی"),
+                Destination("فرودگاه مهرآباد", 35.6962, 51.3111, "تهران، فرودگاه مهرآباد"),
+                Destination("فرودگاه شهید هاشمی نژاد مشهد", 36.2869, 59.6159, "مشهد، فرودگاه شهید هاشمی نژاد")
+            )
+            else -> listOf(
+                Destination("میدان آزادی تهران", 35.6892, 51.3890, "تهران، میدان آزادی"),
+                Destination("برج میلاد تهران", 35.7448, 51.3741, "تهران، برج میلاد"),
+                Destination("حرم امام رضا مشهد", 36.2655, 59.6122, "مشهد، حرم امام رضا"),
+                Destination("میدان نقشه جهان اصفهان", 32.6437, 51.6720, "اصفهان، میدان نقشه جهان"),
+                Destination("سی و سه پل اصفهان", 32.6504, 51.6746, "اصفهان، سی و سه پل")
+            )
+        }
+        
+        updateResults(suggestions)
     }
     
     /**

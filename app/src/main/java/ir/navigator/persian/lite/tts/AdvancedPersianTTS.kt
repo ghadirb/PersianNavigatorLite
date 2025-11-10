@@ -7,6 +7,7 @@ import android.widget.Toast
 import kotlinx.coroutines.*
 import java.util.*
 import android.os.Handler
+import android.os.Looper
 import org.json.JSONObject
 
 /**
@@ -122,21 +123,69 @@ class AdvancedPersianTTS(private val context: Context) {
     }
     
     private fun speakWithSystemTTS(text: String, priority: Priority) {
-        if (!isSystemReady) {
-            Handler(android.os.Looper.getMainLooper()).postDelayed({ 
+        Log.i("AdvancedTTS", "🔊 تلاش برای پخش صدا: '$text'")
+        
+        // بررسی فوری وجود TTS
+        if (systemTTS == null) {
+            Log.e("AdvancedTTS", "❌ System TTS خالی است - مقداردهی مجدد...")
+            initializeSystemTTS()
+            
+            // تلاش مجدد بعد از 2 ثانیه
+            Handler(Looper.getMainLooper()).postDelayed({ 
                 speakWithSystemTTS(text, priority) 
-            }, 1000)
+            }, 2000)
             return
         }
         
-        val queueMode = if (priority == Priority.URGENT) {
-            TextToSpeech.QUEUE_FLUSH
-        } else {
-            TextToSpeech.QUEUE_ADD
+        // اگر آماده نیست، صبر کن و تلاش مجدد
+        if (!isSystemReady) {
+            Log.w("AdvancedTTS", "⏳ TTS آماده نیست - صبر و تلاش مجدد...")
+            Handler(Looper.getMainLooper()).postDelayed({ 
+                speakWithSystemTTS(text, priority) 
+            }, 1500)
+            return
         }
         
-        systemTTS?.speak(text, queueMode, null, null)
-        Log.d("AdvancedTTS", "پخش با System TTS: $text")
+        try {
+            // تنظیمات بهینه برای پخش صدای واضح
+            systemTTS?.setSpeechRate(0.9f)
+            systemTTS?.setPitch(1.0f)
+            
+            // تنظیم زبان فارسی با فال‌بک انگلیسی
+            val langResult = systemTTS?.setLanguage(Locale("fa", "IR"))
+            if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.w("AdvancedTTS", "⚠️ فارسی پشتیبانی نمی‌شود، از انگلیسی استفاده می‌شود")
+                systemTTS?.setLanguage(Locale.US)
+            }
+            
+            // انتخاب حالت صف بر اساس اولویت
+            val queueMode = if (priority == Priority.URGENT) {
+                TextToSpeech.QUEUE_FLUSH // فوری پخش شود
+            } else {
+                TextToSpeech.QUEUE_ADD // به صف اضافه شود
+            }
+            
+            // پخش واقعی صدا با ID منحصر به فرد
+            val utteranceId = "tts_" + System.currentTimeMillis()
+            val result = systemTTS?.speak(text, queueMode, null, utteranceId)
+            
+            Log.i("AdvancedTTS", "📢 دستور پخش صدا ارسال شد: نتیجه=$result, متن='$text'")
+            
+            when (result) {
+                TextToSpeech.SUCCESS -> {
+                    Log.i("AdvancedTTS", "✅ صدای با موفقیت پخش شد")
+                }
+                TextToSpeech.ERROR -> {
+                    Log.e("AdvancedTTS", "❌ خطا در پخش صدا")
+                }
+                else -> {
+                    Log.w("AdvancedTTS", "⚠️ نتیجه نامشخص: $result")
+                }
+            }
+            
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در پخش صدا: ${e.message}", e)
+        }
     }
     
     private fun speakWithHaaniye(text: String, priority: Priority) {
@@ -206,66 +255,75 @@ class AdvancedPersianTTS(private val context: Context) {
     }
     
     /**
-     * تست صدای TTS با پیام کوتاه
+     * تست صدای TTS با اطمینان از پخش واقعی
      */
     fun testVoice() {
-        ttsScope.launch {
-            try {
-                Log.i("AdvancedTTS", "🔊 شروع تست صدا...")
+        Log.i("AdvancedTTS", "🔊 شروع تست صدای واقعی...")
+        
+        try {
+            // بررسی اولیه وضعیت TTS
+            if (systemTTS == null) {
+                Log.e("AdvancedTTS", "❌ System TTS مقداردهی نشده - مقداردهی مجدد...")
+                initializeSystemTTS()
                 
-                if (systemTTS == null) {
-                    Log.e("AdvancedTTS", "❌ System TTS مقداردهی نشده است")
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "خطا: سرویس صوت آماده نیست", Toast.LENGTH_SHORT).show()
-                    }
-                    return@launch
+                // صبر برای مقداردهی و تلاش مجدد
+                Handler(Looper.getMainLooper()).postDelayed({
+                    testVoice()
+                }, 2000)
+                return
+            }
+            
+            // تست با پیام کوتاه و واضح فارسی
+            val testMessage = "تست صدای سیستم"
+            
+            // تنظیمات بهینه برای تست
+            systemTTS?.setSpeechRate(0.9f)
+            systemTTS?.setPitch(1.0f)
+            
+            // تنظیم زبان فارسی با فال‌بک انگلیسی
+            val langResult = systemTTS?.setLanguage(Locale("fa", "IR"))
+            if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.w("AdvancedTTS", "⚠️ فارسی پشتیبانی نمی‌شود، از انگلیسی استفاده می‌شود")
+                systemTTS?.setLanguage(Locale.US)
+                // تست با انگلیسی اگر فارسی کار نکرد
+                val englishTestResult = systemTTS?.speak(
+                    "Test Sound", 
+                    TextToSpeech.QUEUE_FLUSH, 
+                    null, 
+                    "test_en_" + System.currentTimeMillis()
+                )
+                Log.i("AdvancedTTS", "📢 تست انگلیسی ارسال شد: $englishTestResult")
+            }
+            
+            // تست اصلی با فارسی
+            val testResult = systemTTS?.speak(
+                testMessage, 
+                TextToSpeech.QUEUE_FLUSH, 
+                null, 
+                "test_fa_" + System.currentTimeMillis()
+            )
+            
+            Log.i("AdvancedTTS", "📢 تست فارسی ارسال شد: نتیجه=$testResult, متن='$testMessage'")
+            
+            // نمایش نتیجه دقیق
+            when (testResult) {
+                TextToSpeech.SUCCESS -> {
+                    Log.i("AdvancedTTS", "✅ صدای تست با موفقیت ارسال شد - باید بشنوید!")
+                    Toast.makeText(context, "✅ در حال پخش: '$testMessage'", Toast.LENGTH_SHORT).show()
                 }
-                
-                if (!isSystemReady) {
-                    Log.w("AdvancedTTS", "⏳ System TTS هنوز آماده نیست، منتظر می‌مانیم...")
-                    delay(3000) // صبر 3 ثانیه برای آماده شدن
-                    
-                    if (!isSystemReady) {
-                        Log.e("AdvancedTTS", "❌ System TTS پس از انتظار هم آماده نشد")
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "خطا: سرویس صوت پاسخ نمی‌دهد", Toast.LENGTH_LONG).show()
-                        }
-                        return@launch
-                    }
+                TextToSpeech.ERROR -> {
+                    Log.e("AdvancedTTS", "❌ خطا در ارسال دستور صدا")
+                    Toast.makeText(context, "❌ خطا در پخش صدا", Toast.LENGTH_SHORT).show()
                 }
-                
-                withContext(Dispatchers.Main) {
-                    // تنظیمات بهینه برای تست صدا
-                    systemTTS?.setSpeechRate(0.9f)
-                    systemTTS?.setPitch(1.0f)
-                    
-                    // تنظیم زبان فارسی با فال‌بک انگلیسی
-                    val langResult = systemTTS?.setLanguage(Locale("fa", "IR"))
-                    if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        Log.w("AdvancedTTS", "⚠️ فارسی پشتیبانی نمی‌شود، از انگلیسی استفاده می‌شود")
-                        systemTTS?.setLanguage(Locale.US)
-                    }
-                    
-                    // تست با پیام کوتاه و واضح
-                    val testMessage = "تست صدای سیستم"
-                    val result = systemTTS?.speak(testMessage, TextToSpeech.QUEUE_FLUSH, null, "test_voice")
-                    
-                    Log.d("AdvancedTTS", "نتیجه تست صدا: $result")
-                    
-                    if (result == TextToSpeech.ERROR) {
-                        Log.e("AdvancedTTS", "❌ خطا در پخش تست صدا")
-                        Toast.makeText(context, "❌ خطا در پخش صدا", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Log.i("AdvancedTTS", "✅ تست صدا با موفقیت پخش شد")
-                        Toast.makeText(context, "✅ تست صدا پخش شد", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("AdvancedTTS", "❌ خطا در تست صدا: ${e.message}")
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "❌ خطا در تست صدا: ${e.message}", Toast.LENGTH_LONG).show()
+                else -> {
+                    Log.w("AdvancedTTS", "⚠️ نتیجه نامشخص: $testResult")
+                    Toast.makeText(context, "⚠️ وضعیت صدا: $testResult", Toast.LENGTH_SHORT).show()
                 }
             }
+            
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در تست صدا: ${e.message}", e)
+            Toast.makeText(context, "❌ خطا: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
     

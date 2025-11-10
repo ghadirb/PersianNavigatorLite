@@ -107,38 +107,61 @@ class AIAssistant(private val context: Context) {
     
     private suspend fun callOpenAI(apiKey: String, prompt: String): String {
         return withContext(Dispatchers.IO) {
-            val url = URL("https://api.openai.com/v1/chat/completions")
-            val connection = url.openConnection() as java.net.HttpURLConnection
-            
-            connection.requestMethod = "POST"
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.setRequestProperty("Authorization", "Bearer $apiKey")
-            connection.doOutput = true
-            
-            val requestBody = JSONObject().apply {
-                put("model", "gpt-3.5-turbo")
-                put("messages", arrayOf(
-                    JSONObject().apply {
-                        put("role", "system")
-                        put("content", "شما دستیار هوشمند ناوبری فارسی هستید.")
-                    },
-                    JSONObject().apply {
-                        put("role", "user")
-                        put("content", prompt)
-                    }
-                ))
-                put("max_tokens", 800)
-                put("temperature", 0.5)
+            try {
+                Log.i("AIAssistant", "🤖 ارسال درخواست به OpenAI...")
+                
+                val url = URL("https://api.openai.com/v1/chat/completions")
+                val connection = url.openConnection() as java.net.HttpURLConnection
+                
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.setRequestProperty("Authorization", "Bearer $apiKey")
+                connection.doOutput = true
+                connection.connectTimeout = 10000
+                connection.readTimeout = 15000
+                
+                val requestBody = JSONObject().apply {
+                    put("model", "gpt-3.5-turbo")
+                    put("messages", arrayOf(
+                        JSONObject().apply {
+                            put("role", "system")
+                            put("content", "شما دستیار هوشمند ناوبری فارسی هستید. پاسخ‌های کوتاه و مفید بده.")
+                        },
+                        JSONObject().apply {
+                            put("role", "user")
+                            put("content", prompt)
+                        }
+                    ))
+                    put("max_tokens", 500)
+                    put("temperature", 0.3)
+                }
+                
+                Log.d("AIAssistant", "📤 درخواست: ${requestBody.toString().take(200)}...")
+                
+                connection.outputStream.use { output ->
+                    output.write(requestBody.toString().toByteArray())
+                }
+                
+                val responseCode = connection.responseCode
+                Log.d("AIAssistant", "📥 کد پاسخ: $responseCode")
+                
+                val response = if (responseCode == 200) {
+                    connection.inputStream.bufferedReader().readText()
+                } else {
+                    val errorResponse = connection.errorStream?.bufferedReader()?.readText()
+                    Log.e("AIAssistant", "❌ خطای OpenAI: $responseCode - $errorResponse")
+                    throw Exception("خطا در ارتباط با OpenAI: $responseCode")
+                }
+                
+                connection.disconnect()
+                
+                Log.i("AIAssistant", "✅ پاسخ OpenAI دریافت شد")
+                response
+                
+            } catch (e: Exception) {
+                Log.e("AIAssistant", "❌ خطا در ارتباط با OpenAI: ${e.message}", e)
+                throw e
             }
-            
-            connection.outputStream.use { output ->
-                output.write(requestBody.toString().toByteArray())
-            }
-            
-            val response = connection.inputStream.bufferedReader().readText()
-            connection.disconnect()
-            
-            response
         }
     }
     

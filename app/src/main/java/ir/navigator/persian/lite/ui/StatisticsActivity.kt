@@ -37,24 +37,30 @@ class StatisticsActivity : AppCompatActivity() {
             setupUI()
             Log.d("StatisticsActivity", "UI تنظیم شد")
             
-            // مقداردهی اولیه آمار رانندگان با try-catch جداگانه
+            // مقداردهی اولیه آمار رانندگان با امنیت کامل
             try {
-                Log.d("StatisticsActivity", "شروع مقداردهی DrivingStatistics...")
-                drivingStats = DrivingStatistics(this)
-                Log.d("StatisticsActivity", "DrivingStatistics با موفقیت مقداردهی شد")
+                Log.d("StatisticsActivity", "شروع مقداردهی امن آمار...")
                 
-                // بارگذاری آمار با مدیریت خطا
+                // ایجاد نمونه با امنیت کامل
+                drivingStats = DrivingStatistics(this)
+                Log.d("StatisticsActivity", "✅ DrivingStatistics با موفقیت ایجاد شد")
+                
+                // بارگذاری آمار با امنیت کامل
                 try {
                     loadStatistics()
-                    Log.d("StatisticsActivity", "آمار با موفقیت بارگذاری شد")
+                    Log.d("StatisticsActivity", "✅ آمار با موفقیت بارگذاری شد")
                 } catch (loadError: Exception) {
-                    Log.e("StatisticsActivity", "خطا در بارگذاری آمار: ${loadError.message}", loadError)
+                    Log.e("StatisticsActivity", "⚠️ خطا در بارگذاری آمار: ${loadError.message}", loadError)
                     showDefaultStatistics()
+                    Log.d("StatisticsActivity", "✅ آمار پیش‌فرض نمایش داده شد")
                 }
+                
             } catch (statsError: Exception) {
-                Log.e("StatisticsActivity", "خطا در مقداردهی آمار: ${statsError.message}", statsError)
-                // نمایش مقادیر پیش‌فرض در صورت خطا
+                Log.e("StatisticsActivity", "⚠️ خطا در ایجاد آمار: ${statsError.message}", statsError)
+                
+                // ایجاد آمار پیش‌فرض بدون نمونه DrivingStatistics
                 showDefaultStatistics()
+                Log.d("StatisticsActivity", "✅ آمار پیش‌فرض بدون نمونه نمایش داده شد")
             }
             
             Log.d("StatisticsActivity", "✅ StatisticsActivity با موفقیت ایجاد شد")
