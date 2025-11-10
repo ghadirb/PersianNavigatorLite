@@ -33,13 +33,23 @@ class StatisticsActivity : AppCompatActivity() {
         try {
             Log.d("StatisticsActivity", "شروع onCreate...")
             
-            drivingStats = DrivingStatistics(this)
-            Log.d("StatisticsActivity", "DrivingStatistics مقداردهی شد")
-            
+            // مقداردهی اولیه UI قبل از هر چیز
             setupUI()
             Log.d("StatisticsActivity", "UI تنظیم شد")
             
-            loadStatistics()
+            // مقداردهی اولیه آمار رانندگان با try-catch جداگانه
+            try {
+                drivingStats = DrivingStatistics(this)
+                Log.d("StatisticsActivity", "DrivingStatistics مقداردهی شد")
+                
+                loadStatistics()
+                Log.d("StatisticsActivity", "آمار بارگذاری شد")
+            } catch (statsError: Exception) {
+                Log.e("StatisticsActivity", "خطا در مقداردهی آمار: ${statsError.message}", statsError)
+                // نمایش مقادیر پیش‌فرض در صورت خطا
+                showDefaultStatistics()
+            }
+            
             Log.d("StatisticsActivity", "✅ StatisticsActivity با موفقیت ایجاد شد")
         } catch (e: Exception) {
             Log.e("StatisticsActivity", "خطا در onCreate: ${e.message}", e)
@@ -136,6 +146,25 @@ class StatisticsActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("StatisticsActivity", "خطا در نمایش دیالوگ بازنشانی: ${e.message}", e)
             Toast.makeText(this, "خطا: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+    
+    /**
+     * نمایش مقادیر پیش‌فرض در صورت خطا
+     */
+    private fun showDefaultStatistics() {
+        try {
+            tvTotalDistance.text = "0 کیلومتر"
+            tvTotalTime.text = "0 ساعت"
+            tvAverageSpeed.text = "0 کیلومتر/ساعت"
+            tvMaxSpeed.text = "0 کیلومتر/ساعت"
+            tvOverSpeedCount.text = "0 بار"
+            tvCameraAlerts.text = "0 هشدار"
+            tvBumpAlerts.text = "0 هشدار"
+            
+            Toast.makeText(this, "آمار پیش‌فرض نمایش داده شد", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.e("StatisticsActivity", "خطا در نمایش آمار پیش‌فرض: ${e.message}")
         }
     }
 }

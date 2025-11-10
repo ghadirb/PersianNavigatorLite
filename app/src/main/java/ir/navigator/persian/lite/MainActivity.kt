@@ -15,11 +15,12 @@ import android.view.View
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import kotlinx.coroutines.*
 import ir.navigator.persian.lite.service.NavigationService
 import ir.navigator.persian.lite.navigation.DestinationSearchActivity
 import ir.navigator.persian.lite.navigation.Destination
+import android.util.Log
 import ir.navigator.persian.lite.api.SecureKeys
-import ir.navigator.persian.lite.api.KeyActivationActivity
 import ir.navigator.persian.lite.ui.StatisticsActivity
 import ir.navigator.persian.lite.ui.AIChatActivity
 
@@ -28,6 +29,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navigatorEngine: NavigatorEngine
     private lateinit var destinationManager: DestinationManager
     private var isTracking = false
+    private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
     // UI Elements
     private lateinit var btnStart: Button
@@ -55,10 +57,39 @@ class MainActivity : AppCompatActivity() {
         destinationManager = DestinationManager(this)
         SecureKeys.init(this)
         
+        // بررسی و فعال‌سازی خودکار کلیدها
+        checkAndActivateKeys()
+        
         checkPermissions()
         setupUI()
         checkServiceStatus()
         handleIntent(intent)
+    }
+    
+    /**
+     * بررسی و فعال‌سازی خودکار کلیدهای AI
+     */
+    private fun checkAndActivateKeys() {
+        mainScope.launch {
+            try {
+                if (!SecureKeys.areKeysActivated()) {
+                    Log.i("MainActivity", "🔑 کلیدها فعال نیستند، شروع فعال‌سازی خودکار...")
+                    
+                    val result = SecureKeys.autoActivateKeys()
+                    if (result.isSuccess) {
+                        Log.i("MainActivity", "🎉 کلیدها با موفقیت فعال شدند!")
+                        Toast.makeText(this@MainActivity, "✅ کلیدهای هوش مصنوعی فعال شدند", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Log.e("MainActivity", "❌ فعال‌سازی کلیدها ناموفق: ${result.exceptionOrNull()?.message}")
+                        Toast.makeText(this@MainActivity, "❌ خطا در فعال‌سازی کلیدها", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Log.i("MainActivity", "✅ کلیدها از قبل فعال هستند")
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "❌ خطا در بررسی کلیدها: ${e.message}")
+            }
+        }
     }
     
     private fun checkPermissions() {

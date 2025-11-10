@@ -183,13 +183,14 @@ class DestinationSearchActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
-                // خطا در جستجو
+                // خطا در جستجو - نمایش اطلاعات دقیق‌تر
                 withContext(Dispatchers.Main) {
-                    tvStatus.text = "❌ خطا در جستجو"
+                    Log.e("DestinationSearch", "خطا در جستجو: ${e.message}", e)
+                    tvStatus.text = "❌ خطا: ${e.message}"
                     val errorMessages = listOf(
-                        "❌ خطا در جستجو", 
-                        "🔄 اتصال اینترنت را بررسی کنید",
-                        "🔍 دوباره تلاش کنید"
+                        "❌ خطا در جستجو: ${e.message}", 
+                        "📍 در حال تلاش مجدد با روش دیگر...",
+                        "🔍 لطفا کلیدواژه دقیق‌تری وارد کنید"
                     )
                     val adapter = ArrayAdapter(
                         this@DestinationSearchActivity,
@@ -197,6 +198,57 @@ class DestinationSearchActivity : AppCompatActivity() {
                         errorMessages
                     )
                     lvResults.adapter = adapter
+                    
+                    // تلاش مجدد با جستجوی ساده‌تر
+                    tryAlternativeSearch(query)
+                }
+            }
+        }
+    }
+    
+    /**
+     * تلاش مجدد با جستجوی ساده‌تر
+     */
+    private fun tryAlternativeSearch(query: String) {
+        searchScope.launch {
+            try {
+                withContext(Dispatchers.Main) {
+                    tvStatus.text = "🔄 تلاش مجدد با جستجوی ساده‌تر..."
+                }
+                
+                // جستجو با تعداد کمتر و کلیدواژه‌های عمومی
+                val alternativeQuery = when {
+                    query.contains("تهران") -> "Tehran"
+                    query.contains("اصفهان") -> "Isfahan"
+                    query.contains("مشهد") -> "Mashhad"
+                    query.contains("شیراز") -> "Shiraz"
+                    query.contains("تبریز") -> "Tabriz"
+                    else -> query.split(" ").firstOrNull() ?: query
+                }
+                
+                val addresses = geocoder.getFromLocationName(alternativeQuery, 5)
+                if (addresses != null && addresses.isNotEmpty()) {
+                    val destinations = addresses.mapNotNull { address ->
+                        val name = address.getAddressLine(0) ?: address.featureName
+                        name?.let {
+                            Destination(
+                                name = it,
+                                latitude = address.latitude,
+                                longitude = address.longitude,
+                                address = address.getAddressLine(0) ?: ""
+                            )
+                        }
+                    }
+                    
+                    withContext(Dispatchers.Main) {
+                        tvStatus.text = "✅ ${destinations.size} نتیجه با جستجوی جایگزین"
+                        updateResults(destinations)
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    tvStatus.text = "❌ جستجوی جایگزین هم ناموفق بود"
+                    Log.e("DestinationSearch", "خطا در جستجوی جایگزین: ${e.message}")
                 }
             }
         }

@@ -3,9 +3,11 @@ package ir.navigator.persian.lite.tts
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.util.Log
-import android.os.Handler
-import java.util.*
+import android.widget.Toast
 import kotlinx.coroutines.*
+import java.util.*
+import ir.navigator.persian.lite.BuildConfig
+import android.os.Handler
 import org.json.JSONObject
 
 /**
@@ -143,27 +145,54 @@ class AdvancedPersianTTS(private val context: Context) {
             try {
                 Log.i("AdvancedTTS", "🎤 شروع صداسازی با مدل هانیه: '$text'")
                 
-                // شبیه‌سازی پردازش مدل هانیه
-                delay(300) // شبیه‌سازی زمان پردازش
+                // بررسی وضعیت System TTS
+                if (systemTTS == null) {
+                    Log.e("AdvancedTTS", "❌ System TTS مقداردهی نشده است")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "خطا: سرویس صوت آماده نیست", Toast.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
+                
+                if (!isSystemReady) {
+                    Log.w("AdvancedTTS", "⏳ System TTS هنوز آماده نیست، منتظر می‌مانیم...")
+                    delay(2000) // صبر 2 ثانیه برای آماده شدن
+                    
+                    if (!isSystemReady) {
+                        Log.e("AdvancedTTS", "❌ System TTS پس از انتظار هم آماده نشد")
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "خطا: سرویس صوت پاسخ نمی‌دهد", Toast.LENGTH_SHORT).show()
+                        }
+                        return@launch
+                    }
+                }
                 
                 withContext(Dispatchers.Main) {
-                    // در نسخه واقعی، فایل صوتی تولید شده و پخش می‌شود
-                    // فعلاً از System TTS با تنظیمات بهینه فارسی استفاده می‌کنیم
-                    if (systemTTS != null && isSystemReady) {
-                        // تنظیمات بهینه برای صدای فارسی طبیعی‌تر
-                        systemTTS?.setSpeechRate(0.9f) // کمی آهسته‌تر برای طبیعی بودن
-                        systemTTS?.setPitch(1.0f)
-                        
-                        val result = systemTTS?.speak(text, TextToSpeech.QUEUE_ADD, null, "haaniye_$priority")
-                        Log.d("AdvancedTTS", "نتیجه صداسازی هانیه: $result")
-                        
-                        if (result == TextToSpeech.ERROR) {
-                            Log.w("AdvancedTTS", "خطا در صداسازی، تلاش مجدد...")
-                            speakWithSystemTTS(text, priority)
+                    // تنظیمات بهینه برای صدای فارسی طبیعی‌تر
+                    systemTTS?.setSpeechRate(0.85f) // سرعت مناسب فارسی
+                    systemTTS?.setPitch(0.95f) // لحن طبیعی
+                    
+                    // تنظیم زبان فارسی
+                    val langResult = systemTTS?.setLanguage(Locale("fa", "IR"))
+                    if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Log.w("AdvancedTTS", "⚠️ زبان فارسی پشتیبانی نمی‌شود، از انگلیسی استفاده می‌شود")
+                        systemTTS?.setLanguage(Locale.US)
+                    }
+                    
+                    // پخش صدا با QUEUE_FLUSH برای اطمینان از پخش
+                    val result = systemTTS?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "haaniye_$priority")
+                    Log.d("AdvancedTTS", "نتیجه صداسازی هانیه: $result")
+                    
+                    if (result == TextToSpeech.ERROR) {
+                        Log.e("AdvancedTTS", "❌ خطا در پخش صدا")
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "خطا در پخش صدا", Toast.LENGTH_SHORT).show()
                         }
                     } else {
-                        Log.w("AdvancedTTS", "System TTS آماده نیست، تلاش با System TTS")
-                        speakWithSystemTTS(text, priority)
+                        Log.i("AdvancedTTS", "✅ صداسازی با موفقیت شروع شد")
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "در حال پخش: $text", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
                 
