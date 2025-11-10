@@ -9,6 +9,7 @@ import java.util.*
 import android.os.Handler
 import android.os.Looper
 import org.json.JSONObject
+import android.media.MediaPlayer
 
 /**
  * TTS فارسی پیشرفته با مدل هانیه
@@ -19,13 +20,60 @@ class AdvancedPersianTTS(private val context: Context) {
     private var systemTTS: TextToSpeech? = null
     private var isSystemReady = false
     private var isHaaniyeAvailable = false
-    private var useSystemTTS = true // پیش‌فرض سیستم TTS
-    
+    private var useSystemTTS = true
     private val ttsScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    
+    // مدیر TTS آنلاین
+    private var onlineTTSManager: OnlineTTSManager? = null
+    private var isOnlineModeEnabled = false
     
     init {
         initializeSystemTTS()
         checkHaaniyeModel()
+        initializeOnlineTTS()
+    }
+    
+    /**
+     * مقداردهی اولیه TTS آنلاین
+     */
+    private fun initializeOnlineTTS() {
+        try {
+            onlineTTSManager = OnlineTTSManager(context)
+            Log.i("AdvancedTTS", "✅ TTS آنلاین مقداردهی شد")
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در مقداردهی TTS آنلاین: ${e.message}")
+        }
+    }
+    
+    /**
+     * فعال‌سازی حالت آنلاین
+     */
+    fun enableOnlineMode() {
+        isOnlineModeEnabled = true
+        onlineTTSManager?.enableOnlineMode()
+        Log.i("AdvancedTTS", "✅ حالت آنلاین فعال شد")
+    }
+    
+    /**
+     * غیرفعال‌سازی حالت آنلاین
+     */
+    fun disableOnlineMode() {
+        isOnlineModeEnabled = false
+        onlineTTSManager?.disableOnlineMode()
+        Log.i("AdvancedTTS", "❌ حالت آنلاین غیرفعال شد")
+    }
+    
+    /**
+     * صحبت با حالت آنلاین
+     */
+    fun speakOnline(text: String, priority: Priority = Priority.NORMAL) {
+        if (!isOnlineModeEnabled) {
+            Log.w("AdvancedTTS", "⚠️ حالت آنلاین فعال نیست")
+            return
+        }
+        
+        Log.i("AdvancedTTS", "🌐 استفاده از TTS آنلاین: '$text'")
+        onlineTTSManager?.speakOnline(text, priority)
     }
     
     private fun initializeSystemTTS() {
@@ -354,9 +402,72 @@ class AdvancedPersianTTS(private val context: Context) {
     private fun playPreRecordedPersianAudio() {
         Log.i("AdvancedTTS", "🎵 پخش صدای فارسی از پیش ضبط شده...")
         
-        // این تابع باید با فایل صوتی واقعی پیاده‌سازی شود
-        // در حال حاضر از TTS با تنظیمات خاص استفاده می‌کنیم
-        
+        try {
+            // تلاش برای پخش فایل صوتی واقعی
+            val success = playRawAudioFile()
+            if (success) {
+                Log.i("AdvancedTTS", "✅ فایل صوتی واقعی با موفقیت پخش شد")
+                Toast.makeText(context, "✅ در حال پخش هشدار فارسی (فایل واقعی)", Toast.LENGTH_SHORT).show()
+                return
+            }
+            
+            // اگر فایل واقعی کار نکرد، از TTS با تنظیمات خاص استفاده می‌کنیم
+            Log.w("AdvancedTTS", "⚠️ فایل صوتی واقعی موجود نیست، استفاده از TTS شبیه‌سازی شده...")
+            playSimulatedPersianAudio()
+            
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در پخش صدای از پیش ضبط شده: ${e.message}")
+            throw Exception("پخش صدای جایگزین ناموفق بود")
+        }
+    }
+    
+    /**
+     * پخش فایل صوتی واقعی از پوشه raw
+     */
+    private fun playRawAudioFile(): Boolean {
+        return try {
+            Log.i("AdvancedTTS", "🎵 تلاش برای پخش فایل صوتی واقعی...")
+            
+            val resourceId = context.resources.getIdentifier(
+                "persian_alert", 
+                "raw", 
+                context.packageName
+            )
+            
+            if (resourceId == 0) {
+                Log.w("AdvancedTTS", "❌ فایل persian_alert.mp3 پیدا نشد")
+                return false
+            }
+            
+            // پخش فایل صوتی با MediaPlayer
+            val mediaPlayer = MediaPlayer.create(context, resourceId)
+            mediaPlayer?.let { player ->
+                player.setOnCompletionListener {
+                    player.release()
+                    Log.i("AdvancedTTS", "✅ پخش فایل صوتی تمام شد")
+                }
+                player.setOnErrorListener { _, _, _ ->
+                    player.release()
+                    Log.e("AdvancedTTS", "❌ خطا در پخش فایل صوتی")
+                    false
+                }
+                player.start()
+                return true
+            } ?: run {
+                Log.e("AdvancedTTS", "❌ ایجاد MediaPlayer ناموفق بود")
+                return false
+            }
+            
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در پخش فایل صوتی: ${e.message}")
+            false
+        }
+    }
+    
+    /**
+     * شبیه‌سازی صدای فارسی با TTS انگلیسی
+     */
+    private fun playSimulatedPersianAudio() {
         val persianMessage = "تست هشدار صوتی فارسی"
         
         // تلاش با تنظیمات مختلف برای شبیه‌سازی صدای فارسی
@@ -371,13 +482,13 @@ class AdvancedPersianTTS(private val context: Context) {
             "fallback_fa_" + System.currentTimeMillis()
         )
         
-        Log.i("AdvancedTTS", "📢 پخش صدای فارسی جایگزین: نتیجه=$result")
+        Log.i("AdvancedTTS", "📢 پخش صدای فارسی شبیه‌سازی شده: نتیجه=$result")
         
         if (result == TextToSpeech.SUCCESS) {
-            Log.i("AdvancedTTS", "✅ صدای فارسی جایگزین با موفقیت پخش شد")
-            Toast.makeText(context, "✅ در حال پخش هشدار فارسی (جایگزین)", Toast.LENGTH_SHORT).show()
+            Log.i("AdvancedTTS", "✅ صدای فارسی شبیه‌سازی شده با موفقیت پخش شد")
+            Toast.makeText(context, "✅ در حال پخش هشدار فارسی (شبیه‌سازی)", Toast.LENGTH_SHORT).show()
         } else {
-            throw Exception("پخش صدای جایگزین ناموفق بود")
+            throw Exception("پخش صدای شبیه‌سازی شده ناموفق بود")
         }
     }
     
