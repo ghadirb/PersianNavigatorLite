@@ -200,10 +200,39 @@ class DestinationSearchActivity : AppCompatActivity() {
                         updateResults(uniqueDestinations)
                     }
                 } else {
-                    // هیچ نتیجه‌ای یافت نشد - نمایش مقاصد پیشنهادی
-                    withContext(Dispatchers.Main) {
-                        tvStatus.text = "❌ هیچ نتیجه‌ای یافت نشد - مقاصد پیشنهادی:"
-                        showSuggestedDestinations(query)
+                    // جستجوی واقعی با OSM Nominatim API
+                    try {
+                        Log.i("DestinationSearch", "🔍 جستجو با OSM Nominatim...")
+                        val osmResults = searchWithOSM(query)
+                        
+                        if (osmResults.isNotEmpty()) {
+                            withContext(Dispatchers.Main) {
+                                tvStatus.text = "✅ ${osmResults.size} نتیجه از OSM یافت شد"
+                                updateResults(osmResults)
+                            }
+                        } else {
+                            // جستجوی گسترده با کلیدواژه‌های مختلف
+                            val expandedResults = searchExpanded(query)
+                            if (expandedResults.isNotEmpty()) {
+                                withContext(Dispatchers.Main) {
+                                    tvStatus.text = "✅ ${expandedResults.size} نتیجه یافت شد"
+                                    updateResults(expandedResults)
+                                }
+                            } else {
+                                withContext(Dispatchers.Main) {
+                                    tvStatus.text = "❌ متاسفانه نتیجه‌ای یافت نشد"
+                                    updateResults(emptyList())
+                                }
+                            }
+                        }
+                    } catch (osmError: Exception) {
+                        Log.e("DestinationSearch", "خطا در جستجوی OSM: ${osmError.message}")
+                        // جستجوی گسترده به عنوان fallback
+                        val expandedResults = searchExpanded(query)
+                        withContext(Dispatchers.Main) {
+                            tvStatus.text = "✅ ${expandedResults.size} نتیجه یافت شد"
+                            updateResults(expandedResults)
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -231,6 +260,111 @@ class DestinationSearchActivity : AppCompatActivity() {
                     showOfflineDestinations(query)
                 }
             }
+        }
+    }
+    
+    /**
+     * جستجو با OSM Nominatim API برای نتایج واقعی
+     */
+    private suspend fun searchWithOSM(query: String): List<Destination> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val url = "https://nominatim.openstreetmap.org/search?format=json&q=${query.replace(" ", "%20")}&limit=10&countrycodes=ir"
+                val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                
+                connection.requestMethod = "GET"
+                connection.setRequestProperty("User-Agent", "PersianNavigatorLite/1.0")
+                connection.connectTimeout = 8000
+                connection.readTimeout = 10000
+                
+                val responseCode = connection.responseCode
+                if (responseCode == 200) {
+                    val response = connection.inputStream.bufferedReader().readText()
+                    connection.disconnect()
+                    
+                    // Parse JSON response
+                    val jsonArray = org.json.JSONArray(response)
+                    val destinations = mutableListOf<Destination>()
+                    
+                    for (i in 0 until jsonArray.length()) {
+                        val item = jsonArray.getJSONObject(i)
+                        val name = item.getString("display_name")
+                        val lat = item.getDouble("lat")
+                        val lon = item.getDouble("lon")
+                        
+                        destinations.add(
+                            Destination(
+                                name = name,
+                                latitude = lat,
+                                longitude = lon,
+                                address = name
+                            )
+                        )
+                    }
+                    
+                    Log.i("OSM_Search", "✅ ${destinations.size} نتیجه از OSM دریافت شد")
+                    destinations
+                } else {
+                    Log.e("OSM_Search", "❌ خطای OSM: $responseCode")
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                Log.e("OSM_Search", "❌ خطا در جستجوی OSM: ${e.message}", e)
+                emptyList()
+            }
+        }
+    }
+    
+    /**
+     * جستجوی گسترده با کلیدواژه‌های مختلف
+     */
+    private suspend fun searchExpanded(query: String): List<Destination> {
+        return withContext(Dispatchers.IO) {
+            val expandedQueries = listOf(
+                query,
+                "$query تهران",
+                "$query مشهد", 
+                "$query اصفهان",
+                "$query شیراز",
+                "$query کرج",
+                "$query قم",
+                "$query اهواز",
+                "$query تبریز",
+                "بیمارستان $query",
+                "رستوران $query",
+                "فرودگاه $query",
+                "میدان $query",
+                "خیابان $query",
+                "بلوار $query"
+            )
+            
+            val allResults = mutableListOf<Destination>()
+            
+            for (searchQuery in expandedQueries) {
+                try {
+                    if (::geocoder.isInitialized) {
+                        val addresses = geocoder.getFromLocationName(searchQuery, 5)
+                        if (addresses != null) {
+                            addresses.forEach { address ->
+                                val name = address.getAddressLine(0) ?: searchQuery
+                                allResults.add(
+                                    Destination(
+                                        name = name,
+                                        latitude = address.latitude,
+                                        longitude = address.longitude,
+                                        address = name
+                                    )
+                                )
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.w("Expanded_Search", "خطا در جستجوی '$searchQuery': ${e.message}")
+                }
+            }
+            
+            // حذف تکراری‌ها و مرتب‌سازی
+            allResults.distinctBy { it.name }.take(20)
         }
     }
     

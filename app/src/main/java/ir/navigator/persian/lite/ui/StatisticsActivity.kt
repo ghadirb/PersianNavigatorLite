@@ -31,43 +31,80 @@ class StatisticsActivity : AppCompatActivity() {
         setContentView(R.layout.activity_statistics)
         
         try {
-            Log.d("StatisticsActivity", "شروع onCreate...")
+            Log.d("StatisticsActivity", "🚀 شروع onCreate امن...")
             
-            // مقداردهی اولیه UI قبل از هر چیز
-            setupUI()
-            Log.d("StatisticsActivity", "UI تنظیم شد")
-            
-            // مقداردهی اولیه آمار رانندگان با امنیت کامل
+            // مقداردهی اولیه UI با امنیت کامل
             try {
-                Log.d("StatisticsActivity", "شروع مقداردهی امن آمار...")
+                setupUI()
+                Log.d("StatisticsActivity", "✅ UI با موفقیت تنظیم شد")
+            } catch (uiError: Exception) {
+                Log.e("StatisticsActivity", "❌ خطا در تنظیم UI: ${uiError.message}", uiError)
+                // نمایش پیام خطا و ادامه با UI پایه
+                Toast.makeText(this, "خطا در تنظیم صفحه", Toast.LENGTH_SHORT).show()
+            }
+            
+            // نمایش آمار پیش‌فرض فوری (بدون هیچ نمونه‌ای)
+            showImmediateDefaultStats()
+            
+            // تلاش برای ایجاد آمار واقعی در پس‌زمینه
+            try {
+                Thread {
+                    try {
+                        Log.d("StatisticsActivity", "🔄 تلاش برای ایجاد آمار واقعی...")
+                        drivingStats = DrivingStatistics(this)
+                        
+                        runOnUiThread {
+                            try {
+                                loadStatistics()
+                                Log.d("StatisticsActivity", "✅ آمار واقعی بارگذاری شد")
+                            } catch (loadError: Exception) {
+                                Log.e("StatisticsActivity", "⚠️ خطا در بارگذاری: ${loadError.message}")
+                                // آمار پیش‌فرض قبلاً نمایش داده شده
+                            }
+                        }
+                    } catch (statsError: Exception) {
+                        Log.e("StatisticsActivity", "⚠️ خطا در ایجاد آمار: ${statsError.message}")
+                        // آمار پیش‌فرض قبلاً نمایش داده شده
+                    }
+                }.start()
                 
-                // ایجاد نمونه با امنیت کامل
-                drivingStats = DrivingStatistics(this)
-                Log.d("StatisticsActivity", "✅ DrivingStatistics با موفقیت ایجاد شد")
-                
-                // بارگذاری آمار با امنیت کامل
-                try {
-                    loadStatistics()
-                    Log.d("StatisticsActivity", "✅ آمار با موفقیت بارگذاری شد")
-                } catch (loadError: Exception) {
-                    Log.e("StatisticsActivity", "⚠️ خطا در بارگذاری آمار: ${loadError.message}", loadError)
-                    showDefaultStatistics()
-                    Log.d("StatisticsActivity", "✅ آمار پیش‌فرض نمایش داده شد")
-                }
-                
-            } catch (statsError: Exception) {
-                Log.e("StatisticsActivity", "⚠️ خطا در ایجاد آمار: ${statsError.message}", statsError)
-                
-                // ایجاد آمار پیش‌فرض بدون نمونه DrivingStatistics
-                showDefaultStatistics()
-                Log.d("StatisticsActivity", "✅ آمار پیش‌فرض بدون نمونه نمایش داده شد")
+            } catch (threadError: Exception) {
+                Log.e("StatisticsActivity", "❌ خطا در ایجاد Thread: ${threadError.message}")
+                // آمار پیش‌فرض قبلاً نمایش داده شده
             }
             
             Log.d("StatisticsActivity", "✅ StatisticsActivity با موفقیت ایجاد شد")
+            
         } catch (e: Exception) {
-            Log.e("StatisticsActivity", "خطا در onCreate: ${e.message}", e)
-            Toast.makeText(this, "خطا در بارگذاری صفحه آمار: ${e.message}", Toast.LENGTH_LONG).show()
-            finish() // بستن صفحه در صورت خطا
+            Log.e("StatisticsActivity", "❌ خطا در onCreate: ${e.message}", e)
+            Toast.makeText(this, "خطا در بارگذاری صفحه آمار", Toast.LENGTH_LONG).show()
+            
+            // بستن صفحه فقط در صورت خطای بحرانی
+            if (e is OutOfMemoryError || e is StackOverflowError) {
+                finish()
+            }
+        }
+    }
+    
+    /**
+     * نمایش فوری آمار پیش‌فرض بدون هیچ وابستگی
+     */
+    private fun showImmediateDefaultStats() {
+        try {
+            Log.d("StatisticsActivity", "📊 نمایش آمار پیش‌فرض فوری...")
+            
+            tvTotalDistance.text = "0.0 کیلومتر"
+            tvTotalTime.text = "0 ساعت 0 دقیقه"
+            tvAverageSpeed.text = "0 کیلومتر بر ساعت"
+            tvMaxSpeed.text = "0 کیلومتر بر ساعت"
+            tvOverSpeedCount.text = "0 بار"
+            tvCameraAlerts.text = "0 بار"
+            tvBumpAlerts.text = "0 بار"
+            
+            Log.d("StatisticsActivity", "✅ آمار پیش‌فرض با موفقیت نمایش داده شد")
+            
+        } catch (e: Exception) {
+            Log.e("StatisticsActivity", "❌ خطا در نمایش آمار پیش‌فرض: ${e.message}", e)
         }
     }
     
