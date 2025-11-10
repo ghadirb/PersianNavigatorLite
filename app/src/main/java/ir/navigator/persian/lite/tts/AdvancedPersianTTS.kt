@@ -1008,6 +1008,28 @@ class AdvancedPersianTTS(private val context: Context) {
         speak(instruction, Priority.NORMAL)
     }
     
+    /**
+     * تست کامل سیستم صوتی 5 حالته
+     */
+    fun testVoice() {
+        Log.i("AdvancedTTS", "🎯 شروع تست سیستم صوتی 5 حالته...")
+        
+        ttsScope.launch {
+            try {
+                // تست حالت هوشمند
+                testSmartMode()
+                
+                // تست سیستم 4 حالته
+                testThreeModeSystem()
+                
+                Log.i("AdvancedTTS", "✅ تست کامل سیستم صوتی تمام شد")
+                
+            } catch (e: Exception) {
+                Log.e("AdvancedTTS", "❌ خطا در تست سیستم صوتی: ${e.message}")
+            }
+        }
+    }
+    
     fun testVoiceAlert() {
         Log.i("AdvancedTTS", "🎯 شروع تست هشدارهای هوشمند...")
         
@@ -1285,9 +1307,5 @@ class AdvancedPersianTTS(private val context: Context) {
             SmartAlertType.FATIGUE_DETECTION -> "احساس خستگی می‌کنید، لطفاً استراحت کنید"
             SmartAlertType.ROUTE_OPTIMIZATION -> "مسیر بهتری موجود است، پیشنهاد می‌شود"
         }
-    }
-    
-    enum class Priority {
-        LOW, NORMAL, HIGH, URGENT
     }
 }

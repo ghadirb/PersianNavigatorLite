@@ -73,4 +73,3 @@ class PersianTTSPro(private val context: Context) {
     }
 }
 
-enum class Priority { NORMAL, URGENT }
