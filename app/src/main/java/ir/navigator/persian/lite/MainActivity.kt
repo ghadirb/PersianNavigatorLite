@@ -21,7 +21,6 @@ import ir.navigator.persian.lite.navigation.DestinationSearchActivity
 import ir.navigator.persian.lite.navigation.Destination
 import android.util.Log
 import ir.navigator.persian.lite.api.SecureKeys
-import ir.navigator.persian.lite.ui.StatisticsActivity
 import ir.navigator.persian.lite.ui.AIChatActivity
 
 class MainActivity : AppCompatActivity() {
@@ -169,10 +168,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        // Statistics button
+        // Statistics button - temporarily disabled
         btnStatistics.setOnClickListener {
-            val intent = Intent(this, StatisticsActivity::class.java)
-            startActivity(intent)
+            // Show statistics info toast instead of opening activity
+            Toast.makeText(this, "آمار رانندگی در نسخه بعدی اضافه خواهد شد", Toast.LENGTH_SHORT).show()
         }
         
         // AI Chat button
