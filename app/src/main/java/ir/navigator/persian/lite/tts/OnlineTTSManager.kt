@@ -206,8 +206,6 @@ class OnlineTTSManager(private val context: Context) {
     fun isOnlineAvailable(): Boolean {
         return isOnlineMode && SecureKeys.getOpenAIKey()?.isNotEmpty() == true
     }
-        }
-    }
     
     /**
      * تمیز کردن کش
@@ -233,14 +231,4 @@ class OnlineTTSManager(private val context: Context) {
         clearCache()
         Log.i("OnlineTTS", "🧹 منابع OnlineTTS آزاد شد")
     }
-}
-
-/**
- * اولویت‌های پخش صدا
- */
-enum class Priority {
-    LOW,       // پایین
-    NORMAL,    // عادی
-    HIGH,      // بالا
-    URGENT     // فوری
 }

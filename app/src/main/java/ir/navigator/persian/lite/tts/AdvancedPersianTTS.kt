@@ -483,6 +483,9 @@ class AdvancedPersianTTS(private val context: Context) {
                 withContext(Dispatchers.Main) {
                     speakWithSystemTTS(text, priority)
                 }
+            }
+        }
+    }
     
     /**
      * تست سیستم 4 حالته: آفلاین TTS، آفلاین فایل صوتی، مدل هانیه، آنلاین OpenAI
@@ -653,41 +656,6 @@ class AdvancedPersianTTS(private val context: Context) {
                     TextToSpeech.SUCCESS -> {
                         Log.i("AdvancedTTS", "✅ صدای فارسی با موفقیت ارسال شد")
                         Toast.makeText(context, "✅ در حال پخش: $message", Toast.LENGTH_SHORT).show()
-                    }
-                    TextToSpeech.ERROR -> {
-                        Log.e("AdvancedTTS", "❌ خطا در پخش فارسی - استفاده از راه‌حل جایگزین...")
-                        playPersianAudioFallback()
-                    }
-                    else -> {
-                        Log.w("AdvancedTTS", "⚠️ نتیجه نامشخص: $persianResult - استفاده از راه‌حل جایگزین...")
-                        playPersianAudioFallback()
-                    }
-                }
-            } else {
-                // فارسی پشتیبانی نمی‌شود - استفاده از راه‌حل‌های جایگزین
-                Log.w("AdvancedTTS", "⚠️ فارسی پشتیبانی نمی‌شود - استفاده از راه‌حل‌های جایگزین...")
-                playPersianAudioFallback()
-            }
-            
-        } catch (e: Exception) {
-            Log.e("AdvancedTTS", "❌ خطا در تست صدا: ${e.message}", e)
-            playPersianAudioFallback()
-        }
-    }
-                
-                val persianResult = systemTTS?.speak(
-                    persianMessage,
-                    TextToSpeech.QUEUE_FLUSH,
-                    null,
-                    "test_fa_" + System.currentTimeMillis()
-                )
-                
-                Log.i("AdvancedTTS", "📢 تست فارسی با TTS: نتیجه=$persianResult")
-                
-                when (persianResult) {
-                    TextToSpeech.SUCCESS -> {
-                        Log.i("AdvancedTTS", "✅ صدای فارسی با موفقیت ارسال شد")
-                        Toast.makeText(context, "✅ در حال پخش: $persianMessage", Toast.LENGTH_SHORT).show()
                     }
                     TextToSpeech.ERROR -> {
                         Log.e("AdvancedTTS", "❌ خطا در پخش فارسی - استفاده از راه‌حل جایگزین...")
