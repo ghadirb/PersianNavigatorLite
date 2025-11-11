@@ -39,6 +39,7 @@ class NavigationService : Service() {
     
     private var currentSpeed = 0
     private var lastDirectionTime = 0L
+    private var lastBasicAlertTime = 0L
     private var isNavigating = false
     private var ttsMode = TTSMode.AUTONOMOUS
     
@@ -140,8 +141,12 @@ class NavigationService : Service() {
                 locationListener
             )
             
-            // تست هشدار صوتی با سیستم جدید
+            // تست هشدار صوتی با سیستم جدید - همه حالت‌ها
             advancedTTS.speak("سلام. سیستم هشدار صوتی فارسی فعال است")
+            Thread.sleep(2000)
+            advancedTTS.speak("حالت آفلاین با فایل‌های صوتی آماده است")
+            Thread.sleep(2000)
+            advancedTTS.speak("هشدارهای سرعت و ناوبری فعال شد")
             Log.i("NavigationService", "🔊 تست اولیه صوتی با AdvancedPersianTTS انجام شد")
         } catch (e: SecurityException) {
             e.printStackTrace()
@@ -187,7 +192,22 @@ class NavigationService : Service() {
         // تحلیل هوشمند موقعیت و ارائه هشدارهای پیشرفته
         analyzeAndProvideSmartAlerts(location)
         
-        // TODO: بررسی دوربین سرعت در نسخه بعدی
+        // بررسی دوربین‌های سرعت (فعال شده)
+        checkSpeedCameraAlerts(location)
+        
+        // هشدارهای پایه‌ای هر 15 ثانیه برای تست
+        val now = System.currentTimeMillis()
+        if (now - lastBasicAlertTime > 15000) {
+            when (currentSpeed) {
+                0 -> advancedTTS.speak("ایستاده")
+                in 1..30 -> advancedTTS.speak("سرعت کم")
+                in 31..60 -> advancedTTS.speak("سرعت عادی")
+                in 61..80 -> advancedTTS.speak("سرعت بالا")
+                else -> advancedTTS.speak("کاهش سرعت")
+            }
+            Log.i("NavigationService", "🔊 هشدار پایه‌ای: سرعت ${currentSpeed} کیلومتر")
+            lastBasicAlertTime = now
+        }
     }
     
     private fun updateNotification(location: Location) {

@@ -37,30 +37,43 @@ class StatisticsActivity : AppCompatActivity() {
             // دکمه بازگشت
             val btnBack = findViewById<Button>(R.id.btnBack)
             btnBack.setOnClickListener {
-                Log.i("StatisticsActivity", "🔙 دکمه بازگشت فشرده شد")
+                Log.i("StatisticsActivity", " دکمه بازگشت فشرده شد")
                 finish()
             }
             Log.i("StatisticsActivity", "✅ دکمه بازگشت تنظیم شد")
             
-            // نمایش آمار رانندگی
+            // نمایش آمار رانندگی - تمام المان‌ها
             val tvTotalDistance = findViewById<TextView>(R.id.tvTotalDistance)
             val tvTotalTime = findViewById<TextView>(R.id.tvTotalTime)
             val tvAverageSpeed = findViewById<TextView>(R.id.tvAverageSpeed)
+            val tvMaxSpeed = findViewById<TextView>(R.id.tvMaxSpeed)
+            val tvOverSpeedCount = findViewById<TextView>(R.id.tvOverSpeedCount)
+            val tvCameraAlerts = findViewById<TextView>(R.id.tvCameraAlerts)
+            val tvBumpAlerts = findViewById<TextView>(R.id.tvBumpAlerts)
             
-            tvTotalDistance.text = "مسافت کل: 0 کیلومتر"
-            tvTotalTime.text = "زمان کل: 0 ساعت"
-            tvAverageSpeed.text = "میانگین سرعت: 0 کیلومتر بر ساعت"
+            // تنظیم مقادیر اولیه
+            tvTotalDistance.text = "0 کیلومتر"
+            tvTotalTime.text = "0 ساعت و 0 دقیقه"
+            tvAverageSpeed.text = "0 کیلومتر بر ساعت"
+            tvMaxSpeed.text = "0 کیلومتر بر ساعت"
+            tvOverSpeedCount.text = "0 بار"
+            tvCameraAlerts.text = "0 هشدار"
+            tvBumpAlerts.text = "0 هشدار"
             
-            Log.i("StatisticsActivity", "✅ آمار اولیه نمایش داده شد")
+            Log.i("StatisticsActivity", "✅ تمام آمار اولیه نمایش داده شد")
             
             // دکمه بازنشانی
             val btnReset = findViewById<Button>(R.id.btnReset)
             btnReset.setOnClickListener {
-                Log.i("StatisticsActivity", "🔄 دکمه بازنشانی فشرده شد")
-                tvTotalDistance.text = "مسافت کل: 0 کیلومتر"
-                tvTotalTime.text = "زمان کل: 0 ساعت"
-                tvAverageSpeed.text = "میانگین سرعت: 0 کیلومتر بر ساعت"
-                Toast.makeText(this, "🔄 آمار بازنشانی شد", Toast.LENGTH_SHORT).show()
+                Log.i("StatisticsActivity", " دکمه بازنشانی فشرده شد")
+                tvTotalDistance.text = "0 کیلومتر"
+                tvTotalTime.text = "0 ساعت و 0 دقیقه"
+                tvAverageSpeed.text = "0 کیلومتر بر ساعت"
+                tvMaxSpeed.text = "0 کیلومتر بر ساعت"
+                tvOverSpeedCount.text = "0 بار"
+                tvCameraAlerts.text = "0 هشدار"
+                tvBumpAlerts.text = "0 هشدار"
+                Toast.makeText(this, " آمار بازنشانی شد", Toast.LENGTH_SHORT).show()
             }
             
             Log.i("StatisticsActivity", "✅ صفحه آمار با موفقیت آماده شد")
