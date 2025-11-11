@@ -208,7 +208,7 @@ class MainActivity : AppCompatActivity() {
                     advancedTTS.announceDestinationReached()
                     
                     Log.i("MainActivity", "✅ تست جامع هشدار صوتی با موفقیت انجام شد")
-                    Toast.makeText(this, "✅ تست صوتی تمام شد!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "✅ تست صوتی تمام شد!", Toast.LENGTH_SHORT).show()
                 }
                 
             } catch (e: Exception) {
@@ -684,7 +684,6 @@ class MainActivity : AppCompatActivity() {
                         isUrbanArea = true,
                         approachingTurn = false,
                         speedAnalysis = ir.navigator.persian.lite.SpeedAnalysis(
-                            currentSpeed = 45f,
                             avgSpeed = 40f,
                             maxSpeed = 60f,
                             isOverSpeed = false

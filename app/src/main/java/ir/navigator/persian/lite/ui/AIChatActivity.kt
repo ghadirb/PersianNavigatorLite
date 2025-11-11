@@ -34,9 +34,12 @@ class AIChatActivity : AppCompatActivity() {
     private fun setupUI() {
         Log.i("AIChatActivity", "🔧 در حال تنظیم UI چت...")
         
+        // تعریف متغیرها قبل از try
+        lateinit var btnBack: Button
+        
         try {
             // دکمه بازگشت
-            val btnBack = findViewById<Button>(R.id.btnBack)
+            btnBack = findViewById(R.id.btnBack)
             btnBack.setOnClickListener {
                 Log.i("AIChatActivity", "🔙 دکمه بازگشت چت فشرده شد")
                 finish()
