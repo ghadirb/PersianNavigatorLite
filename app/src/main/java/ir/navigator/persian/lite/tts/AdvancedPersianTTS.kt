@@ -154,25 +154,29 @@ class AdvancedPersianTTS(private val context: Context) {
     
     /**
      * صحبت کردن متن (بر اساس حالت انتخاب شده)
+     * 
+     * OFFLINE: فقط فایل‌های صوتی ضبط شده (43 فایل)
+     * ONLINE: مدل OpenAI TTS (فعلاً TTS سیستم، آماده برای OpenAI API)
+     * AUTONOMOUS: مدل هوشمند خودمختار (فعلاً TTS سیستم، آماده برای OpenAI API)
      */
     fun speak(text: String) {
         when (ttsMode) {
             TTSMode.OFFLINE -> {
-                // تلاش برای پخش فایل صوتی متناظر
+                // استفاده از فایل‌های صوتی ضبط شده (43 فایل WAV)
                 if (!playAudioFile(text)) {
                     // اگر فایل صوتی وجود نداشت، از TTS سیستم استفاده کن
                     speakWithTTS(text)
                 }
             }
             TTSMode.ONLINE -> {
-                // استفاده از OpenAI TTS آنلاین
+                // استفاده از مدل OpenAI TTS آنلاین
+                // فعلاً از TTS سیستم استفاده می‌کند تا OpenAI API فعال شود
                 speakWithOpenAI(text)
             }
             TTSMode.AUTONOMOUS -> {
-                // حالت خودمختار - ابتدا فایل صوتی، سپس TTS
-                if (!playAudioFile(text)) {
-                    speakWithTTS(text)
-                }
+                // حالت خودمختار - استفاده از مدل هوشمند OpenAI
+                // فعلاً از TTS سیستم استفاده می‌کند تا OpenAI API فعال شود
+                speakWithOpenAI(text)
             }
         }
     }
