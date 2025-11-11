@@ -41,7 +41,7 @@ class NavigatorEngine(private val context: Context, private val lifecycleOwner: 
         // 2. بررسی رفتار خطرناک
         val danger = behaviorAI.analyzeDangerousBehavior(listOf(location))
         if (danger == DangerLevel.HIGH) {
-            tts.speak("رانندگی خطرناک! احتیاط کنید")
+            tts.speak("رانندگی خطرناک! احتیاط کنید", Priority.HIGH)
             alertOverlay.showSpeedWarning((location.speed * 3.6).toInt())
         }
         
@@ -87,7 +87,7 @@ class NavigatorEngine(private val context: Context, private val lifecycleOwner: 
             "هشدار صوتی فارسی آماده است. رانندگی ایمن داشته باشید",
             "سیستم ناوبری هوشمند فعال شد. در مسیر با شما هستیم"
         )
-        tts.speak(messages.random(), Priority.URGENT)
+        tts.speak(messages.random(), Priority.NORMAL)
     }
     
     fun stop() {

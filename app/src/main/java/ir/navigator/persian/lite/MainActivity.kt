@@ -37,14 +37,7 @@ class MainActivity : AppCompatActivity() {
     private var isTracking = false
     private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
-    // ویژگی‌های جدید
-    private lateinit var drivingChatAssistant: DrivingChatAssistant
-    private lateinit var dayNightModeManager: DayNightModeManager
-    private lateinit var fuelCostAnalyzer: FuelCostAnalyzer
-    private lateinit var driverLearningSystem: DriverLearningSystem
-    private lateinit var smartVehicleConnector: SmartVehicleConnector
-    private lateinit var emergencyMode: EmergencyMode
-    private lateinit var drivingBehaviorMonitor: DrivingBehaviorMonitor
+    // ویژگی‌های اصلی - فقط مدل هوشمند خودمختار فعال است
     
     // UI Elements
     private lateinit var btnStart: Button
@@ -204,21 +197,14 @@ class MainActivity : AppCompatActivity() {
     }
     
     /**
-     * مقداردهی ویژگی‌های جدید
+     * مقداردهی ویژگی‌های اصلی
      */
     private fun initializeNewFeatures() {
         try {
-            drivingChatAssistant = DrivingChatAssistant(this)
-            dayNightModeManager = DayNightModeManager(this)
-            fuelCostAnalyzer = FuelCostAnalyzer(this)
-            driverLearningSystem = DriverLearningSystem(this)
-            smartVehicleConnector = SmartVehicleConnector(this)
-            emergencyMode = EmergencyMode(this)
-            drivingBehaviorMonitor = DrivingBehaviorMonitor(this)
-            
-            Log.i("MainActivity", "✅ تمام ویژگی‌های جدید مقداردهی شدند")
+            // فقط ویژگی‌های اصلی و ضروری فعال می‌شوند
+            Log.i("MainActivity", "✅ ویژگی‌های اصلی مقداردهی شدند")
         } catch (e: Exception) {
-            Log.e("MainActivity", "❌ خطا در مقداردهی ویژگی‌های جدید: ${e.message}")
+            Log.e("MainActivity", "❌ خطا در مقداردهی ویژگی‌های اصلی: ${e.message}")
         }
     }
     
