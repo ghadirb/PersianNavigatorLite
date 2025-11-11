@@ -104,6 +104,29 @@ class NavigationService : Service() {
                 return START_NOT_STICKY
             }
             else -> {
+                // دریافت حالت TTS از MainActivity
+                val receivedTTSMode = intent?.getStringExtra("TTS_MODE")
+                if (receivedTTSMode != null) {
+                    when (receivedTTSMode) {
+                        "OFFLINE" -> {
+                            ttsMode = TTSMode.OFFLINE
+                            advancedTTS.setTTSMode(TTSMode.OFFLINE)
+                            Log.i("NavigationService", "✅ حالت TTS دریافت شد: OFFLINE")
+                        }
+                        "ONLINE" -> {
+                            ttsMode = TTSMode.ONLINE
+                            advancedTTS.setTTSMode(TTSMode.ONLINE)
+                            Log.i("NavigationService", "✅ حالت TTS دریافت شد: ONLINE")
+                        }
+                        "AUTONOMOUS" -> {
+                            ttsMode = TTSMode.AUTONOMOUS
+                            advancedTTS.setTTSMode(TTSMode.AUTONOMOUS)
+                            advancedTTS.enableAutonomousMode()
+                            Log.i("NavigationService", "✅ حالت TTS دریافت شد: AUTONOMOUS")
+                        }
+                    }
+                }
+                
                 startForeground(NOTIFICATION_ID, createNotification())
                 startLocationTracking()
                 return START_STICKY
@@ -183,13 +206,13 @@ class NavigationService : Service() {
                 locationListener
             )
             
-            // تست هشدار صوتی با سیستم جدید - همه حالت‌ها
-            advancedTTS.speak("سلام. سیستم هشدار صوتی فارسی فعال است")
+            // تست هشدار صوتی با سیستم جدید - با فایل‌های صوتی موجود
+            advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند
             Thread.sleep(2000)
-            advancedTTS.speak("حالت آفلاین با فایل‌های صوتی آماده است")
+            advancedTTS.speak("مسیر") // از فایل start_navigation.wav استفاده می‌کند
             Thread.sleep(2000)
-            advancedTTS.speak("هشدارهای سرعت و ناوبری فعال شد")
-            Log.i("NavigationService", "🔊 تست اولیه صوتی با AdvancedPersianTTS انجام شد")
+            advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند
+            Log.i("NavigationService", "🔊 تست اولیه صوتی با فایل‌های WAV انجام شد")
         } catch (e: SecurityException) {
             e.printStackTrace()
         }
@@ -237,17 +260,31 @@ class NavigationService : Service() {
         // بررسی دوربین‌های سرعت (فعال شده)
         checkSpeedCameraAlerts(location)
         
-        // هشدارهای پایه‌ای هر 15 ثانیه برای تست
+        // هشدارهای پایه‌ای هر 15 ثانیه برای تست (با فایل‌های صوتی موجود)
         val now = System.currentTimeMillis()
         if (now - lastBasicAlertTime > 15000) {
             when (currentSpeed) {
-                0 -> advancedTTS.speak("ایستاده")
-                in 1..30 -> advancedTTS.speak("سرعت کم")
-                in 31..60 -> advancedTTS.speak("سرعت عادی")
-                in 61..80 -> advancedTTS.speak("سرعت بالا")
-                else -> advancedTTS.speak("کاهش سرعت")
+                0 -> {
+                    advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند
+                    Log.i("NavigationService", "🔊 هشدار پایه‌ای: ایستاده (تست)")
+                }
+                in 1..30 -> {
+                    advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند
+                    Log.i("NavigationService", "🔊 هشدار پایه‌ای: سرعت کم (تست)")
+                }
+                in 31..60 -> {
+                    advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند
+                    Log.i("NavigationService", "🔊 هشدار پایه‌ای: سرعت عادی (تست)")
+                }
+                in 61..80 -> {
+                    advancedTTS.speak("سرعت بالا") // از فایل speeding_danger.wav استفاده می‌کند
+                    Log.i("NavigationService", "🔊 هشدار پایه‌ای: سرعت بالا")
+                }
+                else -> {
+                    advancedTTS.speak("کاهش سرعت") // از فایل reduce_speed.wav استفاده می‌کند
+                    Log.i("NavigationService", "🔊 هشدار پایه‌ای: کاهش سرعت")
+                }
             }
-            Log.i("NavigationService", "🔊 هشدار پایه‌ای: سرعت ${currentSpeed} کیلومتر")
             lastBasicAlertTime = now
         }
     }

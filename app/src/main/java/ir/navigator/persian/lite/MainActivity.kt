@@ -77,10 +77,10 @@ class MainActivity : AppCompatActivity() {
         advancedTTS = AdvancedPersianTTS(this)
         
         // فعال‌سازی حالت خودمختار هوشمند از ابتدا (پیش‌فرض)
-        aiAssistant.setTTSMode(TTSMode.AUTONOMOUS)
-        aiAssistant.setAutonomousMode(true)
-        aiAssistant.provideTimeBasedAlerts()
-        Log.i("MainActivity", "🤖 دستیار هوشمند خودمختار از ابتدا فعال شد")
+        ttsMode = TTSMode.AUTONOMOUS
+        advancedTTS.setTTSMode(TTSMode.AUTONOMOUS)
+        advancedTTS.enableAutonomousMode()
+        Log.i("MainActivity", "🤖 حالت TTS خودمختار از ابتدا فعال شد: $ttsMode")
         
         // مقداردهی اولیه SecureKeys
         SecureKeys.init(this)
@@ -173,7 +173,8 @@ class MainActivity : AppCompatActivity() {
                 mainScope.launch {
                     // تست حالت آفلاین با فایل‌های صوتی
                     delay(1000)
-                    aiAssistant.setTTSMode(TTSMode.OFFLINE)
+                    ttsMode = TTSMode.OFFLINE
+                    advancedTTS.setTTSMode(TTSMode.OFFLINE)
                     advancedTTS.speak("تست حالت آفلاین با فایل‌های صوتی")
                     delay(2000)
                     advancedTTS.speak("تست")
@@ -182,14 +183,17 @@ class MainActivity : AppCompatActivity() {
                     
                     // تست حالت آنلاین با OpenAI
                     delay(3000)
-                    aiAssistant.setTTSMode(TTSMode.ONLINE)
+                    ttsMode = TTSMode.ONLINE
+                    advancedTTS.setTTSMode(TTSMode.ONLINE)
                     advancedTTS.speak("تست حالت آنلاین با OpenAI TTS")
                     delay(2000)
                     advancedTTS.speak("سیستم آنلاین فعال است")
                     
                     // تست حالت خودمختار هوشمند
                     delay(3000)
-                    aiAssistant.setTTSMode(TTSMode.AUTONOMOUS)
+                    ttsMode = TTSMode.AUTONOMOUS
+                    advancedTTS.setTTSMode(TTSMode.AUTONOMOUS)
+                    advancedTTS.enableAutonomousMode()
                     advancedTTS.speak("تست حالت خودمختار هوشمند")
                     delay(2000)
                     advancedTTS.speak("دستیار هوشمند فعال شد")
@@ -290,21 +294,20 @@ class MainActivity : AppCompatActivity() {
                 else -> TTSMode.AUTONOMOUS
             }
             
-            // تنظیم حالت در AI Assistant
-            aiAssistant.setTTSMode(selectedMode)
-            aiAssistant.setAutonomousMode(true)
-            aiAssistant.provideTimeBasedAlerts()
+            // تنظیم حالت در advancedTTS
+            ttsMode = selectedMode
+            advancedTTS.setTTSMode(selectedMode)
+            if (selectedMode == TTSMode.AUTONOMOUS) {
+                advancedTTS.enableAutonomousMode()
+            }
             
-            // همگام‌سازی با NavigationService برای هشدارهای واقعی در حین رانندگی
+            // ارسال تغییر حالت به NavigationService از طریق Broadcast
             try {
-                val serviceIntent = Intent(this, NavigationService::class.java)
-                // اگر سرویس در حال اجراست، حالت را به‌روز کن
                 if (isNavigationServiceRunning()) {
-                    // استفاده از BroadcastReceiver برای ارسال حالت جدید به سرویس
-                    val broadcastIntent = Intent("UPDATE_TTS_MODE")
-                    broadcastIntent.putExtra("tts_mode", selectedMode.name)
-                    sendBroadcast(broadcastIntent)
-                    Log.i("MainActivity", "📡 حالت TTS به NavigationService ارسال شد: $selectedMode")
+                    val intent = Intent("UPDATE_TTS_MODE")
+                    intent.putExtra("TTS_MODE", selectedMode.toString())
+                    sendBroadcast(intent)
+                    Log.i("MainActivity", "📡 تغییر حالت TTS به NavigationService ارسال شد: $selectedMode")
                 }
             } catch (e: Exception) {
                 Log.e("MainActivity", "❌ خطا در همگام‌سازی با NavigationService: ${e.message}")
@@ -827,6 +830,10 @@ class MainActivity : AppCompatActivity() {
     
     private fun startNavigationService() {
         val intent = Intent(this, NavigationService::class.java)
+        // ارسال حالت TTS فعلی به NavigationService
+        intent.putExtra("TTS_MODE", ttsMode.toString())
+        Log.i("MainActivity", "📤 ارسال حالت TTS به NavigationService: $ttsMode")
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent)
         } else {
