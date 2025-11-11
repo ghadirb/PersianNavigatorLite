@@ -156,7 +156,7 @@ class GoogleMapsIntegration(private val context: Context) {
      * ایجاد Intent برای اشتراک‌گذاری با Google Maps
      */
     fun createShareIntent(destination: Destination): Intent {
-        val uri = Uri.parse("https://www.google.com/maps/search/?api=1&query=${destination.lat},${destination.lng}")
+        val uri = Uri.parse("https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}")
         val intent = Intent(Intent.ACTION_VIEW, uri)
         intent.setPackage("com.google.android.apps.maps")
         return intent
@@ -180,7 +180,7 @@ class GoogleMapsIntegration(private val context: Context) {
     fun openGoogleMapsForNavigation(destination: Destination) {
         try {
             if (isGoogleMapsInstalled()) {
-                val uri = Uri.parse("google.navigation:q=${destination.lat},${destination.lng}")
+                val uri = Uri.parse("google.navigation:q=${destination.latitude},${destination.longitude}")
                 val intent = Intent(Intent.ACTION_VIEW, uri)
                 intent.setPackage("com.google.android.apps.maps")
                 context.startActivity(intent)

@@ -61,17 +61,11 @@ class MainActivity : AppCompatActivity() {
         destinationManager = DestinationManager(this)
         googleMapsIntegration = GoogleMapsIntegration(this)
         
-        checkServiceStatus()
-        
-        // مقداردهی ویژگی‌های جدید
-        initializeNewFeatures()
-        
         // بررسی و فعال‌سازی خودکار کلیدها
         checkAndActivateKeys()
         
         checkPermissions()
         setupUI()
-        checkServiceStatus()
         handleIntent(intent)
     }
     
@@ -135,15 +129,15 @@ class MainActivity : AppCompatActivity() {
         // Start button
         btnStart.setOnClickListener {
             if (!isTracking) {
-                startTracking()
+                startNavigation()
             } else {
-                pauseTracking()
+                pauseNavigation()
             }
         }
         
         // Stop button (end navigation)
         btnStop.setOnClickListener {
-            stopTracking()
+            stopNavigation()
         }
         
         // Test voice button
@@ -217,6 +211,81 @@ class MainActivity : AppCompatActivity() {
                 
         } catch (e: Exception) {
             Log.e("MainActivity", "❌ خطا در نمایش گزینه‌های مقصد: ${e.message}")
+        }
+    }
+    
+    /**
+     * جستجوی مقصد در برنامه
+     */
+    private fun openDestinationSearch() {
+        try {
+            val intent = Intent(this, DestinationSearchActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در باز کردن جستجوی مقصد: ${e.message}")
+        }
+    }
+    
+    /**
+     * شروع مسیریابی
+     */
+    private fun startNavigation() {
+        try {
+            isTracking = true
+            btnStart.text = "توقف"
+            tvStatus.text = "در حال مسیریابی..."
+            
+            navigatorEngine.startNavigation()
+            startNavigationService()
+            
+            Toast.makeText(this, "مسیریابی شروع شد", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در شروع مسیریابی: ${e.message}")
+        }
+    }
+    
+    /**
+     * توقف موقت مسیریابی
+     */
+    private fun pauseNavigation() {
+        try {
+            isTracking = false
+            btnStart.text = "شروع"
+            tvStatus.text = "مسیریابی متوقف شد"
+            
+            Toast.makeText(this, "مسیریابی متوقف شد", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در توقف مسیریابی: ${e.message}")
+        }
+    }
+    
+    /**
+     * توقف کامل مسیریابی
+     */
+    private fun stopNavigation() {
+        try {
+            isTracking = false
+            btnStart.text = "شروع"
+            tvStatus.text = "آماده کار"
+            
+            navigatorEngine.stop()
+            stopNavigationService()
+            
+            Toast.makeText(this, "مسیریابی پایان یافت", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در پایان مسیریابی: ${e.message}")
+        }
+    }
+    
+    /**
+     * تست هشدار صوتی
+     */
+    private fun testVoiceAlert() {
+        try {
+            navigatorEngine.testVoiceAlert()
+            Toast.makeText(this, "تست هشدار صوتی اجرا شد", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در تست هشدار صوتی: ${e.message}")
         }
     }
     

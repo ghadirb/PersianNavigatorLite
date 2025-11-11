@@ -7,8 +7,6 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import ir.navigator.persian.lite.MainActivity
 import ir.navigator.persian.lite.R
-import ir.navigator.persian.lite.ai.*
-import ir.navigator.persian.lite.tts.PersianTTSPro
 import ir.navigator.persian.lite.navigation.RouteManager
 import ir.navigator.persian.lite.DestinationManager
 import android.location.Location
@@ -25,11 +23,8 @@ class NavigationService : Service() {
     private val NOTIFICATION_ID = 1001
     private val CHANNEL_ID = "navigation_service"
     
-    // AI Modules
+    // Core Modules
     private lateinit var locationManager: LocationManager
-    private lateinit var tts: PersianTTSPro
-    private lateinit var speedCameraDB: SpeedCameraDB
-    private lateinit var trafficPredictor: TrafficPredictor
     private lateinit var routeManager: RouteManager
     private lateinit var destinationManager: DestinationManager
     private var currentSpeed = 0
@@ -41,9 +36,6 @@ class NavigationService : Service() {
         
         // Initialize modules
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        tts = PersianTTSPro(this)
-        speedCameraDB = SpeedCameraDB()
-        trafficPredictor = TrafficPredictor()
         routeManager = RouteManager()
         destinationManager = DestinationManager(this)
         
@@ -164,21 +156,7 @@ class NavigationService : Service() {
             }
         }
         
-        // بررسی دوربین سرعت
-        val cameras = speedCameraDB.findNearby(location, 500f)
-        cameras.firstOrNull()?.let { camera ->
-            val distance = calculateDistance(location, camera)
-            if (distance < 500) {
-                tts.speak("دوربین سرعت در ${distance.toInt()} متر جلو")
-            }
-        }
-        
-        // بررسی سرعت غیرمجاز
-        cameras.firstOrNull()?.let { camera ->
-            if (currentSpeed > camera.limit) {
-                tts.speak("سرعت مجاز ${camera.limit} کیلومتر است. سرعت شما $currentSpeed")
-            }
-        }
+        // TODO: بررسی دوربین سرعت در نسخه بعدی
     }
     
     private fun calculateDistance(location: Location, camera: SpeedCamera): Float {

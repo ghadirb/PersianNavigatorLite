@@ -5,6 +5,7 @@ import android.location.Location
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import android.util.Log
 
 /**
  * موتور اصلی ناوبری
