@@ -9,10 +9,13 @@ import ir.navigator.persian.lite.MainActivity
 import ir.navigator.persian.lite.R
 import ir.navigator.persian.lite.navigation.RouteManager
 import ir.navigator.persian.lite.DestinationManager
+import ir.navigator.persian.lite.models.SpeedCamera
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.content.Context
+import android.speech.tts.TextToSpeech
+import android.util.Log
 
 /**
  * ForegroundService برای اجرا در پس‌زمینه
@@ -27,6 +30,7 @@ class NavigationService : Service() {
     private lateinit var locationManager: LocationManager
     private lateinit var routeManager: RouteManager
     private lateinit var destinationManager: DestinationManager
+    private lateinit var tts: TextToSpeech
     private var currentSpeed = 0
     private var lastDirectionTime = 0L
     
@@ -38,6 +42,18 @@ class NavigationService : Service() {
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         routeManager = RouteManager()
         destinationManager = DestinationManager(this)
+        
+        // Initialize TTS
+        tts = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val result = tts.setLanguage(java.util.Locale("fa", "IR"))
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Log.e("NavigationService", "زبان فارسی پشتیبانی نمی‌شود")
+                }
+            } else {
+                Log.e("NavigationService", "خطا در راه‌اندازی TTS")
+            }
+        }
         
         // بارگذاری مقصد ذخیره شده
         destinationManager.getDestination()?.let { dest ->
@@ -56,6 +72,14 @@ class NavigationService : Service() {
                 startLocationTracking()
                 return START_STICKY
             }
+        }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::tts.isInitialized) {
+            tts.stop()
+            tts.shutdown()
         }
     }
     

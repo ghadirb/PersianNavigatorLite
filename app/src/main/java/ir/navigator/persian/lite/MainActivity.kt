@@ -439,7 +439,29 @@ class MainActivity : AppCompatActivity() {
     
     /**
      * نمایش وضعیت خودرو
-                    emergencyMode.testEmergencyModes()
+     */
+    private fun showVehicleStatus() {
+        try {
+            AlertDialog.Builder(this)
+                .setTitle("وضعیت خودرو")
+                .setMessage("وضعیت فعلی خودرو در حال بررسی است...")
+                .setPositiveButton("باشه", null)
+                .show()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در نمایش وضعیت خودرو: ${e.message}")
+        }
+    }
+    
+    /**
+     * تست حالت‌های اضطراری
+     */
+    private fun testEmergencyModes() {
+        try {
+            AlertDialog.Builder(this)
+                .setTitle("تست حالت اضطراری")
+                .setMessage("آیا مایل به تست حالت‌های اضطراری هستید؟")
+                .setPositiveButton("بله") { _, _ ->
+                    // emergencyMode.testEmergencyModes()
                 }
                 .setNegativeButton("خیر", null)
                 .show()
