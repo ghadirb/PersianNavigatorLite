@@ -2,6 +2,8 @@ package ir.navigator.persian.lite
 
 // Final build verification - All issues resolved
 
+import ir.navigator.persian.lite.BuildConfig
+
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle

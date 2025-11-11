@@ -8,7 +8,7 @@ import kotlinx.coroutines.launch
 import android.util.Log
 import ir.navigator.persian.lite.models.SpeedCamera
 import ir.navigator.persian.lite.tts.AdvancedPersianTTS
-import ir.navigator.persian.lite.RouteAnalyzer.AnalysisResult
+import ir.navigator.persian.lite.AnalysisResult
 
 /**
  * موتور اصلی ناوبری با قابلیت‌های هوشمند
@@ -67,7 +67,7 @@ class NavigatorEngine(private val context: Context, private val lifecycleOwner: 
         }
     }
     
-    private fun provideSmartAlerts(speed: Float, analysis: RouteAnalyzer.AnalysisResult) {
+    private fun provideSmartAlerts(speed: Float, analysis: AnalysisResult) {
         when {
             // هشدار سرعت بالا در شهر
             speed > 80 && analysis.isUrbanArea -> {

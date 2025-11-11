@@ -100,7 +100,17 @@ class AdvancedPersianTTS(private val context: Context) {
     }
     
     /**
-     * ارائه هشدارهای مسیریابی
+     * ارائه هشدار سرعت
+     */
+    fun provideSpeedAlert(currentSpeed: Float, isUrbanArea: Boolean) {
+        val speedLimit = if (isUrbanArea) 50 else 80
+        if (currentSpeed > speedLimit) {
+            speak("⚠️ هشدار: سرعت شما ${currentSpeed.toInt()} کیلومتر بر ساعت است که از محدودیت ${speedLimit} کیلومتر بر ساعت بیشتر است.")
+        }
+    }
+    
+    /**
+     * ارائه هشدار مسیریابی
      */
     fun provideNavigationAlert(distance: Int, direction: String) {
         if (!isAutonomousMode) return

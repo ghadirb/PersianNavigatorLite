@@ -7,6 +7,7 @@ import ir.navigator.persian.lite.RouteAnalyzer
 import ir.navigator.persian.lite.AnalysisResult
 import ir.navigator.persian.lite.api.SecureKeys
 import kotlinx.coroutines.*
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
 
