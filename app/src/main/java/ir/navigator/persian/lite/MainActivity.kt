@@ -27,6 +27,8 @@ import android.net.Uri
 import android.app.AlertDialog
 import ir.navigator.persian.lite.ai.PersianAIAssistant
 import ir.navigator.persian.lite.test.AITestSuite
+import ir.navigator.persian.lite.ui.StatisticsActivity
+import ir.navigator.persian.lite.ui.AIChatActivity
 
 class MainActivity : AppCompatActivity() {
     
@@ -183,14 +185,35 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        // Statistics button - فعال
+        // Statistics button - باز کردن صفحه آمار
         btnStatistics.setOnClickListener {
-            Toast.makeText(this, "آمار رانندگی فعال است", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, StatisticsActivity::class.java)
+            startActivity(intent)
         }
         
-        // AI Chat button - فعال
+        // AI Chat button - باز کردن صفحه چت
         btnAIChat.setOnClickListener {
-            Toast.makeText(this, "چت هوشمند فعال است", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, AIChatActivity::class.java)
+            startActivity(intent)
+        }
+        
+        // تنظیم حالت TTS
+        rgTTSMode.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.rbOffline -> {
+                    Toast.makeText(this, "🔊 حالت آفلاین فعال شد", Toast.LENGTH_SHORT).show()
+                    aiAssistant.setAutonomousMode(false)
+                }
+                R.id.rbOnline -> {
+                    Toast.makeText(this, "🌐 حالت آنلاین فعال شد", Toast.LENGTH_SHORT).show()
+                    aiAssistant.setAutonomousMode(false)
+                }
+                R.id.rbAutonomous -> {
+                    Toast.makeText(this, "🤖 دستیار هوشمند خودمختار فعال شد", Toast.LENGTH_SHORT).show()
+                    aiAssistant.setAutonomousMode(true)
+                    aiAssistant.provideTimeBasedAlerts()
+                }
+            }
         }
         
         // دکمه‌های جدید غیرفعال شدند
@@ -293,10 +316,25 @@ class MainActivity : AppCompatActivity() {
      */
     private fun testVoiceAlert() {
         try {
+            // تست دستیار هوشمند
+            aiAssistant.setAutonomousMode(true)
+            
+            // تست NavigatorEngine
             navigatorEngine.testVoiceAlert()
-            Toast.makeText(this, "تست هشدار صوتی اجرا شد", Toast.LENGTH_SHORT).show()
+            
+            // تست مستقیم AI Assistant
+            mainScope.launch {
+                delay(1000)
+                aiAssistant.processUserInput("سلام")
+                delay(2000)
+                aiAssistant.provideTimeBasedAlerts()
+            }
+            
+            Toast.makeText(this, "🔊 تست هشدار صوتی شروع شد - دستیار هوشمند فعال است", Toast.LENGTH_LONG).show()
+            Log.i("MainActivity", "✅ تست هشدار صوتی با موفقیت اجرا شد")
         } catch (e: Exception) {
             Log.e("MainActivity", "❌ خطا در تست هشدار صوتی: ${e.message}")
+            Toast.makeText(this, "خطا در تست: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     

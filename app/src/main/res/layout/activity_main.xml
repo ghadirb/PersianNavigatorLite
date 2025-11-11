@@ -154,8 +154,7 @@
                 android:id="@+id/rbOffline"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="آفلاین (رایگان - صدای سیستم)"
-                android:checked="true"
+                android:text="🔊 آفلاین (رایگان - صدای سیستم)"
                 android:textSize="16sp"
                 android:padding="8dp" />
 
@@ -163,9 +162,19 @@
                 android:id="@+id/rbOnline"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="آنلاین (حرفه‌ای - نیاز به اینترنت)"
+                android:text="🌐 آنلاین (حرفه‌ای - نیاز به اینترنت)"
                 android:textSize="16sp"
                 android:padding="8dp" />
+                
+            <RadioButton
+                android:id="@+id/rbAutonomous"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🤖 خودمختار هوشمند (دستیار AI همیشه فعال)"
+                android:checked="true"
+                android:textSize="16sp"
+                android:padding="8dp"
+                android:textStyle="bold" />
         </RadioGroup>
 
         <!-- دکمه تست صدا -->
