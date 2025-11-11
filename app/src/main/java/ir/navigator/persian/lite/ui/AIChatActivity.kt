@@ -17,10 +17,9 @@ import android.widget.Toast
 class AIChatActivity : AppCompatActivity() {
     
     private lateinit var aiAssistant: PersianAIAssistant
-    private lateinit var tvChatHistory: TextView
-    private lateinit var etUserInput: EditText
+    private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
+    private lateinit var etMessage: EditText
     private lateinit var btnSend: Button
-    private lateinit var scrollView: ScrollView
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,10 +35,9 @@ class AIChatActivity : AppCompatActivity() {
         
         // مقداردهی اولیه متغیرها قبل از هر چیز
         try {
-            tvChatHistory = findViewById(R.id.tvChatHistory)
-            etUserInput = findViewById(R.id.etUserInput)
+            recyclerView = findViewById(R.id.recyclerView)
+            etMessage = findViewById(R.id.etMessage)
             btnSend = findViewById(R.id.btnSend)
-            scrollView = findViewById(R.id.scrollView)
             Log.i("AIChatActivity", "✅ المان‌های اصلی چت پیدا شدند")
         } catch (e: Exception) {
             Log.e("AIChatActivity", "❌ خطا در پیدا کردن المان‌های اصلی: ${e.message}")
@@ -62,16 +60,14 @@ class AIChatActivity : AppCompatActivity() {
         
         try {
             // پیام خوشامدگویی
-            addMessage("🤖 دستیار هوشمند", "سلام! من دستیار هوشمند شما هستم. چطور می‌توانم کمک کنم؟")
-            Log.i("AIChatActivity", "✅ پیام خوشامدگویی اضافه شد")
+            Log.i("AIChatActivity", "✅ صفحه چت آماده شد")
             
             // دکمه ارسال
             btnSend.setOnClickListener {
-                val input = etUserInput.text.toString().trim()
+                val input = etMessage.text.toString().trim()
                 if (input.isNotEmpty()) {
                     Log.i("AIChatActivity", "💬 پیام کاربر: $input")
-                    addMessage("شما", input)
-                    etUserInput.setText("")
+                    etMessage.setText("")
                     
                     // ارسال به AI
                     try {
@@ -79,7 +75,7 @@ class AIChatActivity : AppCompatActivity() {
                         Log.i("AIChatActivity", "✅ پیام به AI ارسال شد")
                     } catch (e: Exception) {
                         Log.e("AIChatActivity", "❌ خطا در ارسال به AI: ${e.message}")
-                        addMessage("سیستم", "متاسفم، خطایی در ارتباط با AI رخ داد.")
+                        Toast.makeText(this@AIChatActivity, "خطا در ارتباط با AI", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -92,21 +88,6 @@ class AIChatActivity : AppCompatActivity() {
         }
         
         Log.i("AIChatActivity", " صفحه چت با موفقیت آماده شد")
-    }
-    
-    private fun addMessage(sender: String, message: String) {
-        val currentText = tvChatHistory.text.toString()
-        val newText = if (currentText.isEmpty()) {
-            "$sender: $message"
-        } else {
-            "$currentText\n\n$sender: $message"
-        }
-        tvChatHistory.text = newText
-        
-        // اسکرول به پایین
-        scrollView.post {
-            scrollView.fullScroll(ScrollView.FOCUS_DOWN)
-        }
     }
     
     override fun onDestroy() {
