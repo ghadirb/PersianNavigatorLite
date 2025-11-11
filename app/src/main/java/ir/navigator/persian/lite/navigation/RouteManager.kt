@@ -2,9 +2,11 @@ package ir.navigator.persian.lite.navigation
 
 import android.location.Location
 import kotlin.math.*
+import ir.navigator.persian.lite.RouteAnalyzer
+import ir.navigator.persian.lite.AnalysisResult
 
 /**
- * مدیریت مسیریابی مستقل
+ * مدیریت مسیریابی مستقل با قابلیت‌های هوشمند
  * بدون نیاز به Google Maps
  */
 data class Destination(
@@ -25,6 +27,7 @@ class RouteManager {
     
     private var currentDestination: Destination? = null
     private var isNavigating = false
+    private val routeAnalyzer = RouteAnalyzer()
     
     /**
      * تنظیم مقصد جدید
@@ -32,6 +35,13 @@ class RouteManager {
     fun setDestination(destination: Destination) {
         currentDestination = destination
         isNavigating = true
+    }
+    
+    /**
+     * تحلیل موقعیت برای سیستم هوشمند
+     */
+    fun analyzeLocation(location: Location): AnalysisResult {
+        return routeAnalyzer.analyzeLocation(location)
     }
     
     /**

@@ -157,12 +157,10 @@ class NavigationService : Service() {
     
     private fun processLocation(location: Location) {
         // محاسبه سرعت
-        currentSpeed = (location.speed * 3.6).toInt()
+        currentSpeed = (location.speed * 3.6f).toInt()
         
         // آپدیت notification
-        val notification = createNotification()
-        val manager = getSystemService(NotificationManager::class.java)
-        manager?.notify(NOTIFICATION_ID, notification)
+        updateNotification(location)
         
         // مسیریابی به مقصد
         routeManager.calculateRoute(location)?.let { route ->
@@ -182,7 +180,55 @@ class NavigationService : Service() {
             }
         }
         
+        // تحلیل هوشمند موقعیت و ارائه هشدارهای پیشرفته
+        analyzeAndProvideSmartAlerts(location)
+        
         // TODO: بررسی دوربین سرعت در نسخه بعدی
+    }
+    
+    private fun updateNotification(location: Location) {
+        val notification = createNotification()
+        val manager = getSystemService(NotificationManager::class.java)
+        manager?.notify(NOTIFICATION_ID, notification)
+    }
+    
+    /**
+     * تحلیل هوشمند و ارائه هشدارهای پیشرفته
+     */
+    private fun analyzeAndProvideSmartAlerts(location: Location) {
+        try {
+            // استفاده از RouteAnalyzer برای تحلیل هوشمند
+            val analysis = routeManager.analyzeLocation(location)
+            
+            when {
+                // هشدار خطر بالا
+                analysis.riskLevel == ir.navigator.persian.lite.RiskLevel.HIGH -> {
+                    tts.speak("هشدار: شرایط خطرناک. لطفاً با احتیاط رانندگی کنید.", TextToSpeech.QUEUE_FLUSH, null)
+                }
+                // هشدار ترافیک سنگین
+                analysis.trafficCondition == ir.navigator.persian.lite.TrafficCondition.HEAVY -> {
+                    tts.speak("توجه: ترافیک سنگین پیش رو است. زمان بیشتری برای رسیدن به مقصد نیاز دارید.", TextToSpeech.QUEUE_FLUSH, null)
+                }
+                // هشدار رفتار پرخطر رانندگی
+                analysis.drivingBehavior == ir.navigator.persian.lite.DrivingBehavior.AGGRESSIVE -> {
+                    tts.speak("توصیه: رانندگی آرام‌تر داشته باشید. ایمنی شما مهم است.", TextToSpeech.QUEUE_FLUSH, null)
+                }
+            }
+            
+            // هشدار نزدیکی به دوربین سرعت (در صورت وجود)
+            checkSpeedCameraAlerts(location)
+            
+        } catch (e: Exception) {
+            Log.e("NavigationService", "خطا در تحلیل هوشمند: ${e.message}")
+        }
+    }
+    
+    /**
+     * بررسی هشدارهای دوربین سرعت
+     */
+    private fun checkSpeedCameraAlerts(location: Location) {
+        // TODO: پیاده‌سازی هشدار دوربین سرعت در نسخه بعدی
+        // این بخش می‌تواند از دیتابیس دوربین‌ها استفاده کند
     }
     
     private fun calculateDistance(location: Location, camera: SpeedCamera): Float {
