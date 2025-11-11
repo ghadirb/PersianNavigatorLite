@@ -2,6 +2,7 @@ package ir.navigator.persian.lite
 
 import android.location.Location
 import kotlin.math.abs
+import kotlin.math.pow
 
 /**
  * تحلیلگر هوشمند مسیر با قابلیت‌های پیشرفته
@@ -163,10 +164,6 @@ class RouteAnalyzer {
             val timeChange = (current.time - prev.time) / 1000f
             if (timeChange > 0) speedChange / timeChange else 0f
         }
-    }
-    
-    private fun Float.pow(exponent: Int): Float {
-        return this.toDouble().pow(exponent.toDouble()).toFloat()
     }
 }
 

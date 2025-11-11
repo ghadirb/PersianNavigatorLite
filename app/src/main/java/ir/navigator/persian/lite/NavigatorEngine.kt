@@ -6,7 +6,9 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import android.util.Log
+import ir.navigator.persian.lite.models.SpeedCamera
 import ir.navigator.persian.lite.tts.AdvancedPersianTTS
+import ir.navigator.persian.lite.RouteAnalyzer.AnalysisResult
 
 /**
  * موتور اصلی ناوبری با قابلیت‌های هوشمند

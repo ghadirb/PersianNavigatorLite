@@ -215,7 +215,7 @@ class PersianAIAssistant(private val context: Context) {
     /**
      * تولید پاسخ هوشمند
      */
-    private fun generateResponse(input: String): String {
+    private suspend fun generateResponse(input: String): String {
         val normalizedInput = input.lowercase().trim()
         
         return when {
