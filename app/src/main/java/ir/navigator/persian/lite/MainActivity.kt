@@ -26,6 +26,7 @@ import ir.navigator.persian.lite.api.SecureKeys
 import android.net.Uri
 import android.app.AlertDialog
 import ir.navigator.persian.lite.ai.PersianAIAssistant
+import ir.navigator.persian.lite.test.AITestSuite
 
 class MainActivity : AppCompatActivity() {
     
@@ -73,6 +74,20 @@ class MainActivity : AppCompatActivity() {
         
         // بررسی و فعال‌سازی خودکار کلیدها
         checkAndActivateKeys()
+        
+        // اجرای تست سیستم هوشمند (برای اشکال‌زدایی)
+        if (BuildConfig.DEBUG) {
+            mainScope.launch {
+                delay(2000) // صبر برای راه‌اندازی کامل
+                try {
+                    val testSuite = AITestSuite(this@MainActivity)
+                    testSuite.runAllTests()
+                    testSuite.cleanup()
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "❌ خطا در اجرای تست AI: ${e.message}")
+                }
+            }
+        }
         
         checkPermissions()
         setupUI()
