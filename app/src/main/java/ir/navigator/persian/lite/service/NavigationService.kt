@@ -43,6 +43,33 @@ class NavigationService : Service() {
     private var isNavigating = false
     private var ttsMode = TTSMode.AUTONOMOUS
     
+    // BroadcastReceiver برای دریافت تغییرات حالت TTS
+    private val ttsModeReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+            if (intent?.action == "UPDATE_TTS_MODE") {
+                val newMode = intent.getStringExtra("TTS_MODE")
+                when (newMode) {
+                    "OFFLINE" -> {
+                        ttsMode = TTSMode.OFFLINE
+                        advancedTTS.setTTSMode(TTSMode.OFFLINE)
+                        Log.i("NavigationService", "🔄 حالت TTS به OFFLINE تغییر کرد")
+                    }
+                    "ONLINE" -> {
+                        ttsMode = TTSMode.ONLINE
+                        advancedTTS.setTTSMode(TTSMode.ONLINE)
+                        Log.i("NavigationService", "🔄 حالت TTS به ONLINE تغییر کرد")
+                    }
+                    "AUTONOMOUS" -> {
+                        ttsMode = TTSMode.AUTONOMOUS
+                        advancedTTS.setTTSMode(TTSMode.AUTONOMOUS)
+                        advancedTTS.enableAutonomousMode()
+                        Log.i("NavigationService", "🔄 حالت TTS به AUTONOMOUS تغییر کرد")
+                    }
+                }
+            }
+        }
+    }
+    
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
@@ -63,6 +90,11 @@ class NavigationService : Service() {
         destinationManager.getDestination()?.let { dest ->
             routeManager.setDestination(dest)
         }
+        
+        // ثبت BroadcastReceiver برای دریافت تغییرات حالت TTS
+        val filter = android.content.IntentFilter("UPDATE_TTS_MODE")
+        registerReceiver(ttsModeReceiver, filter)
+        Log.i("NavigationService", "✅ BroadcastReceiver برای TTS Mode ثبت شد")
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -81,10 +113,20 @@ class NavigationService : Service() {
     
     override fun onDestroy() {
         super.onDestroy()
+        
+        // لغو ثبت BroadcastReceiver
+        try {
+            unregisterReceiver(ttsModeReceiver)
+            Log.i("NavigationService", " BroadcastReceiver لغو ثبت شد")
+        } catch (e: Exception) {
+            Log.e("NavigationService", "خطا در لغو ثبت BroadcastReceiver: ${e.message}")
+        }
+        
         if (::advancedTTS.isInitialized) {
             advancedTTS.stop()
             advancedTTS.shutdown()
         }
+        locationManager.removeUpdates(locationListener)
     }
     
     private fun createNotificationChannel() {
@@ -137,7 +179,7 @@ class NavigationService : Service() {
             locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,
                 1000L, // هر 1 ثانیه
-                10f,   // هر 10 متر
+                0f,    // هر تغییر موقعیت (حتی وقتی ایستاده)
                 locationListener
             )
             
