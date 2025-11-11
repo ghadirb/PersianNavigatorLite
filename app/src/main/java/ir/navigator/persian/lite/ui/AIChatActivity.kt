@@ -8,6 +8,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import ir.navigator.persian.lite.R
 import ir.navigator.persian.lite.ai.PersianAIAssistant
+import android.util.Log
+import android.widget.Toast
 
 /**
  * صفحه چت با دستیار هوشمند
@@ -82,29 +84,11 @@ class AIChatActivity : AppCompatActivity() {
             Log.i("AIChatActivity", "✅ صفحه چت با موفقیت آماده شد")
             
         } catch (e: Exception) {
-            Log.e("AIChatActivity", "❌ خطا در تنظیم دکمه‌های چت: ${e.message}")
-            Toast.makeText(this, "❌ خطا در تنظیم دکمه‌ها: ${e.message}", Toast.LENGTH_LONG).show()
+            Log.e("AIChatActivity", " خطا در تنظیم دکمه‌های چت: ${e.message}")
+            Toast.makeText(this, " خطا در تنظیم دکمه‌ها: ${e.message}", Toast.LENGTH_LONG).show()
         }
         
-        // پیشنهادات سریع
-        try {
-            findViewById<Button>(R.id.btnQuickHelp)?.setOnClickListener {
-                etUserInput.setText("کمک")
-                btnSend.performClick()
-            }
-            
-            findViewById<Button>(R.id.btnQuickStatus)?.setOnClickListener {
-                etUserInput.setText("وضعیت")
-                btnSend.performClick()
-            }
-            
-            findViewById<Button>(R.id.btnQuickRoute)?.setOnClickListener {
-                etUserInput.setText("مسیر")
-                btnSend.performClick()
-            }
-        } catch (e: Exception) {
-            // دکمه‌های سریع اختیاری هستند
-        }
+        Log.i("AIChatActivity", " صفحه چت با موفقیت آماده شد")
     }
     
     private fun addMessage(sender: String, message: String) {

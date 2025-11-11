@@ -27,6 +27,7 @@ import ir.navigator.persian.lite.api.SecureKeys
 import android.net.Uri
 import android.app.AlertDialog
 import ir.navigator.persian.lite.ai.PersianAIAssistant
+import ir.navigator.persian.lite.tts.AdvancedPersianTTS
 import ir.navigator.persian.lite.tts.TTSMode
 import ir.navigator.persian.lite.test.AITestSuite
 import ir.navigator.persian.lite.ui.StatisticsActivity
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navigatorEngine: NavigatorEngine
     private lateinit var destinationManager: DestinationManager
     private lateinit var aiAssistant: PersianAIAssistant
+    private lateinit var advancedTTS: AdvancedPersianTTS
     private var isTracking = false
     private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
@@ -72,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         destinationManager = DestinationManager(this)
         googleMapsIntegration = GoogleMapsIntegration(this)
         aiAssistant = PersianAIAssistant(this)
+        advancedTTS = AdvancedPersianTTS(this)
         
         // فعال‌سازی حالت خودمختار هوشمند از ابتدا (پیش‌فرض)
         aiAssistant.setTTSMode(TTSMode.AUTONOMOUS)
@@ -171,38 +174,38 @@ class MainActivity : AppCompatActivity() {
                     // تست حالت آفلاین با فایل‌های صوتی
                     delay(1000)
                     aiAssistant.setTTSMode(TTSMode.OFFLINE)
-                    aiAssistant.speak("تست حالت آفلاین با فایل‌های صوتی")
+                    advancedTTS.speak("تست حالت آفلاین با فایل‌های صوتی")
                     delay(2000)
-                    aiAssistant.speak("تست")
+                    advancedTTS.speak("تست")
                     delay(2000)
-                    aiAssistant.speak("خطر سرعت بالا")
+                    advancedTTS.speak("خطر سرعت بالا")
                     
                     // تست حالت آنلاین با OpenAI
                     delay(3000)
                     aiAssistant.setTTSMode(TTSMode.ONLINE)
-                    aiAssistant.speak("تست حالت آنلاین با OpenAI TTS")
+                    advancedTTS.speak("تست حالت آنلاین با OpenAI TTS")
                     delay(2000)
-                    aiAssistant.speak("سیستم آنلاین فعال است")
+                    advancedTTS.speak("سیستم آنلاین فعال است")
                     
                     // تست حالت خودمختار هوشمند
                     delay(3000)
                     aiAssistant.setTTSMode(TTSMode.AUTONOMOUS)
-                    aiAssistant.speak("تست حالت خودمختار هوشمند")
+                    advancedTTS.speak("تست حالت خودمختار هوشمند")
                     delay(2000)
-                    aiAssistant.speak("دستیار هوشمند فعال شد")
+                    advancedTTS.speak("دستیار هوشمند فعال شد")
                     
                     // تست هشدارهای ناوبری
                     delay(3000)
-                    aiAssistant.provideSpeedAlert(85f, false)
+                    advancedTTS.provideSpeedAlert(85f, false)
                     
                     delay(3000)
-                    aiAssistant.provideNavigationAlert(500, "به راست بپیچید")
+                    advancedTTS.provideNavigationAlert(500, "به راست بپیچید")
                     
                     delay(3000)
-                    aiAssistant.announceSpeedCamera(200, 60)
+                    advancedTTS.announceSpeedCamera(200, 60)
                     
                     delay(3000)
-                    aiAssistant.announceDestinationReached()
+                    advancedTTS.announceDestinationReached()
                     
                     Log.i("MainActivity", "✅ تست جامع هشدار صوتی با موفقیت انجام شد")
                     Toast.makeText(this, "✅ تست صوتی تمام شد!", Toast.LENGTH_SHORT).show()
@@ -420,24 +423,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "مسیریابی پایان یافت", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Log.e("MainActivity", "❌ خطا در پایان مسیریابی: ${e.message}")
-        }
-    }
-    
-    /**
-     * تست حالت‌های اضطراری
-     */
-    private fun testEmergencyModes() {
-        try {
-            AlertDialog.Builder(this)
-                .setTitle("تست حالت اضطراری")
-                .setMessage("آیا مایل به تست حالت‌های اضطراری هستید؟")
-                .setPositiveButton("بله") { _, _ ->
-                    // emergencyMode.testEmergencyModes()
-                }
-                .setNegativeButton("خیر", null)
-                .show()
-        } catch (e: Exception) {
-            Log.e("MainActivity", "❌ خطا در تست حالت اضطراری: ${e.message}")
         }
     }
     
@@ -669,19 +654,19 @@ class MainActivity : AppCompatActivity() {
                 
                 // تست حالت آفلاین در حین رانندگی
                 aiAssistant.setTTSMode(TTSMode.OFFLINE)
-                aiAssistant.speak("مسیریابی شروع شد. حالت آفلاین فعال.")
+                advancedTTS.speak("مسیریابی شروع شد. حالت آفلاین فعال.")
                 delay(2000)
-                aiAssistant.speak("تست هشدار سرعت")
+                advancedTTS.speak("تست هشدار سرعت")
                 
                 // تست حالت آنلاین در حین رانندگی  
                 delay(3000)
                 aiAssistant.setTTSMode(TTSMode.ONLINE)
-                aiAssistant.speak("تغییر به حالت آنلاین. سیستم فعال.")
+                advancedTTS.speak("تغییر به حالت آنلاین. سیستم فعال.")
                 
                 // تست حالت خودمختار در حین رانندگی
                 delay(3000)
                 aiAssistant.setTTSMode(TTSMode.AUTONOMOUS)
-                aiAssistant.speak("دستیار هوشمند خودمختار فعال شد")
+                advancedTTS.speak("دستیار هوشمند خودمختار فعال شد")
                 
                 // تست گفتگوی AI
                 delay(2000)
@@ -711,10 +696,10 @@ class MainActivity : AppCompatActivity() {
                 
                 // تست هشدارهای ناوبری زنده
                 delay(3000)
-                aiAssistant.provideNavigationAlert(200, "به چپ بپیچید")
+                advancedTTS.provideNavigationAlert(200, "به چپ بپیچید")
                 
                 delay(2000)
-                aiAssistant.announceSpeedCamera(100, 50)
+                advancedTTS.announceSpeedCamera(100, 50)
                 
                 Log.i("MainActivity", "✅ تست جامع AI در حین رانندگی با موفقیت انجام شد")
                 Toast.makeText(this@MainActivity, "✅ دستیار هوشمند در حین رانندگی فعال است!", Toast.LENGTH_SHORT).show()

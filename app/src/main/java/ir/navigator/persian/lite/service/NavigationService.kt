@@ -249,9 +249,9 @@ class NavigationService : Service() {
             // شبیه‌سازی دوربین سرعت برای تست
             // در نسخه نهایی از دیتابیس واقعی استفاده می‌شود
             val mockSpeedCameras = listOf(
-                SpeedCamera(35.6892, 51.3890, 50), // تهران
-                SpeedCamera(35.7000, 51.4000, 60), // تهران
-                SpeedCamera(35.6800, 51.3800, 40)  // تهران
+                SpeedCamera("cam1", 35.6892, 51.3890, 50), // تهران
+                SpeedCamera("cam2", 35.7000, 51.4000, 60), // تهران
+                SpeedCamera("cam3", 35.6800, 51.3800, 40)  // تهران
             )
             
             mockSpeedCameras.forEach { camera ->
