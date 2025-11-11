@@ -34,23 +34,20 @@ class AIChatActivity : AppCompatActivity() {
     private fun setupUI() {
         Log.i("AIChatActivity", "🔧 در حال تنظیم UI چت...")
         
-        // تعریف متغیرها قبل از try
-        lateinit var btnBack: Button
-        
         try {
+            // المان‌های اصلی چت - خارج از try برای دسترسی عمومی
+            tvChatHistory = findViewById(R.id.tvChatHistory)
+            etUserInput = findViewById(R.id.etUserInput)
+            btnSend = findViewById(R.id.btnSend)
+            scrollView = findViewById(R.id.scrollView)
+            
             // دکمه بازگشت
-            btnBack = findViewById(R.id.btnBack)
+            val btnBack = findViewById<Button>(R.id.btnBack)
             btnBack.setOnClickListener {
                 Log.i("AIChatActivity", "🔙 دکمه بازگشت چت فشرده شد")
                 finish()
             }
             Log.i("AIChatActivity", "✅ دکمه بازگشت چت تنظیم شد")
-            
-            // المان‌های اصلی چت
-            tvChatHistory = findViewById(R.id.tvChatHistory)
-            etUserInput = findViewById(R.id.etUserInput)
-            btnSend = findViewById(R.id.btnSend)
-            scrollView = findViewById(R.id.scrollView)
             
             Log.i("AIChatActivity", "✅ المان‌های چت با موفقیت پیدا شدند")
             
