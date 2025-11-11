@@ -2,8 +2,6 @@ package ir.navigator.persian.lite
 
 // Final build verification - All issues resolved
 
-import ir.navigator.persian.lite.BuildConfig
-
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -76,20 +74,6 @@ class MainActivity : AppCompatActivity() {
         
         // بررسی و فعال‌سازی خودکار کلیدها
         checkAndActivateKeys()
-        
-        // اجرای تست سیستم هوشمند (برای اشکال‌زدایی)
-        if (BuildConfig.DEBUG) {
-            mainScope.launch {
-                delay(2000) // صبر برای راه‌اندازی کامل
-                try {
-                    val testSuite = AITestSuite(this@MainActivity)
-                    testSuite.runAllTests()
-                    testSuite.cleanup()
-                } catch (e: Exception) {
-                    Log.e("MainActivity", "❌ خطا در اجرای تست AI: ${e.message}")
-                }
-            }
-        }
         
         checkPermissions()
         setupUI()

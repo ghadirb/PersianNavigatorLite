@@ -267,8 +267,10 @@ class PersianAIAssistant(private val context: Context) {
         speak("🎉 تبریک! شما با موفقیت به مقصد خود رسیدید. امیدوارم سفر خوبی داشته باشید.")
         
         if (userPreferences.conversationLevel == ConversationLevel.ADVANCED) {
-            delay(3000)
-            speak("آیا می‌خواهید به مکان دیگری بروید؟")
+            assistantScope.launch {
+                delay(3000)
+                speak("آیا می‌خواهید به مکان دیگری بروید؟")
+            }
         }
     }
     
