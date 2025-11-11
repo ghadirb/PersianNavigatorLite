@@ -34,27 +34,30 @@ class AIChatActivity : AppCompatActivity() {
     private fun setupUI() {
         Log.i("AIChatActivity", "🔧 در حال تنظیم UI چت...")
         
+        // مقداردهی اولیه متغیرها قبل از هر چیز
         try {
-            // المان‌های اصلی چت - خارج از try برای دسترسی عمومی
             tvChatHistory = findViewById(R.id.tvChatHistory)
             etUserInput = findViewById(R.id.etUserInput)
             btnSend = findViewById(R.id.btnSend)
             scrollView = findViewById(R.id.scrollView)
-            
-            // دکمه بازگشت
+            Log.i("AIChatActivity", "✅ المان‌های اصلی چت پیدا شدند")
+        } catch (e: Exception) {
+            Log.e("AIChatActivity", "❌ خطا در پیدا کردن المان‌های اصلی: ${e.message}")
+            Toast.makeText(this, "❌ خطا در تنظیم صفحه چت: ${e.message}", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+        
+        // تنظیم دکمه بازگشت
+        try {
             val btnBack = findViewById<Button>(R.id.btnBack)
             btnBack.setOnClickListener {
                 Log.i("AIChatActivity", "🔙 دکمه بازگشت چت فشرده شد")
                 finish()
             }
             Log.i("AIChatActivity", "✅ دکمه بازگشت چت تنظیم شد")
-            
-            Log.i("AIChatActivity", "✅ المان‌های چت با موفقیت پیدا شدند")
-            
         } catch (e: Exception) {
-            Log.e("AIChatActivity", "❌ خطا در پیدا کردن المان‌های چت: ${e.message}")
-            Toast.makeText(this, "❌ خطا در تنظیم صفحه چت: ${e.message}", Toast.LENGTH_LONG).show()
-            return
+            Log.e("AIChatActivity", "❌ خطا در تنظیم دکمه بازگشت: ${e.message}")
         }
         
         try {
