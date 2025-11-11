@@ -79,8 +79,6 @@ class AdvancedPersianTTS(private val context: Context) {
         this.lastStatus = status
         this.isNavigating = isNavigating
         
-        if (!isAutonomousMode) return
-        
         // تحلیل هوشمند و ارائه هشدارهای خودمختار
         analyzeAndProvideSmartAlerts(speed, status)
     }
@@ -118,7 +116,7 @@ class AdvancedPersianTTS(private val context: Context) {
     fun provideSpeedAlert(currentSpeed: Float, isUrbanArea: Boolean) {
         val speedLimit = if (isUrbanArea) 50 else 80
         if (currentSpeed > speedLimit) {
-            speak("⚠️ هشدار: سرعت شما ${currentSpeed.toInt()} کیلومتر بر ساعت است که از محدودیت ${speedLimit} کیلومتر بر ساعت بیشتر است.")
+            speak("سرعت بالا") // از فایل speeding_danger.wav استفاده می‌کند
         }
     }
     
@@ -126,30 +124,39 @@ class AdvancedPersianTTS(private val context: Context) {
      * ارائه هشدار مسیریابی
      */
     fun provideNavigationAlert(distance: Int, direction: String) {
-        if (!isAutonomousMode) return
-        
-        val message = when {
-            distance < 100 -> "$direction. به زودی به مقصد خواهید رسید."
-            distance < 500 -> "$direction. فاصله تا مقصد $distance متر."
-            else -> "$direction. فاصله تا مقصد ${distance/1000} کیلومتر."
+        // استفاده از فایل‌های صوتی موجود برای هشدارهای ناوبری
+        when {
+            direction.contains("راست") -> {
+                if (distance < 100) speak("به راست بپیچید")
+                else if (distance < 200) speak("به راست بپیچید")
+                else if (distance < 500) speak("به راست بپیچید")
+                else speak("به راست بپیچید")
+            }
+            direction.contains("چپ") -> {
+                if (distance < 100) speak("به چپ بپیچید")
+                else if (distance < 200) speak("به چپ بپیچید")
+                else if (distance < 500) speak("به چپ بپیچید")
+                else speak("به چپ بپیچید")
+            }
+            else -> {
+                // برای مسیرهای مستقیم یا سایر جهت‌ها
+                speak("تست") // از فایل test_alert.wav استفاده می‌کند
+            }
         }
-        speak(message)
     }
     
     /**
      * هشدار رسیدن به مقصد
      */
     fun announceDestinationReached() {
-        speak("شما به مقصد خود رسیدید. مسیریابی پایان یافت. امیدوارم سفر خوبی داشته باشید.")
+        speak("مقصد") // از فایل destination_arrived.wav استفاده می‌کند
     }
     
     /**
      * هشدار دوربین سرعت
      */
     fun announceSpeedCamera(distance: Int, speedLimit: Int) {
-        if (!isAutonomousMode) return
-        
-        speak("توجه: در فاصله ${distance} متری دوربین سرعت با محدودیت ${speedLimit} کیلومتر بر ساعت.")
+        speak("دوربین سرعت") // از فایل speed_camera.wav استفاده می‌کند
     }
     
     /**
@@ -214,7 +221,7 @@ class AdvancedPersianTTS(private val context: Context) {
             text.contains("سرعت بالا") || text.contains("سرعت بالاست") -> "speeding_danger"
             text.contains("دوربین سرعت") -> "speed_camera"
             text.contains("تغییر مسیر") || text.contains("مسیر جایگزین") -> "alternative_route"
-            text.contains("مقصد") && text.contains("رسیدید") -> "destination_arrived"
+            text.contains("مقصد") -> "destination_arrived"
             text.contains("ترافیک سنگین") -> "heavy_traffic"
             text.contains("کاهش سرعت") -> "reduce_speed"
             text.contains("به راست بپیچید") || text.contains("راست") -> "turn_right"

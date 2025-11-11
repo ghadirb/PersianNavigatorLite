@@ -209,7 +209,7 @@ class NavigationService : Service() {
             // تست هشدار صوتی با سیستم جدید - با فایل‌های صوتی موجود
             advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند
             Thread.sleep(2000)
-            advancedTTS.speak("مسیر") // از فایل start_navigation.wav استفاده می‌کند
+            advancedTTS.speak("شروع مسیر") // از فایل start_navigation.wav استفاده می‌کند
             Thread.sleep(2000)
             advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند
             Log.i("NavigationService", "🔊 تست اولیه صوتی با فایل‌های WAV انجام شد")
