@@ -28,6 +28,8 @@ import android.app.AlertDialog
 
 class MainActivity : AppCompatActivity() {
     
+    // Build fix v2 - All duplicate functions resolved, TTS issues fixed
+    
     private lateinit var navigatorEngine: NavigatorEngine
     private lateinit var destinationManager: DestinationManager
     private var isTracking = false

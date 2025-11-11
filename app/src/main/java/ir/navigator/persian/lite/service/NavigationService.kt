@@ -23,6 +23,8 @@ import android.util.Log
  */
 class NavigationService : Service() {
     
+    // Build fix v2 - TTS issues resolved, duplicate onDestroy removed
+    
     private val NOTIFICATION_ID = 1001
     private val CHANNEL_ID = "navigation_service"
     
