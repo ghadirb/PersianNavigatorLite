@@ -71,6 +71,11 @@ class MainActivity : AppCompatActivity() {
         googleMapsIntegration = GoogleMapsIntegration(this)
         aiAssistant = PersianAIAssistant(this)
         
+        // فعال‌سازی حالت خودمختار هوشمند از ابتدا (پیش‌فرض)
+        aiAssistant.setAutonomousMode(true)
+        aiAssistant.provideTimeBasedAlerts()
+        Log.i("MainActivity", "🤖 دستیار هوشمند خودمختار از ابتدا فعال شد")
+        
         // مقداردهی اولیه SecureKeys
         SecureKeys.init(this)
         
