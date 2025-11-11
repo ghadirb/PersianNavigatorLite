@@ -515,7 +515,15 @@ class MainActivity : AppCompatActivity() {
                 smartVehicleConnector.enableEcoMonitoring()
             }
             
+            // فعال‌سازی دستیار هوشمند خودمختار برای هشدارهای زنده
+            val advancedTTS = ir.navigator.persian.lite.tts.AdvancedPersianTTS(this)
+            advancedTTS.enableAutonomousMode()
+            
+            // به‌روزرسانی وضعیت اولیه برای AI
+            advancedTTS.updateDrivingStatusForAI(0f, "آماده شروع", true)
+            
             Log.i("MainActivity", "🚗 ویژگی‌های رانندگی فعال شد")
+            Log.i("MainActivity", "🤖 دستیار هوشمند خودمختار فعال شد")
         } catch (e: Exception) {
             Log.e("MainActivity", "❌ خطا در فعال‌سازی ویژگی‌های رانندگی: ${e.message}")
         }
