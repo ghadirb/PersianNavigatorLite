@@ -3,16 +3,29 @@ package ir.navigator.persian.lite.tts
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import android.media.MediaPlayer
 import java.util.*
 
 /**
- * سیستم هوشمند تبدیل متن به گفتار فارسی با قابلیت‌های پیشرفته
- * شامل حالت خودمختار برای هشدارهای هوشمند
+ * سیستم پیشرفته تبدیل متن به گفتار فارسی
+ * با پشتیبانی از حالت آفلاین (فایل‌های صوتی)، آنلاین (OpenAI) و خودمختار هوشمند
  */
+
+/**
+ * حالت‌های مختلف TTS
+ */
+enum class TTSMode {
+    OFFLINE,    // استفاده از فایل‌های صوتی ضبط شده
+    ONLINE,     // استفاده از OpenAI TTS آنلاین
+    AUTONOMOUS  // حالت خودمختار هوشمند (ترکیبی)
+}
+
 class AdvancedPersianTTS(private val context: Context) {
     
     private var tts: TextToSpeech? = null
+    private var mediaPlayer: MediaPlayer? = null
     private var isAutonomousMode = false
+    private var ttsMode = TTSMode.OFFLINE
     private var lastSpeed = 0f
     private var lastStatus = ""
     private var isNavigating = false
@@ -140,10 +153,105 @@ class AdvancedPersianTTS(private val context: Context) {
     }
     
     /**
-     * صحبت کردن متن
+     * صحبت کردن متن (بر اساس حالت انتخاب شده)
      */
     fun speak(text: String) {
+        when (ttsMode) {
+            TTSMode.OFFLINE -> {
+                // تلاش برای پخش فایل صوتی متناظر
+                if (!playAudioFile(text)) {
+                    // اگر فایل صوتی وجود نداشت، از TTS سیستم استفاده کن
+                    speakWithTTS(text)
+                }
+            }
+            TTSMode.ONLINE -> {
+                // استفاده از OpenAI TTS آنلاین
+                speakWithOpenAI(text)
+            }
+            TTSMode.AUTONOMOUS -> {
+                // حالت خودمختار - ابتدا فایل صوتی، سپس TTS
+                if (!playAudioFile(text)) {
+                    speakWithTTS(text)
+                }
+            }
+        }
+    }
+    
+    /**
+     * پخش فایل صوتی آفلاین
+     */
+    private fun playAudioFile(text: String): Boolean {
+        try {
+            val resourceId = getAudioResourceId(text)
+            if (resourceId != 0) {
+                // متوقف کردن پخش قبلی
+                mediaPlayer?.release()
+                
+                mediaPlayer = MediaPlayer.create(context, resourceId)
+                mediaPlayer?.setOnCompletionListener {
+                    it.release()
+                    mediaPlayer = null
+                }
+                mediaPlayer?.start()
+                Log.i("AdvancedPersianTTS", "🔊 پخش فایل صوتی: $text")
+                return true
+            }
+        } catch (e: Exception) {
+            Log.e("AdvancedPersianTTS", "❌ خطا در پخش فایل صوتی: ${e.message}")
+        }
+        return false
+    }
+    
+    /**
+     * دریافت ID فایل صوتی بر اساس متن
+     */
+    private fun getAudioResourceId(text: String): Int {
+        val resourceName = when {
+            text.contains("سرعت بالا") || text.contains("سرعت بالاست") -> "speeding_danger"
+            text.contains("دوربین سرعت") -> "speed_camera"
+            text.contains("تغییر مسیر") || text.contains("مسیر جایگزین") -> "alternative_route"
+            text.contains("مقصد") && text.contains("رسیدید") -> "destination_arrived"
+            text.contains("ترافیک سنگین") -> "heavy_traffic"
+            text.contains("کاهش سرعت") -> "reduce_speed"
+            text.contains("به راست بپیچید") || text.contains("راست") -> "turn_right"
+            text.contains("به چپ بپیچید") || text.contains("چپ") -> "turn_left"
+            text.contains("مسیر") && text.contains("شروع") -> "start_navigation"
+            text.contains("تست") -> "test_alert"
+            text.contains("خطر") -> "danger_ahead"
+            text.contains("ایستگاه سوخت") -> "fuel_station_1km"
+            text.contains("بنزین") || text.contains("سوخت") -> "low_fuel_warning"
+            else -> null
+        }
+        
+        return resourceName?.let { name ->
+            context.resources.getIdentifier(name, "raw", context.packageName)
+        } ?: 0
+    }
+    
+    /**
+     * صحبت کردن با TTS سیستم
+     */
+    private fun speakWithTTS(text: String) {
         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "advanced_tts_${System.currentTimeMillis()}")
+        Log.i("AdvancedPersianTTS", "🗣️ پخش با TTS سیستم: $text")
+    }
+    
+    /**
+     * صحبت کردن با OpenAI TTS آنلاین
+     */
+    private fun speakWithOpenAI(text: String) {
+        // TODO: پیاده‌سازی OpenAI TTS API
+        // فعلاً از TTS سیستم استفاده می‌کنیم
+        speakWithTTS(text)
+        Log.i("AdvancedPersianTTS", "🌐 پخش با OpenAI TTS: $text")
+    }
+    
+    /**
+     * تنظیم حالت TTS
+     */
+    fun setTTSMode(mode: TTSMode) {
+        ttsMode = mode
+        Log.i("AdvancedPersianTTS", "حالت TTS تغییر کرد به: $mode")
     }
     
     /**

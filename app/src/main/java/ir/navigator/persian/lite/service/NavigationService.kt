@@ -16,6 +16,8 @@ import android.location.LocationManager
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import ir.navigator.persian.lite.tts.AdvancedPersianTTS
+import ir.navigator.persian.lite.tts.TTSMode
 
 /**
  * ForegroundService برای اجرا در پس‌زمینه
@@ -30,11 +32,15 @@ class NavigationService : Service() {
     
     // Core Modules
     private lateinit var locationManager: LocationManager
+    private lateinit var advancedTTS: AdvancedPersianTTS
     private lateinit var routeManager: RouteManager
     private lateinit var destinationManager: DestinationManager
-    private lateinit var tts: TextToSpeech
+    private lateinit var notificationManager: NotificationManager
+    
     private var currentSpeed = 0
     private var lastDirectionTime = 0L
+    private var isNavigating = false
+    private var ttsMode = TTSMode.AUTONOMOUS
     
     override fun onCreate() {
         super.onCreate()
@@ -42,20 +48,15 @@ class NavigationService : Service() {
         
         // Initialize modules
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        advancedTTS = AdvancedPersianTTS(this)
         routeManager = RouteManager()
         destinationManager = DestinationManager(this)
         
-        // Initialize TTS
-        tts = TextToSpeech(this) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                val result = tts.setLanguage(java.util.Locale("fa", "IR"))
-                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    Log.e("NavigationService", "زبان فارسی پشتیبانی نمی‌شود")
-                }
-            } else {
-                Log.e("NavigationService", "خطا در راه‌اندازی TTS")
-            }
-        }
+        // تنظیم حالت پیش‌فرض TTS به خودمختار
+        advancedTTS.setTTSMode(ttsMode)
+        advancedTTS.enableAutonomousMode()
+        
+        Log.i("NavigationService", "✅ AdvancedPersianTTS با حالت $ttsMode فعال شد")
         
         // بارگذاری مقصد ذخیره شده
         destinationManager.getDestination()?.let { dest ->
@@ -79,9 +80,9 @@ class NavigationService : Service() {
     
     override fun onDestroy() {
         super.onDestroy()
-        if (::tts.isInitialized) {
-            tts.stop()
-            tts.shutdown()
+        if (::advancedTTS.isInitialized) {
+            advancedTTS.stop()
+            advancedTTS.shutdown()
         }
     }
     
@@ -139,8 +140,9 @@ class NavigationService : Service() {
                 locationListener
             )
             
-            // تست هشدار صوتی
-            tts.speak("سلام. سیستم هشدار صوتی فارسی فعال است", TextToSpeech.QUEUE_FLUSH, null)
+            // تست هشدار صوتی با سیستم جدید
+            advancedTTS.speak("سلام. سیستم هشدار صوتی فارسی فعال است")
+            Log.i("NavigationService", "🔊 تست اولیه صوتی با AdvancedPersianTTS انجام شد")
         } catch (e: SecurityException) {
             e.printStackTrace()
         }
@@ -162,19 +164,21 @@ class NavigationService : Service() {
         // آپدیت notification
         updateNotification(location)
         
-        // مسیریابی به مقصد
+        // مسیریابی به مقصد با هشدارهای صوتی واقعی
         routeManager.calculateRoute(location)?.let { route ->
             // بررسی رسیدن به مقصد
             if (routeManager.hasReachedDestination(location)) {
-                tts.speak("به مقصد رسیدید", TextToSpeech.QUEUE_FLUSH, null)
+                advancedTTS.announceDestinationReached()
+                Log.i("NavigationService", "🏁 هشدار رسیدن به مقصد صادر شد")
                 routeManager.clearDestination()
                 destinationManager.clearDestination()
             } else {
-                // راهنمایی جهت (هر 30 ثانیه)
+                // راهنمایی جهت (هر 30 ثانیه) با فایل‌های صوتی
                 val now = System.currentTimeMillis()
                 if (now - lastDirectionTime > 30000) {
                     val distance = (route.distance / 1000).toInt()
-                    tts.speak("${route.direction}. فاصله تا مقصد $distance کیلومتر", TextToSpeech.QUEUE_FLUSH, null)
+                    advancedTTS.provideNavigationAlert(route.distance.toInt(), route.direction)
+                    Log.i("NavigationService", "🧭 هشدار ناوبری: ${route.direction} - فاصله: ${route.distance}m")
                     lastDirectionTime = now
                 }
             }
@@ -193,7 +197,7 @@ class NavigationService : Service() {
     }
     
     /**
-     * تحلیل هوشمند و ارائه هشدارهای پیشرفته
+     * تحلیل هوشمند و ارائه هشدارهای پیشرفته با فایل‌های صوتی
      */
     private fun analyzeAndProvideSmartAlerts(location: Location) {
         try {
@@ -201,19 +205,33 @@ class NavigationService : Service() {
             val analysis = routeManager.analyzeLocation(location)
             
             when {
-                // هشدار خطر بالا
+                // هشدار خطر بالا با فایل صوتی
                 analysis.riskLevel == ir.navigator.persian.lite.RiskLevel.HIGH -> {
-                    tts.speak("هشدار: شرایط خطرناک. لطفاً با احتیاط رانندگی کنید.", TextToSpeech.QUEUE_FLUSH, null)
+                    advancedTTS.speak("خطر")
+                    Log.i("NavigationService", "⚠️ هشدار خطر بالا صادر شد")
                 }
-                // هشدار ترافیک سنگین
+                // هشدار ترافیک سنگین با فایل صوتی
                 analysis.trafficCondition == ir.navigator.persian.lite.TrafficCondition.HEAVY -> {
-                    tts.speak("توجه: ترافیک سنگین پیش رو است. زمان بیشتری برای رسیدن به مقصد نیاز دارید.", TextToSpeech.QUEUE_FLUSH, null)
+                    advancedTTS.speak("ترافیک سنگین")
+                    Log.i("NavigationService", "🚗 هشدار ترافیک سنگین صادر شد")
                 }
                 // هشدار رفتار پرخطر رانندگی
                 analysis.drivingBehavior == ir.navigator.persian.lite.DrivingBehavior.AGGRESSIVE -> {
-                    tts.speak("توصیه: رانندگی آرام‌تر داشته باشید. ایمنی شما مهم است.", TextToSpeech.QUEUE_FLUSH, null)
+                    advancedTTS.speak("کاهش سرعت")
+                    Log.i("NavigationService", "🛑 هشدار کاهش سرعت صادر شد")
                 }
             }
+            
+            // هشدار سرعت بر اساس موقعیت (شهری/بین شهری)
+            val isUrbanArea = analysis.isUrbanArea
+            advancedTTS.provideSpeedAlert(currentSpeed.toFloat(), isUrbanArea)
+            
+            // به‌روزرسانی وضعیت برای AI خودمختار
+            advancedTTS.updateDrivingStatusForAI(
+                currentSpeed.toFloat(), 
+                "در حال رانندگی", 
+                true
+            )
             
             // هشدار نزدیکی به دوربین سرعت (در صورت وجود)
             checkSpeedCameraAlerts(location)
@@ -224,11 +242,29 @@ class NavigationService : Service() {
     }
     
     /**
-     * بررسی هشدارهای دوربین سرعت
+     * بررسی هشدارهای دوربین سرعت با فایل‌های صوتی
      */
     private fun checkSpeedCameraAlerts(location: Location) {
-        // TODO: پیاده‌سازی هشدار دوربین سرعت در نسخه بعدی
-        // این بخش می‌تواند از دیتابیس دوربین‌ها استفاده کند
+        try {
+            // شبیه‌سازی دوربین سرعت برای تست
+            // در نسخه نهایی از دیتابیس واقعی استفاده می‌شود
+            val mockSpeedCameras = listOf(
+                SpeedCamera(35.6892, 51.3890, 50), // تهران
+                SpeedCamera(35.7000, 51.4000, 60), // تهران
+                SpeedCamera(35.6800, 51.3800, 40)  // تهران
+            )
+            
+            mockSpeedCameras.forEach { camera ->
+                val distance = calculateDistance(location, camera)
+                if (distance < 500) { // کمتر از 500 متر
+                    advancedTTS.announceSpeedCamera(distance.toInt(), camera.speedLimit)
+                    Log.i("NavigationService", "📸 هشدار دوربین سرعت: فاصله ${distance}m، محدودیت ${camera.speedLimit}km/h")
+                    return // فقط یک هشدار در هر بار
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("NavigationService", "خطا در بررسی دوربین سرعت: ${e.message}")
+        }
     }
     
     private fun calculateDistance(location: Location, camera: SpeedCamera): Float {
@@ -240,6 +276,23 @@ class NavigationService : Service() {
         return results[0]
     }
     
+    /**
+     * تنظیم حالت TTS از MainActivity
+     */
+    fun setTTSMode(mode: TTSMode) {
+        ttsMode = mode
+        if (::advancedTTS.isInitialized) {
+            advancedTTS.setTTSMode(mode)
+            Log.i("NavigationService", "🔧 حالت TTS در سرویس تغییر کرد به: $mode")
+        }
+    }
+    
+    /**
+     * دریافت حالت فعلی TTS
+     */
+    fun getCurrentTTSMode(): TTSMode {
+        return ttsMode
+    }
     
     override fun onBind(intent: Intent?): IBinder? = null
 }

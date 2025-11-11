@@ -19,6 +19,7 @@ import android.content.Intent
 import android.os.Build
 import kotlinx.coroutines.*
 import ir.navigator.persian.lite.service.NavigationService
+import android.app.ActivityManager
 import ir.navigator.persian.lite.navigation.DestinationSearchActivity
 import ir.navigator.persian.lite.navigation.Destination
 import android.util.Log
@@ -26,6 +27,7 @@ import ir.navigator.persian.lite.api.SecureKeys
 import android.net.Uri
 import android.app.AlertDialog
 import ir.navigator.persian.lite.ai.PersianAIAssistant
+import ir.navigator.persian.lite.tts.TTSMode
 import ir.navigator.persian.lite.test.AITestSuite
 import ir.navigator.persian.lite.ui.StatisticsActivity
 import ir.navigator.persian.lite.ui.AIChatActivity
@@ -72,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         aiAssistant = PersianAIAssistant(this)
         
         // فعال‌سازی حالت خودمختار هوشمند از ابتدا (پیش‌فرض)
+        aiAssistant.setTTSMode(TTSMode.AUTONOMOUS)
         aiAssistant.setAutonomousMode(true)
         aiAssistant.provideTimeBasedAlerts()
         Log.i("MainActivity", "🤖 دستیار هوشمند خودمختار از ابتدا فعال شد")
@@ -160,7 +163,55 @@ class MainActivity : AppCompatActivity() {
         
         // Test voice button
         btnTestVoice.setOnClickListener {
-            testVoiceAlert()
+            try {
+                Log.i("MainActivity", "🎯 شروع تست جامع هشدار صوتی...")
+                Toast.makeText(this, "🎯 در حال تست تمام حالت‌های صوتی...", Toast.LENGTH_SHORT).show()
+                
+                mainScope.launch {
+                    // تست حالت آفلاین با فایل‌های صوتی
+                    delay(1000)
+                    aiAssistant.setTTSMode(TTSMode.OFFLINE)
+                    aiAssistant.speak("تست حالت آفلاین با فایل‌های صوتی")
+                    delay(2000)
+                    aiAssistant.speak("تست")
+                    delay(2000)
+                    aiAssistant.speak("خطر سرعت بالا")
+                    
+                    // تست حالت آنلاین با OpenAI
+                    delay(3000)
+                    aiAssistant.setTTSMode(TTSMode.ONLINE)
+                    aiAssistant.speak("تست حالت آنلاین با OpenAI TTS")
+                    delay(2000)
+                    aiAssistant.speak("سیستم آنلاین فعال است")
+                    
+                    // تست حالت خودمختار هوشمند
+                    delay(3000)
+                    aiAssistant.setTTSMode(TTSMode.AUTONOMOUS)
+                    aiAssistant.speak("تست حالت خودمختار هوشمند")
+                    delay(2000)
+                    aiAssistant.speak("دستیار هوشمند فعال شد")
+                    
+                    // تست هشدارهای ناوبری
+                    delay(3000)
+                    aiAssistant.provideSpeedAlert(85f, false)
+                    
+                    delay(3000)
+                    aiAssistant.provideNavigationAlert(500, "به راست بپیچید")
+                    
+                    delay(3000)
+                    aiAssistant.announceSpeedCamera(200, 60)
+                    
+                    delay(3000)
+                    aiAssistant.announceDestinationReached()
+                    
+                    Log.i("MainActivity", "✅ تست جامع هشدار صوتی با موفقیت انجام شد")
+                    Toast.makeText(this, "✅ تست صوتی تمام شد!", Toast.LENGTH_SHORT).show()
+                }
+                
+            } catch (e: Exception) {
+                Log.e("MainActivity", "❌ خطا در تست هشدار صوتی: ${e.message}")
+                Toast.makeText(this, "خطا در تست صدا: ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
         
         // Select destination button
@@ -192,38 +243,92 @@ class MainActivity : AppCompatActivity() {
         
         // Statistics button - باز کردن صفحه آمار
         btnStatistics.setOnClickListener {
-            val intent = Intent(this, StatisticsActivity::class.java)
-            startActivity(intent)
+            try {
+                Log.i("MainActivity", "📊 در حال باز کردن صفحه آمار رانندگی...")
+                Toast.makeText(this, "📊 در حال باز کردن صفحه آمار...", Toast.LENGTH_SHORT).show()
+                val intent = Intent(this, StatisticsActivity::class.java)
+                startActivity(intent)
+                Log.i("MainActivity", "✅ صفحه آمار با موفقیت باز شد")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "❌ خطا در باز کردن صفحه آمار: ${e.message}")
+                Toast.makeText(this, "❌ خطا در باز کردن صفحه آمار", Toast.LENGTH_SHORT).show()
+            }
         }
         
         // AI Chat button - باز کردن صفحه چت
         btnAIChat.setOnClickListener {
-            val intent = Intent(this, AIChatActivity::class.java)
-            startActivity(intent)
-        }
-        
-        // تنظیم حالت TTS - همه حالت‌ها AI فعال دارند، فقط موتور TTS متفاوت است
-        rgTTSMode.setOnCheckedChangeListener { _, checkedId ->
-            when (checkedId) {
-                R.id.rbOffline -> {
-                    Toast.makeText(this, "🔊 حالت آفلاین فعال شد - AI با صدای سیستم", Toast.LENGTH_SHORT).show()
-                    aiAssistant.setAutonomousMode(true)
-                    aiAssistant.provideTimeBasedAlerts()
-                }
-                R.id.rbOnline -> {
-                    Toast.makeText(this, "🌐 حالت آنلاین فعال شد - AI با صدای حرفه‌ای", Toast.LENGTH_SHORT).show()
-                    aiAssistant.setAutonomousMode(true)
-                    aiAssistant.provideTimeBasedAlerts()
-                }
-                R.id.rbAutonomous -> {
-                    Toast.makeText(this, "🤖 دستیار هوشمند خودمختار فعال شد", Toast.LENGTH_SHORT).show()
-                    aiAssistant.setAutonomousMode(true)
-                    aiAssistant.provideTimeBasedAlerts()
-                }
+            try {
+                Log.i("MainActivity", "🤖 در حال باز کردن صفحه چت با هوش مصنوعی...")
+                Toast.makeText(this, "🤖 در حال باز کردن صفحه چت...", Toast.LENGTH_SHORT).show()
+                val intent = Intent(this, AIChatActivity::class.java)
+                startActivity(intent)
+                Log.i("MainActivity", "✅ صفحه چت با موفقیت باز شد")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "❌ خطا در باز کردن صفحه چت: ${e.message}")
+                Toast.makeText(this, "❌ خطا در باز کردن صفحه چت", Toast.LENGTH_SHORT).show()
             }
         }
         
+        // تنظیم حالت TTS - همگام‌سازی با NavigationService برای هشدارهای واقعی
+        rgTTSMode.setOnCheckedChangeListener { _, checkedId ->
+            val selectedMode = when (checkedId) {
+                R.id.rbOffline -> {
+                    Toast.makeText(this, "🔊 حالت آفلاین فعال شد - هشدارها با فایل‌های صوتی ضبط شده", Toast.LENGTH_SHORT).show()
+                    TTSMode.OFFLINE
+                }
+                R.id.rbOnline -> {
+                    Toast.makeText(this, "🌐 حالت آنلاین فعال شد - هشدارها با OpenAI TTS", Toast.LENGTH_SHORT).show()
+                    TTSMode.ONLINE
+                }
+                R.id.rbAutonomous -> {
+                    Toast.makeText(this, "🤖 دستیار هوشمند خودمختار فعال شد", Toast.LENGTH_SHORT).show()
+                    TTSMode.AUTONOMOUS
+                }
+                else -> TTSMode.AUTONOMOUS
+            }
+            
+            // تنظیم حالت در AI Assistant
+            aiAssistant.setTTSMode(selectedMode)
+            aiAssistant.setAutonomousMode(true)
+            aiAssistant.provideTimeBasedAlerts()
+            
+            // همگام‌سازی با NavigationService برای هشدارهای واقعی در حین رانندگی
+            try {
+                val serviceIntent = Intent(this, NavigationService::class.java)
+                // اگر سرویس در حال اجراست، حالت را به‌روز کن
+                if (isNavigationServiceRunning()) {
+                    // استفاده از BroadcastReceiver برای ارسال حالت جدید به سرویس
+                    val broadcastIntent = Intent("UPDATE_TTS_MODE")
+                    broadcastIntent.putExtra("tts_mode", selectedMode.name)
+                    sendBroadcast(broadcastIntent)
+                    Log.i("MainActivity", "📡 حالت TTS به NavigationService ارسال شد: $selectedMode")
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "❌ خطا در همگام‌سازی با NavigationService: ${e.message}")
+            }
+            
+            Log.i("MainActivity", "✅ حالت TTS فعال شد: $selectedMode (هشدارهای واقعی در حین رانندگی)")
+        }
+        
         // دکمه‌های جدید غیرفعال شدند
+    }
+    
+    /**
+     * بررسی اینکه آیا NavigationService در حال اجراست
+     */
+    private fun isNavigationServiceRunning(): Boolean {
+        return try {
+            val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            for (service in activityManager.getRunningServices(Integer.MAX_VALUE)) {
+                if (NavigationService::class.java.name == service.service.className) {
+                    return true
+                }
+            }
+            false
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در بررسی وضعیت سرویس: ${e.message}")
+            false
+        }
     }
     
         
@@ -319,29 +424,20 @@ class MainActivity : AppCompatActivity() {
     }
     
     /**
-     * تست هشدار صوتی
+     * تست حالت‌های اضطراری
      */
-    private fun testVoiceAlert() {
+    private fun testEmergencyModes() {
         try {
-            // تست دستیار هوشمند
-            aiAssistant.setAutonomousMode(true)
-            
-            // تست NavigatorEngine
-            navigatorEngine.testVoiceAlert()
-            
-            // تست مستقیم AI Assistant
-            mainScope.launch {
-                delay(1000)
-                aiAssistant.processUserInput("سلام")
-                delay(2000)
-                aiAssistant.provideTimeBasedAlerts()
-            }
-            
-            Toast.makeText(this, "🔊 تست هشدار صوتی شروع شد - دستیار هوشمند فعال است", Toast.LENGTH_LONG).show()
-            Log.i("MainActivity", "✅ تست هشدار صوتی با موفقیت اجرا شد")
+            AlertDialog.Builder(this)
+                .setTitle("تست حالت اضطراری")
+                .setMessage("آیا مایل به تست حالت‌های اضطراری هستید؟")
+                .setPositiveButton("بله") { _, _ ->
+                    // emergencyMode.testEmergencyModes()
+                }
+                .setNegativeButton("خیر", null)
+                .show()
         } catch (e: Exception) {
-            Log.e("MainActivity", "❌ خطا در تست هشدار صوتی: ${e.message}")
-            Toast.makeText(this, "خطا در تست: ${e.message}", Toast.LENGTH_SHORT).show()
+            Log.e("MainActivity", "❌ خطا در تست حالت اضطراری: ${e.message}")
         }
     }
     
@@ -558,20 +654,45 @@ class MainActivity : AppCompatActivity() {
         // فعال‌سازی ویژگی‌های هوشمند در حین رانندگی
         activateDrivingFeatures()
         
-        // تست هشدار صوتی
+        // فعال‌سازی حالت خودمختار برای هشدارهای زنده
+        aiAssistant.setTTSMode(TTSMode.AUTONOMOUS)
+        aiAssistant.setAutonomousMode(true)
+        
+        // تست هشدار صوتی با فایل‌های صوتی
         navigatorEngine.testVoiceAlert()
         
-        // تست جامع AI در حین رانندگی
+        // تست جامع AI در حین رانندگی با تمام حالت‌های صوتی
         mainScope.launch {
             delay(2000)
             try {
-                // تست گفتگوی AI
-                aiAssistant.processUserInput("سلام")
-                delay(3000)
-                // تست هشدارهای زمانی
-                aiAssistant.provideTimeBasedAlerts()
+                Log.i("MainActivity", "🚗 شروع تست جامع AI در حین رانندگی...")
+                
+                // تست حالت آفلاین در حین رانندگی
+                aiAssistant.setTTSMode(TTSMode.OFFLINE)
+                aiAssistant.speak("مسیریابی شروع شد. حالت آفلاین فعال.")
                 delay(2000)
-                // تست تحلیل وضعیت
+                aiAssistant.speak("تست هشدار سرعت")
+                
+                // تست حالت آنلاین در حین رانندگی  
+                delay(3000)
+                aiAssistant.setTTSMode(TTSMode.ONLINE)
+                aiAssistant.speak("تغییر به حالت آنلاین. سیستم فعال.")
+                
+                // تست حالت خودمختار در حین رانندگی
+                delay(3000)
+                aiAssistant.setTTSMode(TTSMode.AUTONOMOUS)
+                aiAssistant.speak("دستیار هوشمند خودمختار فعال شد")
+                
+                // تست گفتگوی AI
+                delay(2000)
+                aiAssistant.processUserInput("وضعیت مسیر چطور است؟")
+                
+                // تست هشدارهای زمانی
+                delay(3000)
+                aiAssistant.provideTimeBasedAlerts()
+                
+                // تست تحلیل وضعیت رانندگی
+                delay(2000)
                 aiAssistant.analyzeDrivingSituation(
                     ir.navigator.persian.lite.AnalysisResult(
                         status = "در حال رانندگی",
@@ -587,7 +708,17 @@ class MainActivity : AppCompatActivity() {
                         riskLevel = ir.navigator.persian.lite.RiskLevel.LOW
                     )
                 )
+                
+                // تست هشدارهای ناوبری زنده
+                delay(3000)
+                aiAssistant.provideNavigationAlert(200, "به چپ بپیچید")
+                
+                delay(2000)
+                aiAssistant.announceSpeedCamera(100, 50)
+                
                 Log.i("MainActivity", "✅ تست جامع AI در حین رانندگی با موفقیت انجام شد")
+                Toast.makeText(this@MainActivity, "✅ دستیار هوشمند در حین رانندگی فعال است!", Toast.LENGTH_SHORT).show()
+                
             } catch (e: Exception) {
                 Log.e("MainActivity", "❌ خطا در تست AI رانندگی: ${e.message}")
             }

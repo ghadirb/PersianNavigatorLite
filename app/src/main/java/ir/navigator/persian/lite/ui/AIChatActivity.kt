@@ -30,45 +30,60 @@ class AIChatActivity : AppCompatActivity() {
     }
     
     private fun setupUI() {
-        // دکمه بازگشت
-        findViewById<Button>(R.id.btnBack).setOnClickListener {
-            finish()
-        }
+        Log.i("AIChatActivity", "🔧 در حال تنظیم UI چت...")
         
         try {
+            // دکمه بازگشت
+            val btnBack = findViewById<Button>(R.id.btnBack)
+            btnBack.setOnClickListener {
+                Log.i("AIChatActivity", "🔙 دکمه بازگشت چت فشرده شد")
+                finish()
+            }
+            Log.i("AIChatActivity", "✅ دکمه بازگشت چت تنظیم شد")
+            
+            // المان‌های اصلی چت
             tvChatHistory = findViewById(R.id.tvChatHistory)
             etUserInput = findViewById(R.id.etUserInput)
             btnSend = findViewById(R.id.btnSend)
             scrollView = findViewById(R.id.scrollView)
+            
+            Log.i("AIChatActivity", "✅ المان‌های چت با موفقیت پیدا شدند")
+            
         } catch (e: Exception) {
-            // اگر المان‌ها در layout نباشند، از TextView ساده استفاده کنیم
+            Log.e("AIChatActivity", "❌ خطا در پیدا کردن المان‌های چت: ${e.message}")
+            Toast.makeText(this, "❌ خطا در تنظیم صفحه چت: ${e.message}", Toast.LENGTH_LONG).show()
             return
         }
         
-        // پیام خوشامدگویی
-        addMessage("🤖 دستیار هوشمند", "سلام! من دستیار هوشمند شما هستم. چطور می‌توانم کمک کنم؟")
-        
-        btnSend.setOnClickListener {
-            val userMessage = etUserInput.text.toString().trim()
-            if (userMessage.isNotEmpty()) {
-                addMessage("👤 شما", userMessage)
-                etUserInput.text.clear()
-                
-                // پردازش پیام توسط AI
-                aiAssistant.processUserInput(userMessage)
-                
-                // شبیه‌سازی پاسخ
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    val response = when {
-                        userMessage.contains("سلام") -> "سلام! خوش آمدید. چطور می‌توانم کمک کنم؟"
-                        userMessage.contains("کمک") -> "من می‌توانم در مسیریابی، هشدارهای سرعت و تحلیل ترافیک به شما کمک کنم."
-                        userMessage.contains("وضعیت") -> "وضعیت رانندگی شما عالی است. همه سیستم‌ها به درستی کار می‌کنند."
-                        userMessage.contains("مسیر") -> "برای تنظیم مسیر، لطفاً مقصد مورد نظر خود را در صفحه اصلی وارد کنید."
-                        else -> "متوجه شدم. اگر سوال دیگری دارید، لطفاً بپرسید."
+        try {
+            // پیام خوشامدگویی
+            addMessage("🤖 دستیار هوشمند", "سلام! من دستیار هوشمند شما هستم. چطور می‌توانم کمک کنم؟")
+            Log.i("AIChatActivity", "✅ پیام خوشامدگویی اضافه شد")
+            
+            // دکمه ارسال
+            btnSend.setOnClickListener {
+                val input = etUserInput.text.toString().trim()
+                if (input.isNotEmpty()) {
+                    Log.i("AIChatActivity", "💬 پیام کاربر: $input")
+                    addMessage("شما", input)
+                    etUserInput.setText("")
+                    
+                    // ارسال به AI
+                    try {
+                        aiAssistant.processUserInput(input)
+                        Log.i("AIChatActivity", "✅ پیام به AI ارسال شد")
+                    } catch (e: Exception) {
+                        Log.e("AIChatActivity", "❌ خطا در ارسال به AI: ${e.message}")
+                        addMessage("سیستم", "متاسفم، خطایی در ارتباط با AI رخ داد.")
                     }
-                    addMessage("🤖 دستیار هوشمند", response)
-                }, 1000)
+                }
             }
+            
+            Log.i("AIChatActivity", "✅ صفحه چت با موفقیت آماده شد")
+            
+        } catch (e: Exception) {
+            Log.e("AIChatActivity", "❌ خطا در تنظیم دکمه‌های چت: ${e.message}")
+            Toast.makeText(this, "❌ خطا در تنظیم دکمه‌ها: ${e.message}", Toast.LENGTH_LONG).show()
         }
         
         // پیشنهادات سریع

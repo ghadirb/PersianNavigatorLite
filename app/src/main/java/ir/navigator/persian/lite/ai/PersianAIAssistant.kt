@@ -3,6 +3,7 @@ package ir.navigator.persian.lite.ai
 import android.content.Context
 import android.util.Log
 import ir.navigator.persian.lite.tts.AdvancedPersianTTS
+import ir.navigator.persian.lite.tts.TTSMode
 import ir.navigator.persian.lite.RouteAnalyzer
 import ir.navigator.persian.lite.AnalysisResult
 import ir.navigator.persian.lite.api.SecureKeys
@@ -306,6 +307,14 @@ class PersianAIAssistant(private val context: Context) {
     fun setUserPreferences(preferences: UserPreferences) {
         userPreferences = preferences
         Log.i("PersianAIAssistant", "⚙️ ترجیحات کاربر به‌روز شد")
+    }
+    
+    /**
+     * تنظیم حالت TTS
+     */
+    fun setTTSMode(mode: TTSMode) {
+        advancedTTS.setTTSMode(mode)
+        Log.i("PersianAIAssistant", "🔧 حالت TTS تغییر کرد به: $mode")
     }
     
     /**
