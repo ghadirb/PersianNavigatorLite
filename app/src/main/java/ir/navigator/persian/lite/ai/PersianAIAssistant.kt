@@ -51,12 +51,11 @@ class PersianAIAssistant(private val context: Context) {
     
     private fun initializeAI() {
         try {
-            advancedTTS.enableAutonomousMode()
-            isAutonomousMode = true
-            Log.i("PersianAIAssistant", "🤖 دستیار هوشمند فارسی با موفقیت راه‌اندازی شد")
+            // فقط راه‌اندازی اولیه TTS
+            Log.i("PersianAIAssistant", "🤖 دستیار هوشمند فارسی در حال راه‌اندازی...")
             
-            // پیام خوشامدگویی هوشمند
-            welcomeUser()
+            // پیام خوشامدگویی هوشمند بعد از فعال‌سازی نهایی
+            // welcomeUser() در setAutonomousMode(true) فراخوانی می‌شود
         } catch (e: Exception) {
             Log.e("PersianAIAssistant", "❌ خطا در راه‌اندازی دستیار هوشمند: ${e.message}")
         }
@@ -316,7 +315,14 @@ class PersianAIAssistant(private val context: Context) {
         isAutonomousMode = enabled
         if (enabled) {
             advancedTTS.enableAutonomousMode()
+            Log.i("PersianAIAssistant", "🤖 حالت خودمختار فعال شد")
+            
+            // پیام فعال‌سازی و خوشامدگویی
             speak("حالت خودمختار فعال شد.")
+            assistantScope.launch {
+                delay(1000)
+                welcomeUser()
+            }
         } else {
             advancedTTS.disableAutonomousMode()
             speak("حالت خودمختار غیرفعال شد.")

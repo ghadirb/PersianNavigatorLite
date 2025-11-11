@@ -202,16 +202,18 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
         
-        // تنظیم حالت TTS
+        // تنظیم حالت TTS - همه حالت‌ها AI فعال دارند، فقط موتور TTS متفاوت است
         rgTTSMode.setOnCheckedChangeListener { _, checkedId ->
             when (checkedId) {
                 R.id.rbOffline -> {
-                    Toast.makeText(this, "🔊 حالت آفلاین فعال شد", Toast.LENGTH_SHORT).show()
-                    aiAssistant.setAutonomousMode(false)
+                    Toast.makeText(this, "🔊 حالت آفلاین فعال شد - AI با صدای سیستم", Toast.LENGTH_SHORT).show()
+                    aiAssistant.setAutonomousMode(true)
+                    aiAssistant.provideTimeBasedAlerts()
                 }
                 R.id.rbOnline -> {
-                    Toast.makeText(this, "🌐 حالت آنلاین فعال شد", Toast.LENGTH_SHORT).show()
-                    aiAssistant.setAutonomousMode(false)
+                    Toast.makeText(this, "🌐 حالت آنلاین فعال شد - AI با صدای حرفه‌ای", Toast.LENGTH_SHORT).show()
+                    aiAssistant.setAutonomousMode(true)
+                    aiAssistant.provideTimeBasedAlerts()
                 }
                 R.id.rbAutonomous -> {
                     Toast.makeText(this, "🤖 دستیار هوشمند خودمختار فعال شد", Toast.LENGTH_SHORT).show()
@@ -558,6 +560,38 @@ class MainActivity : AppCompatActivity() {
         
         // تست هشدار صوتی
         navigatorEngine.testVoiceAlert()
+        
+        // تست جامع AI در حین رانندگی
+        mainScope.launch {
+            delay(2000)
+            try {
+                // تست گفتگوی AI
+                aiAssistant.processUserInput("سلام")
+                delay(3000)
+                // تست هشدارهای زمانی
+                aiAssistant.provideTimeBasedAlerts()
+                delay(2000)
+                // تست تحلیل وضعیت
+                aiAssistant.analyzeDrivingSituation(
+                    ir.navigator.persian.lite.AnalysisResult(
+                        status = "در حال رانندگی",
+                        isUrbanArea = true,
+                        approachingTurn = false,
+                        speedAnalysis = ir.navigator.persian.lite.SpeedAnalysis(
+                            currentSpeed = 45f,
+                            avgSpeed = 40f,
+                            maxSpeed = 60f,
+                            isOverSpeed = false
+                        ),
+                        trafficCondition = ir.navigator.persian.lite.TrafficCondition.NORMAL,
+                        riskLevel = ir.navigator.persian.lite.RiskLevel.LOW
+                    )
+                )
+                Log.i("MainActivity", "✅ تست جامع AI در حین رانندگی با موفقیت انجام شد")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "❌ خطا در تست AI رانندگی: ${e.message}")
+            }
+        }
     }
     
     /**
