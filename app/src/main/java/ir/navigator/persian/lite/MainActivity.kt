@@ -1,6 +1,6 @@
 package ir.navigator.persian.lite
 
-// Build fixes applied - duplicates resolved, TTS issues fixed
+// Final build verification - All issues resolved
 
 import android.Manifest
 import android.content.pm.PackageManager
