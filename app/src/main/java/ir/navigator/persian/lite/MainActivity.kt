@@ -25,6 +25,7 @@ import android.util.Log
 import ir.navigator.persian.lite.api.SecureKeys
 import android.net.Uri
 import android.app.AlertDialog
+import ir.navigator.persian.lite.ai.PersianAIAssistant
 
 class MainActivity : AppCompatActivity() {
     
@@ -32,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     
     private lateinit var navigatorEngine: NavigatorEngine
     private lateinit var destinationManager: DestinationManager
+    private lateinit var aiAssistant: PersianAIAssistant
     private var isTracking = false
     private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
@@ -64,6 +66,10 @@ class MainActivity : AppCompatActivity() {
         navigatorEngine = NavigatorEngine(this, this)
         destinationManager = DestinationManager(this)
         googleMapsIntegration = GoogleMapsIntegration(this)
+        aiAssistant = PersianAIAssistant(this)
+        
+        // مقداردهی اولیه SecureKeys
+        SecureKeys.init(this)
         
         // بررسی و فعال‌سازی خودکار کلیدها
         checkAndActivateKeys()
@@ -516,14 +522,21 @@ class MainActivity : AppCompatActivity() {
     private fun activateDrivingFeatures() {
         try {
             // فعال‌سازی دستیار هوشمند خودمختار برای هشدارهای زنده
-            val advancedTTS = ir.navigator.persian.lite.tts.AdvancedPersianTTS(this)
-            advancedTTS.enableAutonomousMode()
+            aiAssistant.setAutonomousMode(true)
+            
+            // ارائه هشدارهای زمانی
+            aiAssistant.provideTimeBasedAlerts()
             
             // به‌روزرسانی وضعیت اولیه برای AI
-            advancedTTS.updateDrivingStatusForAI(0f, "آماده شروع", true)
+            aiAssistant.analyzeDrivingSituation(
+                ir.navigator.persian.lite.AnalysisResult(
+                    status = "آماده شروع",
+                    isUrbanArea = false,
+                    approachingTurn = false
+                )
+            )
             
-            Log.i("MainActivity", "🚗 ویژگی‌های رانندگی فعال شد")
-            Log.i("MainActivity", "🤖 دستیار هوشمند خودمختار فعال شد")
+            Log.i("MainActivity", "🤖 ویژگی‌های هوشمند رانندگی فعال شد")
         } catch (e: Exception) {
             Log.e("MainActivity", "❌ خطا در فعال‌سازی ویژگی‌های رانندگی: ${e.message}")
         }
@@ -555,8 +568,7 @@ class MainActivity : AppCompatActivity() {
     private fun deactivateDrivingFeatures() {
         try {
             // غیرفعال‌سازی دستیار هوشمند خودمختار
-            val advancedTTS = ir.navigator.persian.lite.tts.AdvancedPersianTTS(this)
-            advancedTTS.disableAutonomousMode()
+            aiAssistant.setAutonomousMode(false)
             
             Log.i("MainActivity", "🛑 ویژگی‌های رانندگی غیرفعال شد")
         } catch (e: Exception) {
@@ -639,6 +651,9 @@ class MainActivity : AppCompatActivity() {
         
         // خاموش کردن ویژگی‌های اصلی
         try {
+            aiAssistant.shutdown()
+            navigatorEngine.stop()
+            mainScope.cancel()
             Log.i("MainActivity", "🧹 ویژگی‌های اصلی خاموش شدند")
         } catch (e: Exception) {
             Log.e("MainActivity", "❌ خطا در خاموش کردن ویژگی‌ها: ${e.message}")
