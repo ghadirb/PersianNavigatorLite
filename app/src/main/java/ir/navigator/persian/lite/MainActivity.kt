@@ -41,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var destinationManager: DestinationManager
     private lateinit var aiAssistant: PersianAIAssistant
     private lateinit var advancedTTS: AdvancedPersianTTS
+    private var ttsMode = TTSMode.AUTONOMOUS
     private var isTracking = false
     private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
