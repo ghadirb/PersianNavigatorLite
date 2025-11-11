@@ -29,6 +29,8 @@ import ir.navigator.persian.lite.learning.DriverLearningSystem
 import ir.navigator.persian.lite.vehicle.SmartVehicleConnector
 import ir.navigator.persian.lite.safety.EmergencyMode
 import ir.navigator.persian.lite.safety.DrivingBehaviorMonitor
+import android.net.Uri
+import android.app.AlertDialog
 
 class MainActivity : AppCompatActivity() {
     
@@ -38,6 +40,8 @@ class MainActivity : AppCompatActivity() {
     private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
     // ویژگی‌های اصلی - فقط مدل هوشمند خودمختار فعال است
+    
+    private lateinit var googleMapsIntegration: GoogleMapsIntegration
     
     // UI Elements
     private lateinit var btnStart: Button
@@ -63,7 +67,9 @@ class MainActivity : AppCompatActivity() {
         
         navigatorEngine = NavigatorEngine(this, this)
         destinationManager = DestinationManager(this)
-        SecureKeys.init(this)
+        googleMapsIntegration = GoogleMapsIntegration(this)
+        
+        checkServiceStatus().init(this)
         
         // مقداردهی ویژگی‌های جدید
         initializeNewFeatures()
@@ -155,7 +161,7 @@ class MainActivity : AppCompatActivity() {
         
         // Select destination button
         btnSelectDestination.setOnClickListener {
-            openDestinationSearch()
+            showDestinationOptions()
         }
         
         // Activate keys button - Manual activation (backup)
@@ -209,12 +215,113 @@ class MainActivity : AppCompatActivity() {
     }
     
     /**
-     * تنظیم دکمه‌های ویژگی‌های جدید
+     * نمایش گزینه‌های انتخاب مقصد
      */
-    private fun setupNewFeatureButtons() {
-        // دکمه‌های جدید در حال حاضر غیرفعال هستند تا از خطاهای کامپایل جلوگیری شود
-        // ویژگی‌های اصلی برنامه و مدل هوشمند خودمختار کاملاً فعال هستند
-        Log.i("MainActivity", "✅ ویژگی‌های جدید با موفقیت مقداردهی شدند")
+    private fun showDestinationOptions() {
+        try {
+            val options = arrayOf(
+                "جستجوی مقصد در برنامه",
+                "اشتراک‌گذاری از Google Maps",
+                "باز کردن Google Maps برای انتخاب"
+            )
+            
+            AlertDialog.Builder(this)
+                .setTitle("انتخاب روش مقصد")
+                .setItems(options) { _, which ->
+                    when (which) {
+                        0 -> openDestinationSearch()
+                        1 -> shareFromGoogleMaps()
+                        2 -> openGoogleMapsForSelection()
+                    }
+                }
+                .setNegativeButton("انصراف", null)
+                .show()
+                
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در نمایش گزینه‌های مقصد: ${e.message}")
+        }
+    }
+    
+    /**
+     * اشتراک‌گذاری از Google Maps
+     */
+    private fun shareFromGoogleMaps() {
+        try {
+            val message = """
+                برای استفاده از Google Maps:
+                
+                ۱. Google Maps را باز کنید
+                ۲. مقصد مورد نظر را جستجو کنید
+                ۳. روی دکمه "اشتراک‌گذاری" ضربه بزنید
+                ۴. برنامه PersianNavigatorLite را انتخاب کنید
+                
+                برنامه به طور خودکار مقصد را تشخیص داده 
+                و هشدارهای فارسی را فعال خواهد کرد.
+            """.trimIndent()
+            
+            AlertDialog.Builder(this)
+                .setTitle("🗺️ استفاده از Google Maps")
+                .setMessage(message)
+                .setPositiveButton("باز کردن Google Maps") { _, _ ->
+                    openGoogleMapsApp()
+                }
+                .setNegativeButton("بعداً", null)
+                .show()
+                
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در اشتراک‌گذاری Google Maps: ${e.message}")
+        }
+    }
+    
+    /**
+     * باز کردن Google Maps برای انتخاب مقصد
+     */
+    private fun openGoogleMapsForSelection() {
+        try {
+            if (googleMapsIntegration.isGoogleMapsInstalled()) {
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse("https://www.google.com/maps")
+                intent.setPackage("com.google.android.apps.maps")
+                startActivity(intent)
+                
+                Toast.makeText(this, "مقصد را در Google Maps انتخاب و سپس اشتراک‌گذاری کنید", Toast.LENGTH_LONG).show()
+                
+                // هشدار صوتی راهنمایی
+                val advancedTTS = ir.navigator.persian.lite.tts.AdvancedPersianTTS(this)
+                advancedTTS.speak("Google Maps باز شد. مقصد را انتخاب کرده و با برنامه به اشتراک بگذارید.", 
+                    ir.navigator.persian.lite.tts.Priority.NORMAL)
+            } else {
+                Toast.makeText(this, "Google Maps نصب نیست", Toast.LENGTH_SHORT).show()
+                
+                // پیشنهاد نصب Google Maps
+                AlertDialog.Builder(this)
+                    .setTitle("نصب Google Maps")
+                    .setMessage("برای استفاده از این ویژگی، Google Maps باید نصب باشد. آیا مایلید نصب کنید؟")
+                    .setPositiveButton("نصب") { _, _ ->
+                        val intent = Intent(Intent.ACTION_VIEW)
+                        intent.data = Uri.parse("market://details?id=com.google.android.apps.maps")
+                        startActivity(intent)
+                    }
+                    .setNegativeButton("انصراف", null)
+                    .show()
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در باز کردن Google Maps: ${e.message}")
+        }
+    }
+    
+    /**
+     * باز کردن Google Maps
+     */
+    private fun openGoogleMapsApp() {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse("https://www.google.com/maps")
+            intent.setPackage("com.google.android.apps.maps")
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در باز کردن Google Maps: ${e.message}")
+        }
     }
     
     /**
@@ -439,9 +546,30 @@ class MainActivity : AppCompatActivity() {
             Intent.ACTION_SEND -> {
                 val text = intent.getStringExtra(Intent.EXTRA_TEXT)
                 text?.let {
-                    destinationManager.parseGoogleMapsLink(it)?.let { dest ->
+                    // استفاده از GoogleMapsIntegration برای استخراج مقصد
+                    googleMapsIntegration.extractDestinationFromMapsLink(it)?.let { dest ->
                         destinationManager.saveDestination(dest)
-                        startNavigationService()
+                        tvStatus.text = "مقصد: ${dest.name}"
+                        
+                        // شروع مسیریابی با هشدارهای فارسی
+                        googleMapsIntegration.startNavigationWithPersianAlerts(dest) {
+                            startNavigationService()
+                        }
+                    }
+                }
+            }
+            Intent.ACTION_VIEW -> {
+                // بررسی لینک Google Maps
+                if (googleMapsIntegration.isGoogleMapsIntent(intent)) {
+                    val data = intent.dataString ?: return
+                    googleMapsIntegration.extractDestinationFromMapsLink(data)?.let { dest ->
+                        destinationManager.saveDestination(dest)
+                        tvStatus.text = "مقصد: ${dest.name}"
+                        
+                        // شروع مسیریابی با هشدارهای فارسی
+                        googleMapsIntegration.startNavigationWithPersianAlerts(dest) {
+                            startNavigationService()
+                        }
                     }
                 }
             }
