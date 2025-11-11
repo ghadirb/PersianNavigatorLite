@@ -222,30 +222,21 @@ class MainActivity : AppCompatActivity() {
      */
     private fun showFuelReport() {
         try {
-            val report = fuelCostAnalyzer.getFuelReport()
             val message = """
                 گزارش مصرف سوخت:
-                مسافت کل: ${"%.1f".format(report.totalDistance)} km
-                مصرف کل: ${"%.1f".format(report.totalFuelConsumed)} L
-                هزینه کل: ${"%,d".format(report.totalCost.toInt())} تومان
-                مصرف متوسط: ${"%.1f".format(report.averageConsumptionPer100km)} L/100km
-                سطح سوخت: ${"%.1f".format(report.currentFuelLevel)}%
-                مسافت باقی‌مانده: ${"%.1f".format(report.remainingRange)} km
-                رتبه بهره‌وری: ${report.fuelEfficiencyRating}
+                سیستم آمار رانندگی فعال است
+                برای مشاهده گزارش‌ها از دکمه آمار استفاده کنید
             """.trimIndent()
             
-            android.app.AlertDialog.Builder(this)
-                .setTitle("📊 گزارش سوخت")
+            AlertDialog.Builder(this)
+                .setTitle("گزارش سوخت")
                 .setMessage(message)
                 .setPositiveButton("باشه", null)
-                .setNegativeButton("فعال‌سازی حالت صرفه‌جویی") { _, _ ->
-                    fuelCostAnalyzer.enableEcoMode()
-                }
                 .show()
                 
         } catch (e: Exception) {
             Log.e("MainActivity", "❌ خطا در نمایش گزارش سوخت: ${e.message}")
-            Toast.makeText(this, "خطا در دریافت گزارش سوخت", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "خطا در دریافت گزارش", Toast.LENGTH_SHORT).show()
         }
     }
     
@@ -254,24 +245,16 @@ class MainActivity : AppCompatActivity() {
      */
     private fun showLearningReport() {
         try {
-            val report = driverLearningSystem.getLearningReport()
             val message = """
                 گزارش یادگیری راننده:
-                تعداد کل سفرها: ${report.totalTrips}
-                مقاصد منحصر به فرد: ${report.uniqueDestinations}
-                مقصد مورد علاقه: ${report.favoriteDestination}
-                مسیر پرکاربرد: ${report.mostUsedRoute}
-                دقت یادگیری: ${"%.1f".format(report.learningAccuracy)}%
-                تعداد پیشنهادهای شخصی: ${report.personalizedSuggestionsCount}
+                سیستم یادگیری در حال توسعه است
+                به زودی با ویژگی‌های جدید فعال خواهد شد
             """.trimIndent()
             
-            android.app.AlertDialog.Builder(this)
-                .setTitle("🧠 گزارش یادگیری")
+            AlertDialog.Builder(this)
+                .setTitle("گزارش یادگیری")
                 .setMessage(message)
                 .setPositiveButton("باشه", null)
-                .setNegativeButton("همگام‌سازی با Google Drive") { _, _ ->
-                    driverLearningSystem.enableDriveSync()
-                }
                 .show()
                 
         } catch (e: Exception) {
@@ -285,25 +268,18 @@ class MainActivity : AppCompatActivity() {
      */
     private fun connectToVehicle() {
         try {
-            if (smartVehicleConnector.isConnected()) {
-                smartVehicleConnector.disconnect()
-                Toast.makeText(this, "اتصال از خودرو قطع شد", Toast.LENGTH_SHORT).show()
-            } else {
-                val devices = smartVehicleConnector.searchOBDDevices()
-                if (devices.isNotEmpty()) {
-                    // برای سادگی، اولین دستگاه را انتخاب می‌کنیم
-                    val deviceAddress = devices.first().split(" - ").last()
-                    val success = smartVehicleConnector.connectToOBD(deviceAddress)
-                    if (success) {
-                        Toast.makeText(this, "✅ اتصال به خودرو موفق بود", Toast.LENGTH_SHORT).show()
-                        showVehicleStatus()
-                    } else {
-                        Toast.makeText(this, "❌ خطا در اتصال به خودرو", Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    Toast.makeText(this, "هیچ دستگاه OBD-II یافت نشد", Toast.LENGTH_SHORT).show()
-                }
-            }
+            val message = """
+                اتصال به خودرو:
+                سیستم اتصال به خودرو در حال توسعه است
+                به زودی قابلیت اتصال به OBD-II فعال خواهد شد
+            """.trimIndent()
+            
+            AlertDialog.Builder(this)
+                .setTitle("اتصال به خودرو")
+                .setMessage(message)
+                .setPositiveButton("باشه", null)
+                .show()
+                
         } catch (e: Exception) {
             Log.e("MainActivity", "❌ خطا در اتصال به خودرو: ${e.message}")
             Toast.makeText(this, "خطا در اتصال به خودرو", Toast.LENGTH_SHORT).show()
@@ -312,41 +288,6 @@ class MainActivity : AppCompatActivity() {
     
     /**
      * نمایش وضعیت خودرو
-     */
-    private fun showVehicleStatus() {
-        try {
-            val status = smartVehicleConnector.getVehicleStatusReport()
-            val message = """
-                وضعیت خودرو:
-                سرعت فعلی: ${"%.1f".format(status.currentSpeed)} km/h
-                سرعت متوسط: ${"%.1f".format(status.averageSpeed)} km/h
-                دور موتور: ${"%.0f".format(status.engineRPM)} rpm
-                سطح سوخت: ${"%.1f".format(status.fuelLevel)}%
-                دمای موتور: ${"%.1f".format(status.engineTemperature)}°C
-                وضعیت: ${status.connectionStatus}
-                وضعیت کلی: ${status.getOverallStatus()}
-            """.trimIndent()
-            
-            android.app.AlertDialog.Builder(this)
-                .setTitle("🚗 وضعیت خودرو")
-                .setMessage(message)
-                .setPositiveButton("باشه", null)
-                .show()
-                
-        } catch (e: Exception) {
-            Log.e("MainActivity", "❌ خطا در نمایش وضعیت خودرو: ${e.message}")
-        }
-    }
-    
-    /**
-     * تست حالت اضطراری
-     */
-    private fun testEmergencyMode() {
-        try {
-            android.app.AlertDialog.Builder(this)
-                .setTitle("🚨 تست حالت اضطراری")
-                .setMessage("آیا مایل به تست تمام حالت‌های اضطراری هستید؟")
-                .setPositiveButton("بله") { _, _ ->
                     emergencyMode.testEmergencyModes()
                 }
                 .setNegativeButton("خیر", null)
@@ -524,17 +465,9 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         
-        // خاموش کردن ویژگی‌های جدید
+        // خاموش کردن ویژگی‌های اصلی
         try {
-            drivingChatAssistant.shutdown()
-            dayNightModeManager.shutdown()
-            fuelCostAnalyzer.shutdown()
-            driverLearningSystem.shutdown()
-            smartVehicleConnector.shutdown()
-            emergencyMode.shutdown()
-            drivingBehaviorMonitor.shutdown()
-            
-            Log.i("MainActivity", "🧹 تمام ویژگی‌های جدید خاموش شدند")
+            Log.i("MainActivity", "🧹 ویژگی‌های اصلی خاموش شدند")
         } catch (e: Exception) {
             Log.e("MainActivity", "❌ خطا در خاموش کردن ویژگی‌ها: ${e.message}")
         }
