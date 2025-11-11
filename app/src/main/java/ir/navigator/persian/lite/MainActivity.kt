@@ -470,10 +470,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    private fun openDestinationSearch() {
-        val intent = Intent(this, DestinationSearchActivity::class.java)
-        startActivityForResult(intent, 100)
-    }
     
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -493,29 +489,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    private fun testVoiceAlert() {
-        // تست هشدار صوتی فارسی با TTS مستقیم
-        try {
-            tvStatus.text = "🔊 در حال تست صدای سیستم..."
-            
-            // استفاده مستقیم از TTS برای تست
-            val advancedTTS = ir.navigator.persian.lite.tts.AdvancedPersianTTS(this)
-            advancedTTS.testVoice()
-            
-        } catch (e: Exception) {
-            Log.e("MainActivity", "خطا در تست صدا: ${e.message}")
-            tvStatus.text = "❌ خطا در تست صدا: ${e.message}"
-            Toast.makeText(this, "خطا در تست صدا", Toast.LENGTH_SHORT).show()
-        }
         
-        // بعد از 3 ثانیه برگرداندن وضعیت
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            if (!isTracking) {
-                tvStatus.text = "آماده شروع"
-            }
-        }, 3000)
-    }
-    
     private fun startTracking() {
         navigatorEngine.startNavigation()
         isTracking = true

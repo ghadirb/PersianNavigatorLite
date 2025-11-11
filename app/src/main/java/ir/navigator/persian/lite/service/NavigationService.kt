@@ -138,7 +138,7 @@ class NavigationService : Service() {
             )
             
             // تست هشدار صوتی
-            tts.speak("سلام. سیستم هشدار صوتی فارسی فعال است")
+            tts.speak("سلام. سیستم هشدار صوتی فارسی فعال است", TextToSpeech.QUEUE_FLUSH, null)
         } catch (e: SecurityException) {
             e.printStackTrace()
         }
@@ -166,7 +166,7 @@ class NavigationService : Service() {
         routeManager.calculateRoute(location)?.let { route ->
             // بررسی رسیدن به مقصد
             if (routeManager.hasReachedDestination(location)) {
-                tts.speak("به مقصد رسیدید", ir.navigator.persian.lite.tts.Priority.URGENT)
+                tts.speak("به مقصد رسیدید", TextToSpeech.QUEUE_FLUSH, null)
                 routeManager.clearDestination()
                 destinationManager.clearDestination()
             } else {
@@ -174,7 +174,7 @@ class NavigationService : Service() {
                 val now = System.currentTimeMillis()
                 if (now - lastDirectionTime > 30000) {
                     val distance = (route.distance / 1000).toInt()
-                    tts.speak("${route.direction}. فاصله تا مقصد $distance کیلومتر")
+                    tts.speak("${route.direction}. فاصله تا مقصد $distance کیلومتر", TextToSpeech.QUEUE_FLUSH, null)
                     lastDirectionTime = now
                 }
             }
@@ -187,16 +187,11 @@ class NavigationService : Service() {
         val results = FloatArray(1)
         Location.distanceBetween(
             location.latitude, location.longitude,
-            camera.lat, camera.lng, results
+            camera.latitude, camera.longitude, results
         )
         return results[0]
     }
     
-    override fun onDestroy() {
-        super.onDestroy()
-        locationManager.removeUpdates(locationListener)
-        tts.shutdown()
-    }
     
     override fun onBind(intent: Intent?): IBinder? = null
 }
