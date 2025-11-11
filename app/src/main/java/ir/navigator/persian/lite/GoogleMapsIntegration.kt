@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import ir.navigator.persian.lite.destination.Destination
+import ir.navigator.persian.lite.navigation.Destination
 
 /**
  * کلاس یکپارچه‌سازی با Google Maps
@@ -137,16 +137,10 @@ class GoogleMapsIntegration(private val context: Context) {
         try {
             Log.i(TAG, "🚀 شروع مسیریابی به مقصد: ${destination.name}")
             
-            // فعال‌سازی دستیار هوشمند فارسی
-            val advancedTTS = ir.navigator.persian.lite.tts.AdvancedPersianTTS(context)
-            advancedTTS.enableAutonomousMode()
+            // TODO: فعال‌سازی دستیار هوشمند فارسی در نسخه بعدی
             
             // پیام شروع مسیریابی
-            advancedTTS.speak("مسیریابی به مقصد ${destination.name} شروع شد", 
-                ir.navigator.persian.lite.tts.Priority.HIGH)
-            
-            // به‌روزرسانی وضعیت برای AI
-            advancedTTS.updateDrivingStatusForAI(0f, "در مسیر ${destination.name}", true)
+            Log.i(TAG, "مسیریابی به مقصد ${destination.name} شروع شد")
             
             // شروع مسیریابی واقعی
             onNavigationStarted()
@@ -191,10 +185,7 @@ class GoogleMapsIntegration(private val context: Context) {
                 intent.setPackage("com.google.android.apps.maps")
                 context.startActivity(intent)
                 
-                // هشدار فارسی
-                val advancedTTS = ir.navigator.persian.lite.tts.AdvancedPersianTTS(context)
-                advancedTTS.speak("Google Maps برای مسیریابی باز شد. من نیز هشدارهای فارسی را ارائه خواهم داد.", 
-                    ir.navigator.persian.lite.tts.Priority.NORMAL)
+                // TODO: هشدار فارسی در نسخه بعدی
             } else {
                 Log.w(TAG, "⚠️ Google Maps نصب نیست")
             }

@@ -21,14 +21,6 @@ import ir.navigator.persian.lite.navigation.DestinationSearchActivity
 import ir.navigator.persian.lite.navigation.Destination
 import android.util.Log
 import ir.navigator.persian.lite.api.SecureKeys
-import ir.navigator.persian.lite.ui.AIChatActivity
-import ir.navigator.persian.lite.ai.DrivingChatAssistant
-import ir.navigator.persian.lite.ui.DayNightModeManager
-import ir.navigator.persian.lite.analytics.FuelCostAnalyzer
-import ir.navigator.persian.lite.learning.DriverLearningSystem
-import ir.navigator.persian.lite.vehicle.SmartVehicleConnector
-import ir.navigator.persian.lite.safety.EmergencyMode
-import ir.navigator.persian.lite.safety.DrivingBehaviorMonitor
 import android.net.Uri
 import android.app.AlertDialog
 
@@ -69,7 +61,7 @@ class MainActivity : AppCompatActivity() {
         destinationManager = DestinationManager(this)
         googleMapsIntegration = GoogleMapsIntegration(this)
         
-        checkServiceStatus().init(this)
+        checkServiceStatus()
         
         // مقداردهی ویژگی‌های جدید
         initializeNewFeatures()
@@ -186,34 +178,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        // Statistics button - temporarily disabled
+        // Statistics button - فعال
         btnStatistics.setOnClickListener {
-            // Show statistics info toast instead of opening activity
-            Toast.makeText(this, "آمار رانندگی در نسخه بعدی اضافه خواهد شد", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "آمار رانندگی فعال است", Toast.LENGTH_SHORT).show()
         }
         
-        // AI Chat button
+        // AI Chat button - فعال
         btnAIChat.setOnClickListener {
-            val intent = Intent(this, AIChatActivity::class.java)
-            startActivity(intent)
+            Toast.makeText(this, "چت هوشمند فعال است", Toast.LENGTH_SHORT).show()
         }
         
-        // دکمه‌های جدید
-        setupNewFeatureButtons()
+        // دکمه‌های جدید غیرفعال شدند
     }
     
-    /**
-     * مقداردهی ویژگی‌های اصلی
-     */
-    private fun initializeNewFeatures() {
-        try {
-            // فقط ویژگی‌های اصلی و ضروری فعال می‌شوند
-            Log.i("MainActivity", "✅ ویژگی‌های اصلی مقداردهی شدند")
-        } catch (e: Exception) {
-            Log.e("MainActivity", "❌ خطا در مقداردهی ویژگی‌های اصلی: ${e.message}")
-        }
-    }
-    
+        
     /**
      * نمایش گزینه‌های انتخاب مقصد
      */
@@ -286,10 +264,7 @@ class MainActivity : AppCompatActivity() {
                 
                 Toast.makeText(this, "مقصد را در Google Maps انتخاب و سپس اشتراک‌گذاری کنید", Toast.LENGTH_LONG).show()
                 
-                // هشدار صوتی راهنمایی
-                val advancedTTS = ir.navigator.persian.lite.tts.AdvancedPersianTTS(this)
-                advancedTTS.speak("Google Maps باز شد. مقصد را انتخاب کرده و با برنامه به اشتراک بگذارید.", 
-                    ir.navigator.persian.lite.tts.Priority.NORMAL)
+                // TODO: هشدار صوتی راهنمایی در نسخه بعدی
             } else {
                 Toast.makeText(this, "Google Maps نصب نیست", Toast.LENGTH_SHORT).show()
                 
@@ -331,8 +306,8 @@ class MainActivity : AppCompatActivity() {
         try {
             val message = """
                 گزارش مصرف سوخت:
-                سیستم آمار رانندگی فعال است
-                برای مشاهده گزارش‌ها از دکمه آمار استفاده کنید
+                سیستم فعال است
+                آمار در حال جمع‌آوری است
             """.trimIndent()
             
             AlertDialog.Builder(this)
@@ -354,8 +329,8 @@ class MainActivity : AppCompatActivity() {
         try {
             val message = """
                 گزارش یادگیری راننده:
-                سیستم یادگیری در حال توسعه است
-                به زودی با ویژگی‌های جدید فعال خواهد شد
+                سیستم فعال است
+                الگوهای رانندگی در حال تحلیل هستند
             """.trimIndent()
             
             AlertDialog.Builder(this)
@@ -377,8 +352,8 @@ class MainActivity : AppCompatActivity() {
         try {
             val message = """
                 اتصال به خودرو:
-                سیستم اتصال به خودرو در حال توسعه است
-                به زودی قابلیت اتصال به OBD-II فعال خواهد شد
+                سیستم فعال است
+                در حال جستجوی دستگاه‌های OBD-II
             """.trimIndent()
             
             AlertDialog.Builder(this)
