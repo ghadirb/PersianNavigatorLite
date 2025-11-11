@@ -22,6 +22,13 @@ import ir.navigator.persian.lite.navigation.Destination
 import android.util.Log
 import ir.navigator.persian.lite.api.SecureKeys
 import ir.navigator.persian.lite.ui.AIChatActivity
+import ir.navigator.persian.lite.ai.DrivingChatAssistant
+import ir.navigator.persian.lite.ui.DayNightModeManager
+import ir.navigator.persian.lite.analytics.FuelCostAnalyzer
+import ir.navigator.persian.lite.learning.DriverLearningSystem
+import ir.navigator.persian.lite.vehicle.SmartVehicleConnector
+import ir.navigator.persian.lite.safety.EmergencyMode
+import ir.navigator.persian.lite.safety.DrivingBehaviorMonitor
 
 class MainActivity : AppCompatActivity() {
     
@@ -29,6 +36,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var destinationManager: DestinationManager
     private var isTracking = false
     private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    
+    // ویژگی‌های جدید
+    private lateinit var drivingChatAssistant: DrivingChatAssistant
+    private lateinit var dayNightModeManager: DayNightModeManager
+    private lateinit var fuelCostAnalyzer: FuelCostAnalyzer
+    private lateinit var driverLearningSystem: DriverLearningSystem
+    private lateinit var smartVehicleConnector: SmartVehicleConnector
+    private lateinit var emergencyMode: EmergencyMode
+    private lateinit var drivingBehaviorMonitor: DrivingBehaviorMonitor
     
     // UI Elements
     private lateinit var btnStart: Button
@@ -55,6 +71,9 @@ class MainActivity : AppCompatActivity() {
         navigatorEngine = NavigatorEngine(this, this)
         destinationManager = DestinationManager(this)
         SecureKeys.init(this)
+        
+        // مقداردهی ویژگی‌های جدید
+        initializeNewFeatures()
         
         // بررسی و فعال‌سازی خودکار کلیدها
         checkAndActivateKeys()
@@ -179,6 +198,240 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, AIChatActivity::class.java)
             startActivity(intent)
         }
+        
+        // دکمه‌های جدید
+        setupNewFeatureButtons()
+    }
+    
+    /**
+     * مقداردهی ویژگی‌های جدید
+     */
+    private fun initializeNewFeatures() {
+        try {
+            drivingChatAssistant = DrivingChatAssistant(this)
+            dayNightModeManager = DayNightModeManager(this)
+            fuelCostAnalyzer = FuelCostAnalyzer(this)
+            driverLearningSystem = DriverLearningSystem(this)
+            smartVehicleConnector = SmartVehicleConnector(this)
+            emergencyMode = EmergencyMode(this)
+            drivingBehaviorMonitor = DrivingBehaviorMonitor(this)
+            
+            Log.i("MainActivity", "✅ تمام ویژگی‌های جدید مقداردهی شدند")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در مقداردهی ویژگی‌های جدید: ${e.message}")
+        }
+    }
+    
+    /**
+     * تنظیم دکمه‌های ویژگی‌های جدید
+     */
+    private fun setupNewFeatureButtons() {
+        // دکمه چت هوشمند رانندگی
+        try {
+            val btnDrivingChat = findViewById<Button>(R.id.btnDrivingChat)
+            btnDrivingChat?.setOnClickListener {
+                if (drivingChatAssistant.isActive()) {
+                    drivingChatAssistant.deactivate()
+                    btnDrivingChat.text = "چت هوشمند رانندگی"
+                } else {
+                    drivingChatAssistant.activate()
+                    btnDrivingChat.text = "غیرفعال کردن چت"
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("MainActivity", "دکمه چت هوشمند یافت نشد")
+        }
+        
+        // دکمه حالت شب و روز
+        try {
+            val btnDayNight = findViewById<Button>(R.id.btnDayNight)
+            btnDayNight?.setOnClickListener {
+                dayNightModeManager.toggleMode()
+                val mode = dayNightModeManager.getCurrentMode()
+                Toast.makeText(this, "حالت: ${mode.name}", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.w("MainActivity", "دکمه حالت شب و روز یافت نشد")
+        }
+        
+        // دکمه تحلیل سوخت
+        try {
+            val btnFuelAnalysis = findViewById<Button>(R.id.btnFuelAnalysis)
+            btnFuelAnalysis?.setOnClickListener {
+                showFuelReport()
+            }
+        } catch (e: Exception) {
+            Log.w("MainActivity", "دکمه تحلیل سوخت یافت نشد")
+        }
+        
+        // دکمه یادگیری راننده
+        try {
+            val btnDriverLearning = findViewById<Button>(R.id.btnDriverLearning)
+            btnDriverLearning?.setOnClickListener {
+                showLearningReport()
+            }
+        } catch (e: Exception) {
+            Log.w("MainActivity", "دکمه یادگیری راننده یافت نشد")
+        }
+        
+        // دکمه اتصال به خودرو
+        try {
+            val btnVehicleConnect = findViewById<Button>(R.id.btnVehicleConnect)
+            btnVehicleConnect?.setOnClickListener {
+                connectToVehicle()
+            }
+        } catch (e: Exception) {
+            Log.w("MainActivity", "دکمه اتصال به خودرو یافت نشد")
+        }
+        
+        // دکمه حالت اضطراری
+        try {
+            val btnEmergencyMode = findViewById<Button>(R.id.btnEmergencyMode)
+            btnEmergencyMode?.setOnClickListener {
+                testEmergencyMode()
+            }
+        } catch (e: Exception) {
+            Log.w("MainActivity", "دکمه حالت اضطراری یافت نشد")
+        }
+    }
+    
+    /**
+     * نمایش گزارش سوخت
+     */
+    private fun showFuelReport() {
+        try {
+            val report = fuelCostAnalyzer.getFuelReport()
+            val message = """
+                گزارش مصرف سوخت:
+                مسافت کل: ${"%.1f".format(report.totalDistance)} km
+                مصرف کل: ${"%.1f".format(report.totalFuelConsumed)} L
+                هزینه کل: ${"%,d".format(report.totalCost.toInt())} تومان
+                مصرف متوسط: ${"%.1f".format(report.averageConsumptionPer100km)} L/100km
+                سطح سوخت: ${"%.1f".format(report.currentFuelLevel)}%
+                مسافت باقی‌مانده: ${"%.1f".format(report.remainingRange)} km
+                رتبه بهره‌وری: ${report.fuelEfficiencyRating}
+            """.trimIndent()
+            
+            android.app.AlertDialog.Builder(this)
+                .setTitle("📊 گزارش سوخت")
+                .setMessage(message)
+                .setPositiveButton("باشه", null)
+                .setNegativeButton("فعال‌سازی حالت صرفه‌جویی") { _, _ ->
+                    fuelCostAnalyzer.enableEcoMode()
+                }
+                .show()
+                
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در نمایش گزارش سوخت: ${e.message}")
+            Toast.makeText(this, "خطا در دریافت گزارش سوخت", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * نمایش گزارش یادگیری
+     */
+    private fun showLearningReport() {
+        try {
+            val report = driverLearningSystem.getLearningReport()
+            val message = """
+                گزارش یادگیری راننده:
+                تعداد کل سفرها: ${report.totalTrips}
+                مقاصد منحصر به فرد: ${report.uniqueDestinations}
+                مقصد مورد علاقه: ${report.favoriteDestination}
+                مسیر پرکاربرد: ${report.mostUsedRoute}
+                دقت یادگیری: ${"%.1f".format(report.learningAccuracy)}%
+                تعداد پیشنهادهای شخصی: ${report.personalizedSuggestionsCount}
+            """.trimIndent()
+            
+            android.app.AlertDialog.Builder(this)
+                .setTitle("🧠 گزارش یادگیری")
+                .setMessage(message)
+                .setPositiveButton("باشه", null)
+                .setNegativeButton("همگام‌سازی با Google Drive") { _, _ ->
+                    driverLearningSystem.enableDriveSync()
+                }
+                .show()
+                
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در نمایش گزارش یادگیری: ${e.message}")
+            Toast.makeText(this, "خطا در دریافت گزارش یادگیری", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * اتصال به خودرو
+     */
+    private fun connectToVehicle() {
+        try {
+            if (smartVehicleConnector.isConnected()) {
+                smartVehicleConnector.disconnect()
+                Toast.makeText(this, "اتصال از خودرو قطع شد", Toast.LENGTH_SHORT).show()
+            } else {
+                val devices = smartVehicleConnector.searchOBDDevices()
+                if (devices.isNotEmpty()) {
+                    // برای سادگی، اولین دستگاه را انتخاب می‌کنیم
+                    val deviceAddress = devices.first().split(" - ").last()
+                    val success = smartVehicleConnector.connectToOBD(deviceAddress)
+                    if (success) {
+                        Toast.makeText(this, "✅ اتصال به خودرو موفق بود", Toast.LENGTH_SHORT).show()
+                        showVehicleStatus()
+                    } else {
+                        Toast.makeText(this, "❌ خطا در اتصال به خودرو", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(this, "هیچ دستگاه OBD-II یافت نشد", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در اتصال به خودرو: ${e.message}")
+            Toast.makeText(this, "خطا در اتصال به خودرو", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * نمایش وضعیت خودرو
+     */
+    private fun showVehicleStatus() {
+        try {
+            val status = smartVehicleConnector.getVehicleStatusReport()
+            val message = """
+                وضعیت خودرو:
+                سرعت فعلی: ${"%.1f".format(status.currentSpeed)} km/h
+                سرعت متوسط: ${"%.1f".format(status.averageSpeed)} km/h
+                دور موتور: ${"%.0f".format(status.engineRPM)} rpm
+                سطح سوخت: ${"%.1f".format(status.fuelLevel)}%
+                دمای موتور: ${"%.1f".format(status.engineTemperature)}°C
+                وضعیت: ${status.connectionStatus}
+                وضعیت کلی: ${status.getOverallStatus()}
+            """.trimIndent()
+            
+            android.app.AlertDialog.Builder(this)
+                .setTitle("🚗 وضعیت خودرو")
+                .setMessage(message)
+                .setPositiveButton("باشه", null)
+                .show()
+                
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در نمایش وضعیت خودرو: ${e.message}")
+        }
+    }
+    
+    /**
+     * تست حالت اضطراری
+     */
+    private fun testEmergencyMode() {
+        try {
+            android.app.AlertDialog.Builder(this)
+                .setTitle("🚨 تست حالت اضطراری")
+                .setMessage("آیا مایل به تست تمام حالت‌های اضطراری هستید؟")
+                .setPositiveButton("بله") { _, _ ->
+                    emergencyMode.testEmergencyModes()
+                }
+                .setNegativeButton("خیر", null)
+                .show()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در تست حالت اضطراری: ${e.message}")
+        }
     }
     
     private fun openDestinationSearch() {
@@ -236,8 +489,36 @@ class MainActivity : AppCompatActivity() {
         tvStatus.text = "در حال ردیابی..."
         startNavigationService()
         
+        // فعال‌سازی ویژگی‌های هوشمند در حین رانندگی
+        activateDrivingFeatures()
+        
         // تست هشدار صوتی
         navigatorEngine.testVoiceAlert()
+    }
+    
+    /**
+     * فعال‌سازی ویژگی‌های رانندگی
+     */
+    private fun activateDrivingFeatures() {
+        try {
+            // فعال‌سازی نظارت بر رفتار رانندگی
+            drivingBehaviorMonitor.startMonitoring()
+            
+            // فعال‌سازی حالت صرفه‌جویی سوخت
+            fuelCostAnalyzer.enableEcoMode()
+            
+            // فعال‌سازی یادگیری سریع
+            driverLearningSystem.enableFastLearning()
+            
+            // اگر به خودرو متصل است، پایش اقتصادی را فعال کن
+            if (smartVehicleConnector.isConnected()) {
+                smartVehicleConnector.enableEcoMonitoring()
+            }
+            
+            Log.i("MainActivity", "🚗 ویژگی‌های رانندگی فعال شد")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در فعال‌سازی ویژگی‌های رانندگی: ${e.message}")
+        }
     }
     
     private fun pauseTracking() {
@@ -255,6 +536,26 @@ class MainActivity : AppCompatActivity() {
         btnStop.visibility = View.GONE
         tvStatus.text = "آماده شروع"
         tvSpeed.text = "سرعت: 0 km/h"
+        
+        // غیرفعال‌سازی ویژگی‌های رانندگی
+        deactivateDrivingFeatures()
+    }
+    
+    /**
+     * غیرفعال‌سازی ویژگی‌های رانندگی
+     */
+    private fun deactivateDrivingFeatures() {
+        try {
+            drivingBehaviorMonitor.stopMonitoring()
+            
+            // ثبت سفر در سیستم یادگیری
+            // این داده‌ها باید از NavigatorEngine دریافت شوند
+            // driverLearningSystem.recordTrip(...)
+            
+            Log.i("MainActivity", "🛑 ویژگی‌های رانندگی غیرفعال شد")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در غیرفعال‌سازی ویژگی‌های رانندگی: ${e.message}")
+        }
     }
     
     private fun checkServiceStatus() {
@@ -308,6 +609,22 @@ class MainActivity : AppCompatActivity() {
     
     override fun onDestroy() {
         super.onDestroy()
+        
+        // خاموش کردن ویژگی‌های جدید
+        try {
+            drivingChatAssistant.shutdown()
+            dayNightModeManager.shutdown()
+            fuelCostAnalyzer.shutdown()
+            driverLearningSystem.shutdown()
+            smartVehicleConnector.shutdown()
+            emergencyMode.shutdown()
+            drivingBehaviorMonitor.shutdown()
+            
+            Log.i("MainActivity", "🧹 تمام ویژگی‌های جدید خاموش شدند")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ خطا در خاموش کردن ویژگی‌ها: ${e.message}")
+        }
+        
         // Service مستقل است و با بستن Activity متوقف نمی‌شود
     }
 }

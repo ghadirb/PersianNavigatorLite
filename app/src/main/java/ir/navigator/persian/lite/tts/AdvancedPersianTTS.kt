@@ -36,11 +36,34 @@ class AdvancedPersianTTS(private val context: Context) {
     private var smartAIAssistant: SmartAIAssistant? = null
     private var isSmartModeEnabled = false
     
+    // کنترلر ترافیک برای جلوگیری از پیام‌های تکراری
+    private var trafficController: TrafficAlertController? = null
+    
+    // دستیار هوشمند خودمختار همیشه فعال
+    private var autonomousAI: ir.navigator.persian.lite.ai.AutonomousAIAssistant? = null
+    private var isAutonomousModeEnabled = false
+    
+    // جستجوگر هوشمند مقصد
+    private var destinationFinder: ir.navigator.persian.lite.ai.SmartDestinationFinder? = null
+    private var isDestinationFinderEnabled = false
+    
+    // سیستم آمار رانندگی
+    private var statisticsManager: ir.navigator.persian.lite.statistics.DrivingStatisticsManager? = null
+    private var isStatisticsEnabled = false
+    
+    // مدیر تنظیمات هشدارها
+    private var alertSettings: ir.navigator.persian.lite.settings.AlertSettingsManager? = null
+    
     init {
         initializeSystemTTS()
         checkHaaniyeModel()
         initializeOnlineTTS()
         initializeSmartAI()
+        initializeTrafficController()
+        initializeAutonomousAI()
+        initializeDestinationFinder()
+        initializeStatisticsManager()
+        initializeAlertSettings()
     }
     
     /**
@@ -72,6 +95,69 @@ class AdvancedPersianTTS(private val context: Context) {
     }
     
     /**
+     * مقداردهی اولیه کنترلر ترافیک
+     */
+    private fun initializeTrafficController() {
+        try {
+            trafficController = TrafficAlertController(context)
+            Log.i("AdvancedTTS", "✅ کنترلر ترافیک مقداردهی شد")
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در مقداردهی کنترلر ترافیک: ${e.message}")
+        }
+    }
+    
+    /**
+     * مقداردهی اولیه دستیار هوشمند خودمختار
+     */
+    private fun initializeAutonomousAI() {
+        try {
+            autonomousAI = ir.navigator.persian.lite.ai.AutonomousAIAssistant(context)
+            isAutonomousModeEnabled = true
+            Log.i("AdvancedTTS", "✅ دستیار هوشمند خودمختار مقداردهی شد")
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در مقداردهی دستیار خودمختار: ${e.message}")
+        }
+    }
+    
+    /**
+     * مقداردهی اولیه جستجوگر هوشمند مقصد
+     */
+    private fun initializeDestinationFinder() {
+        try {
+            destinationFinder = ir.navigator.persian.lite.ai.SmartDestinationFinder(context)
+            isDestinationFinderEnabled = true
+            Log.i("AdvancedTTS", "✅ جستجوگر هوشمند مقصد مقداردهی شد")
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در مقداردهی جستجوگر مقصد: ${e.message}")
+        }
+    }
+    
+    /**
+     * مقداردهی اولیه سیستم آمار رانندگی
+     */
+    private fun initializeStatisticsManager() {
+        try {
+            statisticsManager = ir.navigator.persian.lite.statistics.DrivingStatisticsManager(context)
+            isStatisticsEnabled = true
+            Log.i("AdvancedTTS", "✅ سیستم آمار رانندگی مقداردهی شد")
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در مقداردهی سیستم آمار: ${e.message}")
+        }
+    }
+    
+    /**
+     * مقداردهی اولیه مدیر تنظیمات هشدارها
+     */
+    private fun initializeAlertSettings() {
+        try {
+            alertSettings = ir.navigator.persian.lite.settings.AlertSettingsManager(context)
+            Log.i("AdvancedTTS", "✅ مدیر تنظیمات هشدارها مقداردهی شد")
+        } catch (e: Exception) {
+            Log.e("AdvancedTTS", "❌ خطا در مقداردهی مدیر تنظیمات: ${e.message}")
+        }
+    }
+    
+    /**
      * فعال‌سازی حالت آنلاین
      */
     fun enableOnlineMode() {
@@ -90,12 +176,12 @@ class AdvancedPersianTTS(private val context: Context) {
     }
     
     /**
-     * فعال‌سازی حالت هوشمند AI با اولویت OpenAI
+     * فعال‌سازی حالت هوشمند AI
      */
     fun enableSmartMode() {
         isSmartModeEnabled = true
         smartAIAssistant?.enableSmartMode()
-        Log.i("AdvancedTTS", "🧠 حالت هوشمند AI با اولویت OpenAI فعال شد")
+        Log.i("AdvancedTTS", "✅ حالت هوشمند AI فعال شد")
     }
     
     /**
@@ -104,7 +190,189 @@ class AdvancedPersianTTS(private val context: Context) {
     fun disableSmartMode() {
         isSmartModeEnabled = false
         smartAIAssistant?.disableSmartMode()
-        Log.i("AdvancedTTS", "🔒 حالت هوشمند AI غیرفعال شد")
+        Log.i("AdvancedTTS", "❌ حالت هوشمند AI غیرفعال شد")
+    }
+    
+    /**
+     * فعال‌سازی حالت خودمختار (همیشه فعال)
+     */
+    fun enableAutonomousMode() {
+        isAutonomousModeEnabled = true
+        autonomousAI?.let { ai ->
+            Log.i("AdvancedTTS", "✅ دستیار هوشمند خودمختار فعال شد")
+            ai.updateDrivingStatus(0f, "", false) // آماده‌سازی اولیه
+        }
+    }
+    
+    /**
+     * غیرفعال‌سازی حالت خودمختار
+     */
+    fun disableAutonomousMode() {
+        isAutonomousModeEnabled = false
+        Log.i("AdvancedTTS", "❌ دستیار هوشمند خودمختار غیرفعال شد")
+    }
+    
+    /**
+     * به‌روزرسانی وضعیت رانندگی برای مدل خودمختار
+     */
+    fun updateDrivingStatusForAI(speed: Float, location: String = "", isDriving: Boolean = true) {
+        if (isAutonomousModeEnabled) {
+            autonomousAI?.updateDrivingStatus(speed, location, isDriving)
+            Log.d("AdvancedTTS", "📊 وضعیت رانندگی برای AI به‌روز شد: سرعت=$speed, رانندگی=$isDriving")
+        }
+    }
+    
+    /**
+     * جستجو و انتخاب مقصد هوشمند
+     */
+    fun searchAndSetDestination(voiceCommand: String, currentLocation: Pair<Double, Double>? = null) {
+        if (isDestinationFinderEnabled) {
+            destinationFinder?.searchAndSelectDestination(voiceCommand, currentLocation)
+            Log.i("AdvancedTTS", "🗺️ جستجوی مقصد فعال شد: '$voiceCommand'")
+        } else {
+            Log.w("AdvancedTTS", "⚠️ جستجوگر مقصد فعال نیست")
+            speak("جستجوگر مقصد در دسترس نیست", Priority.NORMAL)
+        }
+    }
+    
+    /**
+     * فعال‌سازی جستجوگر مقصد
+     */
+    fun enableDestinationFinder() {
+        isDestinationFinderEnabled = true
+        Log.i("AdvancedTTS", "✅ جستجوگر هوشمند مقصد فعال شد")
+    }
+    
+    /**
+     * غیرفعال‌سازی جستجوگر مقصد
+     */
+    fun disableDestinationFinder() {
+        isDestinationFinderEnabled = false
+        Log.i("AdvancedTTS", "❌ جستجوگر هوشمند مقصد غیرفعال شد")
+    }
+    
+    /**
+     * دریافت گزارش آمار رانندگی
+     */
+    fun getDrivingStatisticsReport(): String {
+        return if (isStatisticsEnabled) {
+            statisticsManager?.getFullReport() ?: "آمار در دسترس نیست"
+        } else {
+            "سیستم آمار غیرفعال است"
+        }
+    }
+    
+    /**
+     * ثبت رویدادهای رانندگی در آمار
+     */
+    fun recordDrivingEvent(eventType: String, data: Any? = null) {
+        if (isStatisticsEnabled) {
+            when (eventType) {
+                "hard_brake" -> statisticsManager?.recordHardBrake()
+                "rapid_acceleration" -> statisticsManager?.recordRapidAcceleration()
+                "sharp_turn" -> statisticsManager?.recordSharpTurn()
+                "speed_violation" -> {
+                    val speed = data as? Float ?: 0f
+                    statisticsManager?.recordSpeedViolation(speed)
+                }
+                "fatigue_alert" -> statisticsManager?.recordFatigueAlert()
+                "navigation_instruction" -> statisticsManager?.recordNavigationInstruction()
+                "destination_reached" -> {
+                    val destination = data as? String ?: ""
+                    statisticsManager?.recordDestinationReached(destination)
+                }
+            }
+        }
+    }
+    
+    /**
+     * به‌روزرسانی سرعت و مسافت در آمار
+     */
+    fun updateDrivingStatistics(speed: Float, distanceDelta: Float) {
+        if (isStatisticsEnabled) {
+            statisticsManager?.updateSpeedAndDistance(speed, distanceDelta)
+        }
+    }
+    
+    /**
+     * دریافت امتیاز ایمنی فعلی
+     */
+    fun getCurrentSafetyScore(): Float {
+        return if (isStatisticsEnabled) {
+            statisticsManager?.getCurrentSafetyScore() ?: 100f
+        } else {
+            100f
+        }
+    }
+    
+    /**
+     * دریافت تنظیمات فعلی هشدارها
+     */
+    fun getAlertSettings(): String {
+        return alertSettings?.getCurrentSettings() ?: "تنظیمات در دسترس نیست"
+    }
+    
+    /**
+     * فعال‌سازی حالت رانندگی آرام
+     */
+    fun enableQuietDrivingMode() {
+        alertSettings?.enableQuietMode()
+        speak("حالت رانندگی آرام فعال شد. فقط هشدارهای مهم پخش می‌شوند.", Priority.NORMAL)
+        Log.i("AdvancedTTS", "🤫 حالت رانندگی آرام فعال شد")
+    }
+    
+    /**
+     * فعال‌سازی حالت رانندگی شهری
+     */
+    fun enableUrbanDrivingMode() {
+        alertSettings?.enableUrbanMode()
+        speak("حالت رانندگی شهری فعال شد. هشدارهای شهری پخش می‌شوند.", Priority.NORMAL)
+        Log.i("AdvancedTTS", "🏙️ حالت رانندگی شهری فعال شد")
+    }
+    
+    /**
+     * فعال‌سازی حالت رانندگی جاده‌ای
+     */
+    fun enableHighwayDrivingMode() {
+        alertSettings?.enableHighwayMode()
+        speak("حالت رانندگی جاده‌ای فعال شد. هشدارهای جاده‌ای پخش می‌شوند.", Priority.NORMAL)
+        Log.i("AdvancedTTS", "🛣️ حالت رانندگی جاده‌ای فعال شد")
+    }
+    
+    /**
+     * فعال‌سازی تمام هشدارها
+     */
+    fun enableAllAlerts() {
+        alertSettings?.enableAllAlerts()
+        speak("تمام هشدارها فعال شدند.", Priority.NORMAL)
+        Log.i("AdvancedTTS", "✅ تمام هشدارها فعال شدند")
+    }
+    
+    /**
+     * غیرفعال‌سازی تمام هشدارها
+     */
+    fun disableAllAlerts() {
+        alertSettings?.disableAllAlerts()
+        speak("تمام هشدارها غیرفعال شدند.", Priority.NORMAL)
+        Log.i("AdvancedTTS", "❌ تمام هشدارها غیرفعال شدند")
+    }
+    
+    /**
+     * دریافت وضعیت کلی سیستم
+     */
+    fun getSystemStatus(): String {
+        val alertStatus = alertSettings?.getSystemStatus() ?: "تنظیمات در دسترس نیست"
+        val statsStatus = if (isStatisticsEnabled) "آمار: فعال" else "آمار: غیرفعال"
+        val aiStatus = if (isAutonomousModeEnabled) "AI خودمختار: فعال" else "AI خودمختار: غیرفعال"
+        val finderStatus = if (isDestinationFinderEnabled) "جستجوگر مقصد: فعال" else "جستجوگر مقصد: غیرفعال"
+        
+        return """
+            📊 وضعیت کلی سیستم:
+            $alertStatus
+            $statsStatus
+            $aiStatus
+            $finderStatus
+        """.trimIndent()
     }
     
     /**
@@ -264,22 +532,19 @@ class AdvancedPersianTTS(private val context: Context) {
     private fun initializeSystemTTS() {
         systemTTS = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                // تلاش برای زبان فارسی
-                var result = systemTTS?.setLanguage(Locale("fa", "IR"))
-                
-                // اگر فارسی پشتیبانی نشود، از انگلیسی استفاده کن
-                if (result == TextToSpeech.LANG_MISSING_DATA || 
-                    result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    result = systemTTS?.setLanguage(Locale.US)
-                    Log.w("AdvancedTTS", "فارسی پشتیبانی نمی‌شود، از انگلیسی استفاده می‌شود")
-                }
+                // فقط زبان فارسی - بدون فال‌بک انگلیسی
+                val result = systemTTS?.setLanguage(Locale("fa", "IR"))
                 
                 isSystemReady = result != TextToSpeech.LANG_MISSING_DATA && 
                                result != TextToSpeech.LANG_NOT_SUPPORTED
                                
-                Log.d("AdvancedTTS", "System TTS آماده شد: $isSystemReady")
+                if (isSystemReady) {
+                    Log.i("AdvancedTTS", "✅ TTS فارسی با موفقیت فعال شد")
+                } else {
+                    Log.w("AdvancedTTS", "⚠️ TTS فارسی در دسترس نیست - از فایل‌های صوتی استفاده می‌شود")
+                }
             } else {
-                Log.e("AdvancedTTS", "خطا در مقداردهی اولیه System TTS: $status")
+                Log.e("AdvancedTTS", "❌ خطا در مقداردهی اولیه System TTS: $status")
             }
         }
     }
@@ -331,28 +596,40 @@ class AdvancedPersianTTS(private val context: Context) {
             Log.e("AdvancedTTS", "خطا در مقداردهی مدل هانیه: ${e.message}")
             isHaaniyeAvailable = false
             useSystemTTS = true
-        }
     }
     
-    private fun checkAssetExists(path: String): Boolean {
-        return try {
-            context.assets.open(path).use { it.available() > 0 }
-        } catch (e: Exception) {
-            false
+    return fileName?.let { playSpecificAudioFile(it) } ?: false
+}
+    private fun playPreRecordedAudio(text: String): Boolean {
+        val fileName = when {
+            text.contains("شروع به حرکت") || text.contains("حرکت کنید") -> "start_navigation"
+            text.contains("به چپ بپیچید") -> "turn_left"
+            text.contains("به راست بپیچید") -> "turn_right"
+            text.contains("در 100 متر به چپ") -> "turn_left_100m"
+            text.contains("در 100 متر به راست") -> "turn_right_100m"
+            text.contains("در 200 متر به چپ") -> "turn_left_200m"
+            text.contains("در 200 متر به راست") -> "turn_right_200m"
+            text.contains("در 500 متر به چپ") -> "turn_left_500m"
+            text.contains("در 500 متر به راست") -> "turn_right_500m"
+            text.contains("به مقصد رسیدید") -> "destination_arrived"
+            text.contains("سرعت خود را کاهش دهید") -> "reduce_speed"
+            text.contains("خطر! سرعت غیر مجاز") -> "speeding_danger"
+            text.contains("دوربین کنترل سرعت") -> "speed_camera"
+            text.contains("ترافیک سنگین") -> "heavy_traffic"
+            text.contains("احتیاط! خطر در پیش است") -> "danger_ahead"
+            text.contains("ایستگاه توقف") -> "stop_ahead"
+            text.contains("سوخت گیری") -> "fuel_station_1km"
+            text.contains("پارکینگ") -> "parking_nearby"
+            text.contains("سرعت‌گیر") -> "speed_bump_warning"
+            text.contains("ترمز ناگهانی") -> "sudden_stop_warning"
+            text.contains("پیچ خطرناک") -> "dangerous_curve_ahead"
+            text.contains("سوخت کم") -> "low_fuel_warning"
+            text.contains("دور بزنید") -> "make_u_turn"
+            text.contains("مسیر را ادامه دهید") -> "continue_route"
+            else -> null
         }
-    }
-    
-    fun speak(text: String, priority: Priority = Priority.NORMAL) {
-        Log.d("AdvancedTTS", "درخواست صحبت: '$text' (اولویت: $priority)")
-        Log.d("AdvancedTTS", "وضعیت موتورها - هانیه: $isHaaniyeAvailable, سیستم: $useSystemTTS")
         
-        if (isHaaniyeAvailable && !useSystemTTS) {
-            Log.d("AdvancedTTS", "🎤 استفاده از مدل هانیه برای صداسازی")
-            speakWithHaaniye(text, priority)
-        } else {
-            Log.d("AdvancedTTS", "🔊 استفاده از System TTS برای صداسازی")
-            speakWithSystemTTS(text, priority)
-        }
+        return fileName?.let { playSpecificAudioFile(it) } ?: false
     }
     
     private fun speakWithSystemTTS(text: String, priority: Priority) {
@@ -384,11 +661,11 @@ class AdvancedPersianTTS(private val context: Context) {
             systemTTS?.setSpeechRate(0.9f)
             systemTTS?.setPitch(1.0f)
             
-            // تنظیم زبان فارسی با فال‌بک انگلیسی
+            // فقط زبان فارسی - بدون فال‌بک انگلیسی
             val langResult = systemTTS?.setLanguage(Locale("fa", "IR"))
             if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.w("AdvancedTTS", "⚠️ فارسی پشتیبانی نمی‌شود، از انگلیسی استفاده می‌شود")
-                systemTTS?.setLanguage(Locale.US)
+                Log.w("AdvancedTTS", "⚠️ فارسی پشتیبانی نمی‌شود - پخش لغو شد")
+                return
             }
             
             // انتخاب حالت صف بر اساس اولویت
@@ -986,13 +1263,18 @@ class AdvancedPersianTTS(private val context: Context) {
         speak(message, Priority.HIGH)
     }
     
-    fun speakTraffic() {
-        val messages = listOf(
-            "ترافیک سنگین در مسیر است. راه جایگزین را بررسی کنید",
-            "مسیر پرترافیک است. احتیاط کنید",
-            "ترافیک در پیش روست. سرعت خود را کاهش دهید"
-        )
-        speak(messages.random(), Priority.HIGH)
+    fun speakTraffic(routeId: String = "default") {
+        // استفاده از کنترلر ترافیک برای جلوگیری از پیام‌های تکراری
+        if (trafficController?.shouldPlayTrafficAlert(routeId, "ترافیک سنگین") == true) {
+            val messages = listOf(
+                "ترافیک سنگین در مسیر است. راه جایگزین را بررسی کنید",
+                "مسیر پرترافیک است. احتیاط کنید",
+                "ترافیک در پیش روست. سرعت خود را کاهش دهید"
+            )
+            speak(messages.random(), Priority.HIGH)
+        } else {
+            Log.d("AdvancedTTS", "⏸️ هشدار ترافیک به دلیل تکراری بودن لغو شد")
+        }
     }
     
     fun speakBumpWarning(distance: Int) {
@@ -1006,6 +1288,19 @@ class AdvancedPersianTTS(private val context: Context) {
     
     fun speakNavigationInstruction(instruction: String) {
         speak(instruction, Priority.NORMAL)
+    }
+    
+    /**
+     * شروع ناوبری با صدای "شروع به حرکت کنید"
+     */
+    fun startNavigation(routeId: String = "default") {
+        Log.i("AdvancedTTS", "🚩 شروع ناوبری برای مسیر: $routeId")
+        
+        // ریست کنترلر ترافیک برای مسیر جدید
+        resetTrafficController(routeId)
+        
+        // پخش صدای شروع حرکت
+        speak("شروع به حرکت کنید", Priority.HIGH)
     }
     
     /**
@@ -1063,13 +1358,13 @@ class AdvancedPersianTTS(private val context: Context) {
                     delay(4000) // فاصله بین هشدارها
                 }
                 
-                // تست خاص OpenAI TTS
+                // تست خاص OpenAI TTS (فقط فارسی)
                 if (onlineTTSManager?.isOnlineAvailable() == true) {
                     Log.i("AdvancedTTS", "🤖 تست هشدار هوشمند با OpenAI...")
-                    speakOnline("تست هشدار هوشمند تولید شده توسط OpenAI", Priority.HIGH)
+                    speakOnline("تست هشدار هوشمند فارسی", Priority.HIGH)
                     
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "🤖 OpenAI TTS تست شد", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "✅ TTS هوشمند فارسی تست شد", Toast.LENGTH_SHORT).show()
                     }
                 }
                 
@@ -1167,6 +1462,26 @@ class AdvancedPersianTTS(private val context: Context) {
         systemTTS?.shutdown()
         smartAIAssistant?.cleanup()
         onlineTTSManager?.cleanup()
+        trafficController?.shutdown()
+        autonomousAI?.shutdown()
+        destinationFinder?.shutdown()
+        statisticsManager?.shutdown()
+        Log.i("AdvancedTTS", "🧹 سیستم Advanced TTS به طور کامل خاموش شد")
+    }
+    
+    /**
+     * ریست کنترلر ترافیک برای مسیر جدید
+     */
+    fun resetTrafficController(routeId: String) {
+        trafficController?.resetForNewRoute(routeId)
+        Log.i("AdvancedTTS", "🔄 کنترلر ترافیک برای مسیر جدید ریست شد: $routeId")
+    }
+    
+    /**
+     * دریافت وضعیت کنترلر ترافیک
+     */
+    fun getTrafficControllerStatus(): String {
+        return trafficController?.getStatus() ?: "کنترلر ترافیک فعال نیست"
     }
     
     /**
