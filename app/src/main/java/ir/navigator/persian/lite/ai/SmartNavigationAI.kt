@@ -96,6 +96,18 @@ class SmartNavigationAI(private val context: Context) {
                 alerts[random.nextInt(alerts.size)]
             }
             
+            NavigationEventType.HAZARD_AHEAD -> {
+                val hazard = event.data["hazard"] ?: "خطر"
+                val distance = event.data["distance"] ?: "200"
+                val alerts = listOf(
+                    "توجه: در $distance متر جلو $hazard وجود دارد",
+                    "$hazard در پیش است، با احتیاط رانندگی کنید",
+                    "خطر در $distance متر جلو، سرعت خود را کم کنید",
+                    "$distance متر دیگر $hazard، آماده باشید"
+                )
+                alerts[random.nextInt(alerts.size)]
+            }
+            
             else -> getFallbackAlert(event)
         }
     }
@@ -110,6 +122,7 @@ class SmartNavigationAI(private val context: Context) {
             NavigationEventType.HEAVY_TRAFFIC -> "ترافیک در پیش است، احتیاط کنید"
             NavigationEventType.TURN_REQUIRED -> "به زودی بپیچید"
             NavigationEventType.DESTINATION_APPROACHING -> "مقصد نزدیک است"
+            NavigationEventType.HAZARD_AHEAD -> "خطر در پیش است، احتیاط کنید"
             else -> "توجه در رانندگی کنید"
         }
     }

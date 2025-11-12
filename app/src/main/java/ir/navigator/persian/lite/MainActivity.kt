@@ -391,7 +391,21 @@ class MainActivity : AppCompatActivity() {
             navigatorEngine.startNavigation()
             startNavigationService()
             
-            Toast.makeText(this, "مسیریابی شروع شد", Toast.LENGTH_SHORT).show()
+            // هشدار اولیه هوشمند برای شروع مسیریابی
+            mainScope.launch {
+                delay(1000) // 1 ثانیه تأخیر برای اطمینان از راه‌اندازی سرویس
+                try {
+                    val startAlertIntent = Intent("SMART_NAVIGATION_ALERT")
+                    startAlertIntent.putExtra("alert_type", "NAVIGATION_START")
+                    startAlertIntent.putExtra("message", "مسیریابی هوشمند فعال شد. آماده دریافت هشدارهای پویا.")
+                    sendBroadcast(startAlertIntent)
+                    Log.i("MainActivity", "🚦 هشدار شروع مسیریابی هوشمند ارسال شد")
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "❌ خطا در ارسال هشدار شروع: ${e.message}")
+                }
+            }
+            
+            Toast.makeText(this, "مسیریابی هوشمند شروع شد", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Log.e("MainActivity", "❌ خطا در شروع مسیریابی: ${e.message}")
         }

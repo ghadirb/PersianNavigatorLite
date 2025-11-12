@@ -78,6 +78,60 @@ class NavigationService : Service() {
         }
     }
     
+    // BroadcastReceiver برای دریافت هشدارهای هوشمند
+    private val smartAlertReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+            if (intent?.action == "SMART_NAVIGATION_ALERT") {
+                val alertType = intent.getStringExtra("alert_type")
+                val message = intent.getStringExtra("message")
+                
+                Log.i("NavigationService", "🚦 هشدار هوشمند دریافت شد: $alertType - $message")
+                
+                when (alertType) {
+                    "NAVIGATION_START" -> {
+                        // هشدار شروع مسیریابی هوشمند
+                        mainScope.launch {
+                            delay(500)
+                            advancedTTS.speak("مسیریابی هوشمند فعال شد")
+                            delay(2000)
+                            advancedTTS.speak("آماده دریافت هشدارهای پویا")
+                            
+                            // شروع هشدارهای دوره‌ای اگر GPS کار نکند
+                            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                                Log.i("NavigationService", "🧪 GPS غیرفعال، شروع هشدارهای تست هوشمند")
+                                startSmartTestAlerts()
+                            }
+                        }
+                    }
+                    "NAVIGATION_PAUSE" -> {
+                        // هشدار توقف مسیریابی
+                        mainScope.launch {
+                            advancedTTS.speak("مسیریابی متوقف شد")
+                        }
+                    }
+                    "TRAFFIC_AHEAD" -> {
+                        // هشدار ترافیک
+                        val trafficEvent = NavigationEvent(
+                            type = NavigationEventType.HEAVY_TRAFFIC,
+                            description = "ترافیک سنگین",
+                            data = mapOf("distance" to "300")
+                        )
+                        smartAI.generateDynamicAlert(trafficEvent)
+                    }
+                    "SPEED_CHANGE" -> {
+                        // هشدار تغییر سرعت
+                        val speedEvent = NavigationEvent(
+                            type = NavigationEventType.SPEED_LIMIT_CHANGE,
+                            description = "تغییر سرعت مجاز",
+                            data = mapOf("speedLimit" to "60", "currentSpeed" to currentSpeed.toString())
+                        )
+                        smartAI.generateDynamicAlert(speedEvent)
+                    }
+                }
+            }
+        }
+    }
+    
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
@@ -101,9 +155,14 @@ class NavigationService : Service() {
         }
         
         // ثبت BroadcastReceiver برای دریافت تغییرات حالت TTS
-        val filter = android.content.IntentFilter("UPDATE_TTS_MODE")
-        registerReceiver(ttsModeReceiver, filter)
+        val ttsFilter = android.content.IntentFilter("UPDATE_TTS_MODE")
+        registerReceiver(ttsModeReceiver, ttsFilter)
         Log.i("NavigationService", "✅ BroadcastReceiver برای TTS Mode ثبت شد")
+        
+        // ثبت BroadcastReceiver برای دریافت هشدارهای هوشمند
+        val smartFilter = android.content.IntentFilter("SMART_NAVIGATION_ALERT")
+        registerReceiver(smartAlertReceiver, smartFilter)
+        Log.i("NavigationService", "✅ BroadcastReceiver برای هشدارهای هوشمند ثبت شد")
         
         // مقداردهی اولیه زمان هشدارها
         lastBasicAlertTime = System.currentTimeMillis()
@@ -345,6 +404,74 @@ class NavigationService : Service() {
                                 Log.i("NavigationService", "🔊 هشدار تست: کاهش سرعت")
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+    
+    private fun startSmartTestAlerts() {
+        Log.i("NavigationService", "🧠 شروع هشدارهای تست هوشمند (بدون GPS)")
+        
+        mainScope.launch {
+            delay(1000)
+            
+            // هشدارهای هوشمند دوره‌ای هر 20 ثانیه
+            var alertCounter = 0
+            while (true) {
+                delay(20000)
+                alertCounter++
+                
+                Log.i("NavigationService", "🧠 هشدار هوشمند #$alertCounter")
+                
+                when (alertCounter % 6) {
+                    1 -> {
+                        val exitEvent = NavigationEvent(
+                            type = NavigationEventType.EXIT_APPROACHING,
+                            description = "نزدیک شدن به خروجی",
+                            data = mapOf("distance" to "300", "direction" to "راست")
+                        )
+                        smartAI.generateDynamicAlert(exitEvent)
+                    }
+                    2 -> {
+                        val speedEvent = NavigationEvent(
+                            type = NavigationEventType.SPEED_LIMIT_CHANGE,
+                            description = "تغییر سرعت مجاز",
+                            data = mapOf("speedLimit" to "60", "currentSpeed" to "40")
+                        )
+                        smartAI.generateDynamicAlert(speedEvent)
+                    }
+                    3 -> {
+                        val trafficEvent = NavigationEvent(
+                            type = NavigationEventType.HEAVY_TRAFFIC,
+                            description = "ترافیک سنگین",
+                            data = mapOf("distance" to "400")
+                        )
+                        smartAI.generateDynamicAlert(trafficEvent)
+                    }
+                    4 -> {
+                        val turnEvent = NavigationEvent(
+                            type = NavigationEventType.TURN_REQUIRED,
+                            description = "نیاز به پیچیدن",
+                            data = mapOf("direction" to "چپ", "distance" to "150")
+                        )
+                        smartAI.generateDynamicAlert(turnEvent)
+                    }
+                    5 -> {
+                        val destEvent = NavigationEvent(
+                            type = NavigationEventType.DESTINATION_APPROACHING,
+                            description = "نزدیک شدن به مقصد",
+                            data = mapOf("distance" to "500")
+                        )
+                        smartAI.generateDynamicAlert(destEvent)
+                    }
+                    0 -> {
+                        val hazardEvent = NavigationEvent(
+                            type = NavigationEventType.HAZARD_AHEAD,
+                            description = "خطر در پیش رو",
+                            data = mapOf("hazard" to "جاده لغزنده", "distance" to "200")
+                        )
+                        smartAI.generateDynamicAlert(hazardEvent)
                     }
                 }
             }
