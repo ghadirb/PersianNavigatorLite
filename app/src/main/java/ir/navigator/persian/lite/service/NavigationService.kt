@@ -244,25 +244,19 @@ class NavigationService : Service() {
                 destinationManager.clearDestination()
             } else {
                 // راهنمایی جهت (هر 30 ثانیه) با فایل‌های صوتی
-                val now = System.currentTimeMillis()
-                if (now - lastDirectionTime > 30000) {
+                val directionNow = System.currentTimeMillis()
+                if (directionNow - lastDirectionTime > 30000) {
                     val distance = (route.distance / 1000).toInt()
                     advancedTTS.provideNavigationAlert(route.distance.toInt(), route.direction)
                     Log.i("NavigationService", "🧭 هشدار ناوبری: ${route.direction} - فاصله: ${route.distance}m")
-                    lastDirectionTime = now
+                    lastDirectionTime = directionNow
                 }
             }
         }
         
-        // تحلیل هوشمند موقعیت و ارائه هشدارهای پیشرفته
-        analyzeAndProvideSmartAlerts(location)
-        
-        // بررسی دوربین‌های سرعت (فعال شده)
-        checkSpeedCameraAlerts(location)
-        
-        // هشدارهای پایه‌ای هر 15 ثانیه برای تست (با فایل‌های صوتی موجود)
-        val now = System.currentTimeMillis()
-        if (now - lastBasicAlertTime > 15000) {
+        // هشدارهای پایه‌ای هر 15 ثانیه برای تست (با فایل‌های صوتی موجود) - مستقل از مسیریابی
+        val basicNow = System.currentTimeMillis()
+        if (basicNow - lastBasicAlertTime > 15000) {
             when (currentSpeed) {
                 0 -> {
                     advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند
@@ -285,7 +279,13 @@ class NavigationService : Service() {
                     Log.i("NavigationService", "🔊 هشدار پایه‌ای: کاهش سرعت")
                 }
             }
-            lastBasicAlertTime = now
+            lastBasicAlertTime = basicNow
+            
+            // تحلیل هوشمند موقعیت و ارائه هشدارهای پیشرفته
+            analyzeAndProvideSmartAlerts(location)
+            
+            // بررسی دوربین‌های سرعت (فعال شده)
+            checkSpeedCameraAlerts(location)
         }
     }
     
