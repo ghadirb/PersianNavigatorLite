@@ -56,9 +56,8 @@
             android:textSize="16sp"
             android:textColor="#333333"
             android:lineSpacingExtra="8dp"
-            android:background="#FFFFFF"
-            android:padding="16dp"
-            android:radius="8dp" />
+            android:background="@drawable/rounded_background"
+            android:padding="16dp" />
 
     </ScrollView>
 
@@ -78,10 +77,9 @@
             android:layout_weight="1"
             android:hint="پیام خود را بنویسید..."
             android:textSize="16sp"
-            android:background="#F0F0F0"
+            android:background="@drawable/rounded_edittext"
             android:padding="12dp"
-            android:layout_marginEnd="8dp"
-            android:radius="24dp" />
+            android:layout_marginEnd="8dp" />
 
         <Button
             android:id="@+id/btnSend"
@@ -90,8 +88,7 @@
             android:text="ارسال"
             android:textColor="#FFFFFF"
             android:textSize="14sp"
-            android:background="#2196F3"
-            android:radius="24dp" />
+            android:background="@drawable/rounded_button" />
 
     </LinearLayout>
 

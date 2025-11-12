@@ -8,7 +8,11 @@ import androidx.core.app.NotificationCompat
 import ir.navigator.persian.lite.MainActivity
 import ir.navigator.persian.lite.R
 import ir.navigator.persian.lite.navigation.RouteManager
-import ir.navigator.persian.lite.DestinationManager
+import ir.navigator.persian.lite.navigation.DestinationManager
+import ir.navigator.persian.lite.navigation.NavigatorEngine
+import ir.navigator.persian.lite.ai.SmartNavigationAI
+import ir.navigator.persian.lite.ai.NavigationEvent
+import ir.navigator.persian.lite.ai.NavigationEventType
 import ir.navigator.persian.lite.models.SpeedCamera
 import android.location.Location
 import android.location.LocationListener
@@ -38,6 +42,7 @@ class NavigationService : Service() {
     private lateinit var routeManager: RouteManager
     private lateinit var destinationManager: DestinationManager
     private lateinit var notificationManager: NotificationManager
+    private lateinit var smartAI: SmartNavigationAI
     
     private var currentSpeed = 0
     private var lastDirectionTime = 0L
@@ -82,6 +87,7 @@ class NavigationService : Service() {
         advancedTTS = AdvancedPersianTTS(this)
         routeManager = RouteManager()
         destinationManager = DestinationManager(this)
+        smartAI = SmartNavigationAI(this)
         
         // تنظیم حالت پیش‌فرض TTS به خودمختار
         advancedTTS.setTTSMode(ttsMode)
@@ -248,6 +254,7 @@ class NavigationService : Service() {
             
             // شبیه‌سازی سرعت برای تست و هشدارهای دوره‌ای
             var simulatedSpeed = 0
+            var alertCounter = 0
             while (true) {
                 delay(15000)
                 
@@ -260,31 +267,84 @@ class NavigationService : Service() {
                 }
                 
                 currentSpeed = simulatedSpeed
-                Log.i("NavigationService", "🚗 سرعت شبیه‌سازی شده: $currentSpeed km/h")
+                alertCounter++
+                
+                Log.i("NavigationService", "🚗 سرعت شبیه‌سازی شده: $currentSpeed km/h (هشدار #$alertCounter)")
                 
                 // آپدیت نوتیفیکیشن با سرعت جدید
                 updateNotification(createMockLocation())
                 
-                when (currentSpeed) {
+                // استفاده از هشدارهای هوشمند خودمختار
+                when (alertCounter % 5) {
+                    1 -> {
+                        // هشدار خروجی
+                        val exitEvent = NavigationEvent(
+                            type = NavigationEventType.EXIT_APPROACHING,
+                            description = "نزدیک شدن به خروجی",
+                            data = mapOf("distance" to "200", "direction" to "راست")
+                        )
+                        smartAI.generateDynamicAlert(exitEvent)
+                    }
+                    2 -> {
+                        // هشدار سرعت
+                        val speedEvent = NavigationEvent(
+                            type = NavigationEventType.SPEED_LIMIT_CHANGE,
+                            description = "تغییر سرعت مجاز",
+                            data = mapOf("speedLimit" to "50", "currentSpeed" to currentSpeed.toString())
+                        )
+                        smartAI.generateDynamicAlert(speedEvent)
+                    }
+                    3 -> {
+                        // هشدار ترافیک
+                        val trafficEvent = NavigationEvent(
+                            type = NavigationEventType.HEAVY_TRAFFIC,
+                            description = "ترافیک سنگین",
+                            data = mapOf("distance" to "500")
+                        )
+                        smartAI.generateDynamicAlert(trafficEvent)
+                    }
+                    4 -> {
+                        // هشدار پیچیدن
+                        val turnEvent = NavigationEvent(
+                            type = NavigationEventType.TURN_REQUIRED,
+                            description = "نیاز به پیچیدن",
+                            data = mapOf("direction" to "چپ", "distance" to "100")
+                        )
+                        smartAI.generateDynamicAlert(turnEvent)
+                    }
                     0 -> {
-                        advancedTTS.speak("تست")
-                        Log.i("NavigationService", "🔊 هشدار تست: ایستاده")
-                    }
-                    in 1..30 -> {
-                        advancedTTS.speak("تست")
-                        Log.i("NavigationService", "🔊 هشدار تست: سرعت کم")
-                    }
-                    in 31..60 -> {
-                        advancedTTS.speak("تست")
-                        Log.i("NavigationService", "🔊 هشدار تست: سرعت عادی")
-                    }
-                    in 61..80 -> {
-                        advancedTTS.speak("سرعت بالا")
-                        Log.i("NavigationService", "🔊 هشدار تست: سرعت بالا")
+                        // هشدار مقصد
+                        val destEvent = NavigationEvent(
+                            type = NavigationEventType.DESTINATION_APPROACHING,
+                            description = "نزدیک شدن به مقصد",
+                            data = mapOf("distance" to "300")
+                        )
+                        smartAI.generateDynamicAlert(destEvent)
                     }
                     else -> {
-                        advancedTTS.speak("کاهش سرعت")
-                        Log.i("NavigationService", "🔊 هشدار تست: کاهش سرعت")
+                        // هشدار عادی
+                        when (currentSpeed) {
+                            0 -> {
+                                advancedTTS.speak("تست")
+                                Log.i("NavigationService", "🔊 هشدار تست: ایستاده")
+                            }
+                            in 1..30 -> {
+                                advancedTTS.speak("تست")
+                                Log.i("NavigationService", "🔊 هشدار تست: سرعت کم")
+                            }
+                            in 31..60 -> {
+                                advancedTTS.speak("تست")
+                                Log.i("NavigationService", "🔊 هشدار تست: سرعت عادی")
+                            }
+                            in 61..80 -> {
+                                advancedTTS.speak("سرعت بالا")
+                                Log.i("NavigationService", "🔊 هشدار تست: سرعت بالا")
+                            }
+                            else -> {
+                                advancedTTS.speak("کاهش سرعت")
+                                Log.i("NavigationService", "🔊 هشدار تست: کاهش سرعت")
+                            }
+                        }
                     }
                 }
             }
