@@ -13,6 +13,8 @@ import ir.navigator.persian.lite.models.SpeedCamera
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import kotlinx.coroutines.*
+import kotlinx.coroutines.delay
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.util.Log
@@ -42,6 +44,7 @@ class NavigationService : Service() {
     private var lastBasicAlertTime = 0L
     private var isNavigating = false
     private var ttsMode = TTSMode.AUTONOMOUS
+    private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
     // BroadcastReceiver برای دریافت تغییرات حالت TTS
     private val ttsModeReceiver = object : android.content.BroadcastReceiver() {
