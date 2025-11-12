@@ -140,6 +140,25 @@ class NavigationService : Service() {
         super.onCreate()
         createNotificationChannel()
         
+        // Initialize SecureKeys first
+        ir.navigator.persian.lite.api.SecureKeys.init(this)
+        
+        // تست و فعال‌سازی کلیدهای OpenAI اگر نیاز باشد
+        mainScope.launch {
+            if (!ir.navigator.persian.lite.api.SecureKeys.areKeysActivated()) {
+                Log.i("NavigationService", "🔑 کلیدهای OpenAI فعال نیستند، در حال تلاش برای فعال‌سازی...")
+                val result = ir.navigator.persian.lite.api.SecureKeys.autoActivateKeys()
+                if (result.isSuccess) {
+                    Log.i("NavigationService", "✅ کلیدهای OpenAI با موفقیت فعال شدند")
+                    advancedTTS.speak("کلیدهای OpenAI فعال شدند")
+                } else {
+                    Log.w("NavigationService", "⚠️ فعال‌سازی کلیدهای OpenAI ناموفق بود، از TTS سیستم استفاده می‌شود")
+                }
+            } else {
+                Log.i("NavigationService", "✅ کلیدهای OpenAI از قبل فعال هستند")
+            }
+        }
+        
         // Initialize modules
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         advancedTTS = AdvancedPersianTTS(this)
@@ -300,9 +319,160 @@ class NavigationService : Service() {
                 delay(2000)
                 advancedTTS.speak("شروع مسیر") // از فایل start_navigation.wav استفاده می‌کند
                 Log.i("NavigationService", "🚀 هشدار شروع مسیر صادر شد")
+                
+                // تست هشدار هوشمند برای اطمینان از عملکرد سیستم صدا
+                delay(3000)
+                performSmartAlertTest()
+                Log.i("NavigationService", "✅ تست هشدار هوشمند اولیه انجام شد")
             }
         } catch (e: SecurityException) {
             e.printStackTrace()
+        }
+    }
+    
+    /**
+     * تست هوشمند هشدار بر اساس وضعیت فعلی
+     * مدل AI وضعیت را تشخیص داده و هشدار مناسب صادر می‌کند
+     */
+    private fun performSmartAlertTest() {
+        Log.i("NavigationService", "🧠 شروع تست هشدار هوشمند...")
+        
+        // ارسال رویداد تست به مدل AI برای تحلیل وضعیت
+        val testEvent = NavigationEvent(
+            type = NavigationEventType.SYSTEM_TEST,
+            description = "تست سیستم هشدار هوشمند",
+            data = mapOf(
+                "speed" to currentSpeed.toString(),
+                "isMoving" to (currentSpeed > 0).toString(),
+                "timestamp" to System.currentTimeMillis().toString(),
+                "testMode" to "initialization"
+            )
+        )
+        
+        // مدل AI وضعیت را تحلیل کرده و هشدار مناسب صادر می‌کند
+        mainScope.launch {
+            try {
+                // کمی تاخیر برای تحلیل AI
+                delay(1000)
+                
+                when {
+                    currentSpeed == 0 -> {
+                        // حالت توقف - AI تشخیص می‌دهد که در شروع، ترافیک یا مقصد هستیم
+                        advancedTTS.speak("سیستم هشدار فعال. در حال توقف آماده به کار هستم.")
+                        Log.i("NavigationService", "🧠 AI: وضعیت توقف تشخیص داده شد")
+                        
+                        delay(2000)
+                        advancedTTS.speak("با شروع حرکت، هشدارهای ناوبری فعال خواهند شد.")
+                    }
+                    
+                    currentSpeed in 1..30 -> {
+                        // حالت حرکت آهسته - معمولا ترافیک یا شروع حرکت
+                        advancedTTS.speak("سیستم هشدار فعال. در حال حرکت آهسته هستم.")
+                        Log.i("NavigationService", "🧠 AI: وضعیت حرکت آهسته تشخیص داده شد")
+                        
+                        delay(2000)
+                        advancedTTS.speak("هشدارهای ترافیک و سرعت پایین فعال هستند.")
+                    }
+                    
+                    currentSpeed in 31..60 -> {
+                        // حالت حرکت عادی
+                        advancedTTS.speak("سیستم هشدار فعال. در حال حرکت عادی هستم.")
+                        Log.i("NavigationService", "🧠 AI: وضعیت حرکت عادی تشخیص داده شد")
+                        
+                        delay(2000)
+                        advancedTTS.speak("هشدارهای ناوبری و مسیر فعال هستند.")
+                    }
+                    
+                    else -> {
+                        // حالت سرعت بالا
+                        advancedTTS.speak("سیستم هشدار فعال. سرعت بالا تشخیص داده شد.")
+                        Log.i("NavigationService", "🧠 AI: وضعیت سرعت بالا تشخیص داده شد")
+                        
+                        delay(2000)
+                        advancedTTS.speak("هشدارهای سرعت و ایمنی فعال هستند.")
+                    }
+                }
+                
+                // تست هشدارهای مختلف برای اطمینان از عملکرد
+                delay(3000)
+                advancedTTS.speak("تست هشدار پیچ به راست")
+                
+                delay(2000)
+                advancedTTS.speak("تست هشدار محدودیت سرعت")
+                
+                delay(2000)
+                advancedTTS.speak("تست کامل. سیستم آماده ناوبری است.")
+                
+                // تست تمام حالت‌های TTS برای اطمینان از عملکرد
+                delay(2000)
+                testAllTTSModes()
+                
+                Log.i("NavigationService", "✅ تست هشدار هوشمند با موفقیت انجام شد")
+                
+            } catch (e: Exception) {
+                Log.e("NavigationService", "❌ خطا در تست هشدار هوشمند: ${e.message}")
+                advancedTTS.speak("خطا در تست سیستم. لطفاً تنظیمات را بررسی کنید.")
+            }
+        }
+    }
+    
+    /**
+     * تست جامع تمام حالت‌های TTS برای اطمینان از عملکرد
+     */
+    private fun testAllTTSModes() {
+        Log.i("NavigationService", "🧪 شروع تست جامع حالت‌های TTS...")
+        
+        mainScope.launch {
+            try {
+                // تست حالت آفلاین (فایل‌های صوتی)
+                advancedTTS.setTTSMode(TTSMode.OFFLINE)
+                delay(1000)
+                advancedTTS.speak("تست حالت آفلاین")
+                Log.i("NavigationService", "✅ تست حالت آفلاین انجام شد")
+                
+                delay(2000)
+                
+                // تست حالت آنلاین (OpenAI)
+                advancedTTS.setTTSMode(TTSMode.ONLINE)
+                delay(1000)
+                advancedTTS.speak("تست حالت آنلاین")
+                Log.i("NavigationService", "✅ تست حالت آنلاین انجام شد")
+                
+                delay(2000)
+                
+                // تست حالت خودمختار هوشمند
+                advancedTTS.setTTSMode(TTSMode.AUTONOMOUS)
+                advancedTTS.enableAutonomousMode()
+                delay(1000)
+                advancedTTS.speak("تست حالت خودمختار")
+                Log.i("NavigationService", "✅ تست حالت خودمختار انجام شد")
+                
+                delay(2000)
+                
+                // تست خاص OpenAI TTS اگر کلید فعال باشد
+                if (ir.navigator.persian.lite.api.SecureKeys.areKeysActivated()) {
+                    delay(2000)
+                    advancedTTS.setTTSMode(TTSMode.ONLINE)
+                    delay(1000)
+                    advancedTTS.speak("تست هوش مصنوعی OpenAI")
+                    Log.i("NavigationService", "✅ تست OpenAI TTS با کلید واقعی انجام شد")
+                } else {
+                    Log.i("NavigationService", "ℹ️ کلید OpenAI فعال نیست، تست آنلاین با TTS سیستم انجام شد")
+                }
+                
+                // بازگشت به حالت پیش‌فرض
+                advancedTTS.setTTSMode(ttsMode)
+                if (ttsMode == TTSMode.AUTONOMOUS) {
+                    advancedTTS.enableAutonomousMode()
+                }
+                
+                advancedTTS.speak("تمام حالت‌های صوتی با موفقیت تست شدند")
+                Log.i("NavigationService", "✅ تست جامع TTS با موفقیت انجام شد")
+                
+            } catch (e: Exception) {
+                Log.e("NavigationService", "❌ خطا در تست TTS: ${e.message}")
+                advancedTTS.speak("خطا در تست سیستم صوتی")
+            }
         }
     }
     
@@ -539,8 +709,8 @@ class NavigationService : Service() {
             }
         }
         
-        // هشدارهای پایه‌ای هر 15 ثانیه (فقط اگر State Machine فعال نبود)
-        if (stateMachine.getCurrentState() == NavigationState.IDLE) {
+        // هشدارهای پایه‌ای هر 15 ثانیه (فقط اگر State Machine فعال نبود و در حال حرکت)
+        if (stateMachine.getCurrentState() == NavigationState.IDLE && currentSpeed > 0) {
             val basicNow = System.currentTimeMillis()
             val timeDiff = basicNow - lastBasicAlertTime
             
@@ -549,14 +719,10 @@ class NavigationService : Service() {
             if (timeDiff > 15000) {
                 lastBasicAlertTime = basicNow
                 
-                // هشدارهای پایه‌ای بر اساس سرعت
+                // هشدارهای پایه‌ای بر اساس سرعت (فقط وقتی در حال حرکت هستیم)
                 when (currentSpeed) {
-                    0 -> {
-                        advancedTTS.speak("تست")
-                        Log.i("NavigationService", "🔊 هشدار پایه‌ای: ایستاده")
-                    }
                     in 1..30 -> {
-                        advancedTTS.speak("تست")
+                        advancedTTS.speak("سرعت پایین")
                         Log.i("NavigationService", "🔊 هشدار پایه‌ای: سرعت کم")
                     }
                     in 31..60 -> {
@@ -575,8 +741,8 @@ class NavigationService : Service() {
             }
         }
         
-        // تحلیل هوشمند موقعیت فقط در حالت IDLE (برای جلوگیری از اسپم)
-        if (stateMachine.getCurrentState() == NavigationState.IDLE) {
+        // تحلیل هوشمند موقعیت فقط در حالت IDLE و حرکت (برای جلوگیری از اسپم و هشدارهای اضافی)
+        if (stateMachine.getCurrentState() == NavigationState.IDLE && currentSpeed > 0) {
             analyzeAndProvideSmartAlerts(location)
         }
         

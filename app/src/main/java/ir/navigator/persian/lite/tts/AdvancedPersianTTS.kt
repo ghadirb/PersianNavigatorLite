@@ -256,10 +256,116 @@ class AdvancedPersianTTS(private val context: Context) {
      * صحبت کردن با OpenAI TTS آنلاین
      */
     private fun speakWithOpenAI(text: String) {
-        // TODO: پیاده‌سازی OpenAI TTS API
-        // فعلاً از TTS سیستم استفاده می‌کنیم
-        speakWithTTS(text)
-        Log.i("AdvancedPersianTTS", "🌐 پخش با OpenAI TTS: $text")
+        Log.i("AdvancedPersianTTS", "🌐 در حال استفاده از OpenAI TTS برای: $text")
+        
+        // بررسی وجود کلید OpenAI
+        val openAIKey = ir.navigator.persian.lite.api.SecureKeys.getOpenAIKey()
+        if (openAIKey.isNullOrEmpty()) {
+            Log.w("AdvancedPersianTTS", "⚠️ کلید OpenAI فعال نیست، استفاده از TTS سیستم")
+            speakWithTTS(text)
+            return
+        }
+        
+        // استفاده از OpenAI TTS API
+        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val audioData = callOpenAITTS(text, openAIKey)
+                if (audioData != null) {
+                    playOpenAIAudio(audioData)
+                } else {
+                    // اگر OpenAI خطا داد، از TTS سیستم استفاده کن
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        speakWithTTS(text)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("AdvancedPersianTTS", "❌ خطا در OpenAI TTS: ${e.message}")
+                // fallback به TTS سیستم
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    speakWithTTS(text)
+                }
+            }
+        }
+    }
+    
+    /**
+     * فراخوانی OpenAI TTS API
+     */
+    private suspend fun callOpenAITTS(text: String, apiKey: String): ByteArray? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
+            val url = java.net.URL("https://api.openai.com/v1/audio/speech")
+            val connection = url.openConnection() as java.net.HttpURLConnection
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Authorization", "Bearer $apiKey")
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.doOutput = true
+            
+            val requestBody = """
+                {
+                    "model": "tts-1",
+                    "input": "$text",
+                    "voice": "alloy",
+                    "response_format": "mp3"
+                }
+            """.trimIndent()
+            
+            // ارسال درخواست
+            val outputStream = connection.outputStream
+            outputStream.write(requestBody.toByteArray(Charsets.UTF_8))
+            outputStream.flush()
+            outputStream.close()
+            
+            // دریافت پاسخ
+            val responseCode = connection.responseCode
+            if (responseCode == 200) {
+                val inputStream = connection.inputStream
+                val audioData = inputStream.readBytes()
+                inputStream.close()
+                
+                Log.i("AdvancedPersianTTS", "✅ صوت از OpenAI با موفقیت دریافت شد")
+                audioData
+            } else {
+                Log.e("AdvancedPersianTTS", "❌ خطا در OpenAI API: $responseCode")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("AdvancedPersianTTS", "❌ خطا در فراخوانی OpenAI TTS: ${e.message}")
+            null
+        }
+    }
+    
+    /**
+     * پخش صوت دریافت شده از OpenAI
+     */
+    private fun playOpenAIAudio(audioData: ByteArray) {
+        try {
+            // نوشتن صوت در فایل موقت
+            val tempFile = java.io.File.createTempFile("openai_tts", ".mp3", context.cacheDir)
+            tempFile.writeBytes(audioData)
+            
+            // پخش با MediaPlayer
+            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                try {
+                    mediaPlayer?.release()
+                    mediaPlayer = android.media.MediaPlayer()
+                    mediaPlayer?.setDataSource(tempFile.absolutePath)
+                    mediaPlayer?.prepare()
+                    mediaPlayer?.setOnCompletionListener {
+                        it.release()
+                        mediaPlayer = null
+                        tempFile.delete()
+                    }
+                    mediaPlayer?.start()
+                    
+                    Log.i("AdvancedPersianTTS", "🔊 پخش صوت OpenAI با موفقیت شروع شد")
+                } catch (e: Exception) {
+                    Log.e("AdvancedPersianTTS", "❌ خطا در پخش صوت OpenAI: ${e.message}")
+                    tempFile.delete()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("AdvancedPersianTTS", "❌ خطا در ایجاد فایل صوتی OpenAI: ${e.message}")
+        }
     }
     
     /**
