@@ -208,11 +208,14 @@ class NavigationService : Service() {
             
             // تست هشدار صوتی با سیستم جدید - با فایل‌های صوتی موجود
             advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند
-            Thread.sleep(2000)
-            advancedTTS.speak("شروع مسیر") // از فایل start_navigation.wav استفاده می‌کند
-            Thread.sleep(2000)
-            advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند
             Log.i("NavigationService", "🔊 تست اولیه صوتی با فایل‌های WAV انجام شد")
+            
+            // هشدار شروع مسیر با تاخیر مناسب
+            mainScope.launch {
+                delay(2000)
+                advancedTTS.speak("شروع مسیر") // از فایل start_navigation.wav استفاده می‌کند
+                Log.i("NavigationService", "🚀 هشدار شروع مسیر صادر شد")
+            }
         } catch (e: SecurityException) {
             e.printStackTrace()
         }
@@ -228,8 +231,10 @@ class NavigationService : Service() {
     }
     
     private fun processLocation(location: Location) {
+        Log.i("NavigationService", "📍 موقعیت جدید دریافت شد: lat=${location.latitude}, lng=${location.longitude}")
         // محاسبه سرعت
         currentSpeed = (location.speed * 3.6f).toInt()
+        Log.i("NavigationService", "🚗 سرعت محاسبه شده: $currentSpeed کیلومتر بر ساعت")
         
         // آپدیت notification
         updateNotification(location)
@@ -256,6 +261,7 @@ class NavigationService : Service() {
         
         // هشدارهای پایه‌ای هر 15 ثانیه برای تست (با فایل‌های صوتی موجود) - مستقل از مسیریابی
         val basicNow = System.currentTimeMillis()
+        Log.i("NavigationService", "⏰ بررسی هشدار پایه‌ای: زمان=${basicNow - lastBasicAlertTime}ms، سرعت=$currentSpeed")
         if (basicNow - lastBasicAlertTime > 15000) {
             when (currentSpeed) {
                 0 -> {

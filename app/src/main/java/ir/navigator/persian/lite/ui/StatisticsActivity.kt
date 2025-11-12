@@ -18,11 +18,13 @@ class StatisticsActivity : AppCompatActivity() {
         Log.i("StatisticsActivity", "📊 در حال ساخت صفحه آمار...")
         
         try {
+            Log.i("StatisticsActivity", "🔍 در حال بارگذاری layout: activity_statistics")
             setContentView(R.layout.activity_statistics)
             Log.i("StatisticsActivity", "✅ layout با موفقیت بارگذاری شد")
         } catch (e: Exception) {
             Log.e("StatisticsActivity", "❌ خطا در بارگذاری layout: ${e.message}")
-            Toast.makeText(this, "❌ خطا در بارگذاری صفحه", Toast.LENGTH_LONG).show()
+            Log.e("StatisticsActivity", "❌ Stack trace: ${e.stackTraceToString()}")
+            Toast.makeText(this, "❌ خطا در بارگذاری صفحه: ${e.message}", Toast.LENGTH_LONG).show()
             finish()
             return
         }

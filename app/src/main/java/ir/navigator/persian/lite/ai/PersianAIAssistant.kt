@@ -200,12 +200,16 @@ class PersianAIAssistant(private val context: Context) {
      * گفتگوی هوشمند با کاربر
      */
     fun processUserInput(input: String) {
+        Log.i("PersianAIAssistant", "📝 ورودی کاربر دریافت شد: $input")
         lastInteractionTime = System.currentTimeMillis()
         
         assistantScope.launch {
             try {
+                Log.i("PersianAIAssistant", "🔄 در حال تولید پاسخ...")
                 val response = generateResponse(input)
+                Log.i("PersianAIAssistant", "✅ پاسخ تولید شد: $response")
                 speak(response)
+                Log.i("PersianAIAssistant", "🗣️ پاسخ صوتی ارسال شد")
             } catch (e: Exception) {
                 Log.e("PersianAIAssistant", "❌ خطا در پردازش ورودی کاربر: ${e.message}")
                 speak("متاسفم، در حال حاضر نمی‌توانم پاسخ دهم.")
