@@ -62,7 +62,7 @@ class NavigationLogger {
                 "message" to message,
                 "channel" to channel,
                 "location" to (location?.let { "${it.latitude},${it.longitude}" } ?: "unknown"),
-                "speed" to speed
+                "speed" to speed.toString()
             )
         )
         log(entry)
@@ -75,12 +75,12 @@ class NavigationLogger {
             category = LogCategory.GPS_UPDATE,
             message = "GPS location update",
             data = mapOf(
-                "latitude" to location.latitude,
-                "longitude" to location.longitude,
-                "speed" to speed,
-                "accuracy" to accuracy,
+                "latitude" to location.latitude.toString(),
+                "longitude" to location.longitude.toString(),
+                "speed" to speed.toString(),
+                "accuracy" to accuracy.toString(),
                 "provider" to location.provider,
-                "time" to location.time
+                "time" to location.time.toString()
             )
         )
         log(entry)
@@ -95,7 +95,7 @@ class NavigationLogger {
             data = mapOf(
                 "text" to text,
                 "mode" to mode,
-                "latency" to latency
+                "latency" to latency.toString()
             )
         )
         log(entry)
@@ -108,10 +108,10 @@ class NavigationLogger {
             category = LogCategory.SPEED_ANALYSIS,
             message = "Speed analysis: $currentSpeed/$speedLimit km/h",
             data = mapOf(
-                "currentSpeed" to currentSpeed,
-                "speedLimit" to speedLimit,
-                "isWarning" to isWarning,
-                "overSpeedBy" to maxOf(0, currentSpeed - speedLimit)
+                "currentSpeed" to currentSpeed.toString(),
+                "speedLimit" to speedLimit.toString(),
+                "isWarning" to isWarning.toString(),
+                "overSpeedBy" to maxOf(0, currentSpeed - speedLimit).toString()
             )
         )
         log(entry)
@@ -125,13 +125,16 @@ class NavigationLogger {
             message = "Cache ${if (hit) "HIT" else "MISS"}: $key",
             data = mapOf(
                 "key" to key,
-                "hit" to hit
+                "hit" to hit.toString()
             )
         )
         log(entry)
     }
     
     fun logPerformance(operation: String, duration: Long, metadata: Map<String, Any> = emptyMap()) {
+        // Convert all metadata values to strings
+        val stringMetadata = metadata.mapValues { it.value.toString() }
+        
         val entry = NavigationLogEntry(
             timestamp = getCurrentTimestamp(),
             level = LogLevel.INFO,
@@ -139,8 +142,8 @@ class NavigationLogger {
             message = "Performance: $operation took ${duration}ms",
             data = mapOf(
                 "operation" to operation,
-                "duration" to duration
-            ) + metadata
+                "duration" to duration.toString()
+            ) + stringMetadata
         )
         log(entry)
     }
