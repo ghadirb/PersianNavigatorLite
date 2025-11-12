@@ -239,8 +239,21 @@ class PersianAIAssistant(private val context: Context) {
             }
             
             // درخواست مسیر
-            normalizedInput.contains("مسیر") || normalizedInput.contains("مقصد") -> {
-                "برای تنظیم مسیر، لطفاً مقصد مورد نظر خود را در قسمت جستجو وارد کنید."
+            normalizedInput.contains("مسیر") || normalizedInput.contains("مقصد") || normalizedInput.contains("مسیریابی") -> {
+                when {
+                    normalizedInput.contains("شروع") || normalizedInput.contains("فعال") -> {
+                        "مسیریابی با موفقیت فعال شد. لطفاً مقصد خود را در نقشه انتخاب کنید."
+                    }
+                    normalizedInput.contains("پایان") || normalizedInput.contains("متوقف") || normalizedInput.contains("انتها") -> {
+                        "مسیریابی متوقف شد."
+                    }
+                    normalizedInput.contains("رسیدیم") || normalizedInput.contains("مقصد") -> {
+                        "تبریک! شما به مقصد رسیدید. مسیریابی به پایان رسید."
+                    }
+                    else -> {
+                        "برای تنظیم مسیر، لطفاً مقصد مورد نظر خود را در قسمت جستجو وارد کنید یا روی نقشه ضربه بزنید."
+                    }
+                }
             }
             
             // درخواست کمک
@@ -258,8 +271,23 @@ class PersianAIAssistant(private val context: Context) {
                 "خداحافظ! سفر خوبی داشته باشید."
             }
             
+            // وضعیت آب و هوا
+            normalizedInput.contains("آب و هوا") || normalizedInput.contains("هوا") || normalizedInput.contains("باران") -> {
+                "هوای امروز آفتابی است. برای مسیرهای اصلی ترافیک عادی گزارش شده است."
+            }
+            
+            // وضعیت ترافیک
+            normalizedInput.contains("ترافیک") || normalizedInput.contains("جاده") || normalizedInput.contains("خیابان") -> {
+                "ترافیک در مسیرهای اصلی در حال حاضر عادی است. پیشنهاد می‌کنم از مسیر جایگزین استفاده کنید."
+            }
+            
+            // سوالات عمومی
+            normalizedInput.contains("چطور") || normalizedInput.contains("چطوری") || normalizedInput.contains("چرا") -> {
+                "من دستیار هوشمند مسیریابی شما هستم. در مورد مسیریابی، هشدارها و وضعیت رانندگی می‌توانم کمک کنم."
+            }
+            
             else -> {
-                "متوجه شدم. اگر سوال دیگری دارید، لطفاً بپرسید."
+                "من دستیار هوشمند شما هستم. می‌توانم در مورد مسیریابی، وضعیت ترافیک، آب و هوا و هشدارهای سرعت کمک کنم. لطفاً سوال خود را بپرسید."
             }
         }
     }

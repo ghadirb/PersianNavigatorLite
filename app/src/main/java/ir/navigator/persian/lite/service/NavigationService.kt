@@ -98,6 +98,11 @@ class NavigationService : Service() {
         val filter = android.content.IntentFilter("UPDATE_TTS_MODE")
         registerReceiver(ttsModeReceiver, filter)
         Log.i("NavigationService", "✅ BroadcastReceiver برای TTS Mode ثبت شد")
+        
+        // مقداردهی اولیه زمان هشدارها
+        lastBasicAlertTime = System.currentTimeMillis()
+        lastDirectionTime = System.currentTimeMillis()
+        Log.i("NavigationService", "⏰ زمان هشدارهای پایه‌ای مقداردهی اولیه شد")
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -238,6 +243,7 @@ class NavigationService : Service() {
         // محاسبه سرعت
         currentSpeed = (location.speed * 3.6f).toInt()
         Log.i("NavigationService", "🚗 سرعت محاسبه شده: $currentSpeed کیلومتر بر ساعت")
+        Log.i("NavigationService", "⏰ زمان از آخر هشدار پایه‌ای: ${System.currentTimeMillis() - lastBasicAlertTime}ms")
         
         // آپدیت notification
         updateNotification(location)
@@ -264,8 +270,10 @@ class NavigationService : Service() {
         
         // هشدارهای پایه‌ای هر 15 ثانیه برای تست (با فایل‌های صوتی موجود) - مستقل از مسیریابی
         val basicNow = System.currentTimeMillis()
-        Log.i("NavigationService", "⏰ بررسی هشدار پایه‌ای: زمان=${basicNow - lastBasicAlertTime}ms، سرعت=$currentSpeed")
-        if (basicNow - lastBasicAlertTime > 15000) {
+        val timeDiff = basicNow - lastBasicAlertTime
+        Log.i("NavigationService", "⏰ بررسی هشدار پایه‌ای: زمان=$timeDiffms، شرط=${timeDiff > 15000}، سرعت=$currentSpeed")
+        if (timeDiff > 15000) {
+            Log.i("NavigationService", "✅ شرط هشدار پایه‌ای برقرار است - در حال صدور هشدار...")
             when (currentSpeed) {
                 0 -> {
                     advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند

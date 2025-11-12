@@ -263,7 +263,7 @@
             android:layout_height="48dp"
             android:layout_margin="16dp"
             android:text="🔄 بازنشانی آمار"
-            android:backgroundTint="#F44336"
+            android:background="#F44336"
             android:textColor="#FFFFFF"
             android:textSize="16sp" />
 
