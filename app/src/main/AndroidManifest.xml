@@ -77,6 +77,13 @@
             android:label="فعال‌سازی کلیدها" />
 
         <activity
+            android:name=".ui.SimpleChatActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize"
+            android:label="چت با دستیار هوشمند" />
+
+        <activity
             android:name=".ui.AIChatActivity"
             android:exported="true"
             android:screenOrientation="portrait"

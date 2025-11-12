@@ -54,6 +54,7 @@ class NavigationService : Service() {
     private var isNavigating = false
     private var ttsMode = TTSMode.AUTONOMOUS
     private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var testAlertsJob: Job? = null
     
     // BroadcastReceiver برای دریافت تغییرات حالت TTS
     private val ttsModeReceiver = object : android.content.BroadcastReceiver() {
@@ -301,6 +302,9 @@ class NavigationService : Service() {
                 Log.w("NavigationService", "⚠️ GPS غیرفعال است - استفاده از هشدارهای تست")
                 startTestAlerts()
                 return
+            } else {
+                // GPS فعال شد، توقف هشدارهای تست
+                stopTestAlerts()
             }
             
             locationManager.requestLocationUpdates(
@@ -479,10 +483,13 @@ class NavigationService : Service() {
     private fun startTestAlerts() {
         Log.i("NavigationService", "🧪 شروع هشدارهای تست (بدون GPS)")
         
+        // توقف هشدارهای قبلی اگر وجود داشت
+        stopTestAlerts()
+        
         // هشدار اولیه
         advancedTTS.speak("تست")
         
-        mainScope.launch {
+        testAlertsJob = mainScope.launch {
             delay(2000)
             advancedTTS.speak("شروع مسیر")
             
@@ -508,8 +515,10 @@ class NavigationService : Service() {
                 // آپدیت نوتیفیکیشن با سرعت جدید
                 updateNotification(createMockLocation())
                 
-                // استفاده از هشدارهای هوشمند خودمختار
-                when (alertCounter % 5) {
+                // فقط وقتی در حال حرکت هستیم هشدار صادر کن
+                if (currentSpeed > 0) {
+                    // استفاده از هشدارهای هوشمند خودمختار
+                    when (alertCounter % 5) {
                     1 -> {
                         // هشدار خروجی
                         val exitEvent = NavigationEvent(
@@ -580,9 +589,20 @@ class NavigationService : Service() {
                             }
                         }
                     }
+                } else {
+                    Log.i("NavigationService", "🚗 سرعت صفر است، هیچ هشداری صادر نمی‌شود")
                 }
             }
         }
+    }
+    
+    /**
+     * توقف هشدارهای تست
+     */
+    private fun stopTestAlerts() {
+        testAlertsJob?.cancel()
+        testAlertsJob = null
+        Log.i("NavigationService", "🛑 هشدارهای تست متوقف شدند")
     }
     
     private fun startSmartTestAlerts() {
