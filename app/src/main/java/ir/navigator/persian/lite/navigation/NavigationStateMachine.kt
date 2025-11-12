@@ -94,7 +94,7 @@ class NavigationStateMachine {
         return NavigationState.IDLE
     }
     
-    private fun createEventForState(state: NavigationState, location: Location, speed: Int, routeData: RouteData?): NavigationEvent {
+    private fun createEventForState(state: NavigationState, location: Location, speed: Int, routeData: RouteData?): NavigationEvent? {
         return when (state) {
             NavigationState.APPROACHING -> {
                 lastTurnDirection = routeData?.nextTurnDirection ?: "راست"
@@ -166,11 +166,8 @@ class NavigationStateMachine {
             }
             
             NavigationState.IDLE -> {
-                NavigationEvent(
-                    type = NavigationEventType.TURN_REQUIRED,
-                    description = "رانندگی عادی",
-                    data = mapOf("status" to "normal")
-                )
+                // حالت IDLE نباید هشدار تولید کند - فقط برای رانندگی عادی
+                null
             }
         }
     }
@@ -179,7 +176,7 @@ class NavigationStateMachine {
     
     fun reset() {
         currentState = NavigationState.IDLE
-        lastStateChange = System.currentTimeMillis()
+        lastStateChangeTime = System.currentTimeMillis()
         lastTurnDirection = ""
         stateHistory.clear()
         Log.i("NavigationStateMachine", "🔄 State Machine بازنشانی شد")
