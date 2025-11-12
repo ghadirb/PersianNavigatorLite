@@ -13,6 +13,9 @@ import ir.navigator.persian.lite.navigation.NavigatorEngine
 import ir.navigator.persian.lite.ai.SmartNavigationAI
 import ir.navigator.persian.lite.ai.NavigationEvent
 import ir.navigator.persian.lite.ai.NavigationEventType
+import ir.navigator.persian.lite.navigation.NavigationStateMachine
+import ir.navigator.persian.lite.navigation.NavigationState
+import ir.navigator.persian.lite.navigation.RouteData
 import ir.navigator.persian.lite.models.SpeedCamera
 import android.location.Location
 import android.location.LocationListener
@@ -43,6 +46,7 @@ class NavigationService : Service() {
     private lateinit var destinationManager: DestinationManager
     private lateinit var notificationManager: NotificationManager
     private lateinit var smartAI: SmartNavigationAI
+    private lateinit var stateMachine: NavigationStateMachine
     
     private var currentSpeed = 0
     private var lastDirectionTime = 0L
@@ -142,6 +146,7 @@ class NavigationService : Service() {
         routeManager = RouteManager()
         destinationManager = DestinationManager(this)
         smartAI = SmartNavigationAI(this)
+        stateMachine = NavigationStateMachine()
         
         // تنظیم حالت پیش‌فرض TTS به خودمختار
         advancedTTS.setTTSMode(ttsMode)
@@ -497,76 +502,96 @@ class NavigationService : Service() {
     
     private fun processLocation(location: Location) {
         Log.i("NavigationService", "📍 موقعیت جدید دریافت شد: lat=${location.latitude}, lng=${location.longitude}")
-        // محاسبه سرعت
         currentSpeed = (location.speed * 3.6f).toInt()
         Log.i("NavigationService", "🚗 سرعت محاسبه شده: $currentSpeed کیلومتر بر ساعت")
         Log.i("NavigationService", "⏰ زمان از آخر هشدار پایه‌ای: ${System.currentTimeMillis() - lastBasicAlertTime}ms")
         
-        // آپدیت notification
+        // آپدیت نوتیفیکیشن
         updateNotification(location)
         
-        // مسیریابی به مقصد با هشدارهای صوتی واقعی
+        // ساخت داده‌های مسیر برای State Machine
+        val routeData = createRouteData(location)
+        
+        // پردازش با State Machine
+        val stateEvent = stateMachine.processLocationUpdate(location, currentSpeed, routeData)
+        
+        // اگر State Machine رویدادی تولید کرد، هشدار صادر کن
+        stateEvent?.let { event ->
+            Log.i("NavigationService", "🤖 State Machine رویداد تولید کرد: ${event.type}")
+            smartAI.generateDynamicAlert(event)
+        }
+        
+        // بررسی مسیر و مقصد
         routeManager.calculateRoute(location)?.let { route ->
-            // بررسی رسیدن به مقصد
             if (routeManager.hasReachedDestination(location)) {
-                advancedTTS.announceDestinationReached()
-                Log.i("NavigationService", "🏁 هشدار رسیدن به مقصد صادر شد")
-                routeManager.clearDestination()
-                destinationManager.clearDestination()
-            } else {
-                // راهنمایی جهت (هر 30 ثانیه) با فایل‌های صوتی
-                val directionNow = System.currentTimeMillis()
-                if (directionNow - lastDirectionTime > 30000) {
-                    val distance = (route.distance / 1000).toInt()
-                    advancedTTS.provideNavigationAlert(route.distance.toInt(), route.direction)
-                    Log.i("NavigationService", "🧭 هشدار ناوبری: ${route.direction} - فاصله: ${route.distance}m")
-                    lastDirectionTime = directionNow
+                advancedTTS.speak("شما به مقصد رسیدید")
+                stopSelf()
+                return
+            }
+        }
+        
+        // هشدارهای پایه‌ای هر 15 ثانیه (فقط اگر State Machine فعال نبود)
+        if (stateMachine.getCurrentState() == NavigationState.IDLE) {
+            val basicNow = System.currentTimeMillis()
+            val timeDiff = basicNow - lastBasicAlertTime
+            
+            Log.i("NavigationService", "⏰ بررسی هشدار پایه‌ای: زمان=${timeDiff}ms، شرط=${timeDiff > 15000}، سرعت=$currentSpeed")
+            
+            if (timeDiff > 15000) {
+                lastBasicAlertTime = basicNow
+                
+                // هشدارهای پایه‌ای بر اساس سرعت
+                when (currentSpeed) {
+                    0 -> {
+                        advancedTTS.speak("تست")
+                        Log.i("NavigationService", "🔊 هشدار پایه‌ای: ایستاده")
+                    }
+                    in 1..30 -> {
+                        advancedTTS.speak("تست")
+                        Log.i("NavigationService", "🔊 هشدار پایه‌ای: سرعت کم")
+                    }
+                    in 31..60 -> {
+                        advancedTTS.speak("تست")
+                        Log.i("NavigationService", "🔊 هشدار پایه‌ای: سرعت عادی")
+                    }
+                    in 61..80 -> {
+                        advancedTTS.speak("سرعت بالا")
+                        Log.i("NavigationService", "🔊 هشدار پایه‌ای: سرعت بالا")
+                    }
+                    else -> {
+                        advancedTTS.speak("کاهش سرعت")
+                        Log.i("NavigationService", "🔊 هشدار پایه‌ای: کاهش سرعت")
+                    }
                 }
             }
         }
         
-        // هشدارهای پایه‌ای هر 15 ثانیه برای تست (با فایل‌های صوتی موجود) - مستقل از مسیریابی
-        val basicNow = System.currentTimeMillis()
-        val timeDiff = basicNow - lastBasicAlertTime
-        Log.i("NavigationService", "⏰ بررسی هشدار پایه‌ای: زمان=${timeDiff}ms، شرط=${timeDiff > 15000}، سرعت=$currentSpeed")
-        if (timeDiff > 15000) {
-            Log.i("NavigationService", "✅ شرط هشدار پایه‌ای برقرار است - در حال صدور هشدار...")
-            when (currentSpeed) {
-                0 -> {
-                    advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند
-                    Log.i("NavigationService", "🔊 هشدار پایه‌ای: ایستاده (تست)")
-                }
-                in 1..30 -> {
-                    advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند
-                    Log.i("NavigationService", "🔊 هشدار پایه‌ای: سرعت کم (تست)")
-                }
-                in 31..60 -> {
-                    advancedTTS.speak("تست") // از فایل test_alert.wav استفاده می‌کند
-                    Log.i("NavigationService", "🔊 هشدار پایه‌ای: سرعت عادی (تست)")
-                }
-                in 61..80 -> {
-                    advancedTTS.speak("سرعت بالا") // از فایل speeding_danger.wav استفاده می‌کند
-                    Log.i("NavigationService", "🔊 هشدار پایه‌ای: سرعت بالا")
-                }
-                else -> {
-                    advancedTTS.speak("کاهش سرعت") // از فایل reduce_speed.wav استفاده می‌کند
-                    Log.i("NavigationService", "🔊 هشدار پایه‌ای: کاهش سرعت")
-                }
-            }
-            lastBasicAlertTime = basicNow
-            
-            // تحلیل هوشمند موقعیت و ارائه هشدارهای پیشرفته
-            analyzeAndProvideSmartAlerts(location)
-            
-            // بررسی دوربین‌های سرعت (فعال شده)
-            checkSpeedCameraAlerts(location)
-        }
+        // تحلیل هوشمند موقعیت و هشدارهای پیشرفته
+        analyzeAndProvideSmartAlerts(location)
+        
+        // بررسی هشدارهای دوربین سرعت
+        checkSpeedCameraAlerts(location)
     }
     
-    private fun updateNotification(location: Location) {
-        val notification = createNotification()
-        val manager = getSystemService(NotificationManager::class.java)
-        manager?.notify(NOTIFICATION_ID, notification)
+    /**
+     * ساخت داده‌های مسیر برای State Machine
+     */
+    private fun createRouteData(location: Location): RouteData? {
+        // در عمل این داده‌ها از RouteManager گرفته می‌شود
+        // اینجا شبیه‌سازی شده است
+        return RouteData(
+            speedLimit = 60,
+            distanceToNextTurn = when (currentSpeed) {
+                0 -> 1000
+                in 1..30 -> 500
+                in 31..60 -> 200
+                else -> 100
+            },
+            nextTurnDirection = if (Math.random() > 0.5) "راست" else "چپ",
+            distanceToDestination = 2000,
+            hazardAhead = if (currentSpeed > 80) "سرعت بالا" else null,
+            distanceToHazard = 300
+        )
     }
     
     /**
