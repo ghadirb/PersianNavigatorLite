@@ -8,8 +8,8 @@ import androidx.core.app.NotificationCompat
 import ir.navigator.persian.lite.MainActivity
 import ir.navigator.persian.lite.R
 import ir.navigator.persian.lite.navigation.RouteManager
-import ir.navigator.persian.lite.navigation.DestinationManager
-import ir.navigator.persian.lite.navigation.NavigatorEngine
+import ir.navigator.persian.lite.DestinationManager
+import ir.navigator.persian.lite.NavigatorEngine
 import ir.navigator.persian.lite.ai.SmartNavigationAI
 import ir.navigator.persian.lite.ai.NavigationEvent
 import ir.navigator.persian.lite.ai.NavigationEventType
@@ -690,6 +690,19 @@ class NavigationService : Service() {
      */
     fun getCurrentTTSMode(): TTSMode {
         return ttsMode
+    }
+    
+    /**
+     * آپدیت نوتیفیکیشن با موقعیت جدید
+     */
+    private fun updateNotification(location: Location) {
+        try {
+            val notification = createNotification()
+            notificationManager.notify(NOTIFICATION_ID, notification)
+            Log.i("NavigationService", "🔔 نوتیفیکیشن آپدیت شد: سرعت $currentSpeed km/h")
+        } catch (e: Exception) {
+            Log.e("NavigationService", "❌ خطا در آپدیت نوتیفیکیشن: ${e.message}")
+        }
     }
     
     override fun onBind(intent: Intent?): IBinder? = null

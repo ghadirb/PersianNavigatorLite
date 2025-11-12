@@ -102,7 +102,7 @@ class NavigationStateMachine {
                     description = "نزدیک شدن به پیچ",
                     data = mapOf(
                         "direction" to lastTurnDirection,
-                        "distance" to routeData?.distanceToNextTurn?.toString() ?: "150",
+                        "distance" to (routeData?.distanceToNextTurn?.toString() ?: "150"),
                         "speed" to speed.toString()
                     )
                 )
@@ -137,7 +137,7 @@ class NavigationStateMachine {
                     type = NavigationEventType.SPEED_LIMIT_CHANGE,
                     description = "سرعت بالا",
                     data = mapOf(
-                        "speedLimit" to routeData?.speedLimit?.toString() ?: "60",
+                        "speedLimit" to (routeData?.speedLimit?.toString() ?: "60"),
                         "currentSpeed" to speed.toString()
                     )
                 )
@@ -148,7 +148,7 @@ class NavigationStateMachine {
                     type = NavigationEventType.DESTINATION_APPROACHING,
                     description = "نزدیک مقصد",
                     data = mapOf(
-                        "distance" to routeData?.distanceToDestination?.toString() ?: "300"
+                        "distance" to (routeData?.distanceToDestination?.toString() ?: "300")
                     )
                 )
             }
@@ -159,7 +159,7 @@ class NavigationStateMachine {
                     description = "خطر در پیش رو",
                     data = mapOf(
                         "hazard" to (routeData?.hazardAhead ?: "خطر ناشناخته"),
-                        "distance" to routeData?.distanceToHazard?.toString() ?: "200"
+                        "distance" to (routeData?.distanceToHazard?.toString() ?: "200")
                     )
                 )
             }

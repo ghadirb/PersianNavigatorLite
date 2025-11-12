@@ -2,7 +2,7 @@ package ir.navigator.persian.lite.logging
 
 import android.location.Location
 import android.util.Log
-import com.google.gson.Gson
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -14,7 +14,7 @@ data class NavigationLogEntry(
     val level: LogLevel,
     val category: LogCategory,
     val message: String,
-    val data: Map<String, Any> = emptyMap()
+    val data: Map<String, String> = emptyMap()
 )
 
 enum class LogLevel {
@@ -33,7 +33,6 @@ enum class LogCategory {
 
 class NavigationLogger {
     
-    private val gson = Gson()
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
     
     fun logStateChange(fromState: String, toState: String, trigger: String, location: Location? = null) {
@@ -147,12 +146,18 @@ class NavigationLogger {
     }
     
     private fun log(entry: NavigationLogEntry) {
-        val jsonLog = gson.toJson(entry)
+        val jsonLog = JSONObject().apply {
+            put("timestamp", entry.timestamp)
+            put("level", entry.level.name)
+            put("category", entry.category.name)
+            put("message", entry.message)
+            put("data", JSONObject(entry.data))
+        }.toString()
         
         when (entry.level) {
             LogLevel.DEBUG -> Log.d("NavigationLogger", jsonLog)
             LogLevel.INFO -> Log.i("NavigationLogger", jsonLog)
-            LogLevel.WARN -> Log.w("NavigationLogger", jsonLog)
+            LogLevel.WARN -> Log.w("NavigationLogger", jsonLog, null)
             LogLevel.ERROR -> Log.e("NavigationLogger", jsonLog)
         }
     }

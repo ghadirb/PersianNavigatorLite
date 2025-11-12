@@ -135,8 +135,8 @@ class TTSCacheManager(private val context: Context) {
         val now = System.currentTimeMillis()
         val expiredThreshold = 30 * 60 * 1000L // 30 دقیقه
         
-        val expired = speechCache.filter { (_, _) ->
-            now - (lastUsed[it.key] ?: 0) > expiredThreshold
+        val expired = speechCache.filter { (key, _) ->
+            now - (lastUsed[key] ?: 0) > expiredThreshold
         }
         
         expired.forEach { (key, _) ->
