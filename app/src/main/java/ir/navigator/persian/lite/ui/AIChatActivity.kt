@@ -7,7 +7,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import ir.navigator.persian.lite.R
-import ir.navigator.persian.lite.ai.PersianAIAssistant
+import ir.navigator.persian.lite.ai.SimpleAIAssistant
 import android.util.Log
 import android.widget.Toast
 
@@ -16,7 +16,7 @@ import android.widget.Toast
  */
 class AIChatActivity : AppCompatActivity() {
     
-    private lateinit var aiAssistant: PersianAIAssistant
+    private lateinit var aiAssistant: SimpleAIAssistant
     private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
     private lateinit var etMessage: EditText
     private lateinit var btnSend: Button
@@ -25,7 +25,7 @@ class AIChatActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_ai_chat)
         
-        aiAssistant = PersianAIAssistant(this)
+        aiAssistant = SimpleAIAssistant(this)
         
         setupUI()
     }

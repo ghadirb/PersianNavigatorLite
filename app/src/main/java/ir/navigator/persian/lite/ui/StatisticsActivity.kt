@@ -18,9 +18,9 @@ class StatisticsActivity : AppCompatActivity() {
         Log.i("StatisticsActivity", "📊 در حال ساخت صفحه آمار...")
         
         try {
-            Log.i("StatisticsActivity", "🔍 در حال بارگذاری layout: activity_statistics")
-            setContentView(R.layout.activity_statistics)
-            Log.i("StatisticsActivity", "✅ layout با موفقیت بارگذاری شد")
+            Log.i("StatisticsActivity", "🔍 در حال بارگذاری layout: activity_statistics_simple")
+            setContentView(R.layout.activity_statistics_simple)
+            Log.i("StatisticsActivity", "✅ layout ساده با موفقیت بارگذاری شد")
         } catch (e: Exception) {
             Log.e("StatisticsActivity", "❌ خطا در بارگذاری layout: ${e.message}")
             Log.e("StatisticsActivity", "❌ Stack trace: ${e.stackTraceToString()}")

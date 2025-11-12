@@ -207,6 +207,13 @@ class NavigationService : Service() {
     
     private fun startLocationTracking() {
         try {
+            // بررسی فعال بودن GPS
+            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                Log.w("NavigationService", "⚠️ GPS غیرفعال است - استفاده از هشدارهای تست")
+                startTestAlerts()
+                return
+            }
+            
             locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,
                 1000L, // هر 1 ثانیه
@@ -226,6 +233,46 @@ class NavigationService : Service() {
             }
         } catch (e: SecurityException) {
             e.printStackTrace()
+        }
+    }
+    
+    private fun startTestAlerts() {
+        Log.i("NavigationService", "🧪 شروع هشدارهای تست (بدون GPS)")
+        
+        // هشدار اولیه
+        advancedTTS.speak("تست")
+        
+        mainScope.launch {
+            delay(2000)
+            advancedTTS.speak("شروع مسیر")
+            
+            // هشدارهای دوره‌ای هر 15 ثانیه
+            while (true) {
+                delay(15000)
+                currentSpeed = (0..80).random() // سرعت تصادفی برای تست
+                when (currentSpeed) {
+                    0 -> {
+                        advancedTTS.speak("تست")
+                        Log.i("NavigationService", "🔊 هشدار تست: ایستاده")
+                    }
+                    in 1..30 -> {
+                        advancedTTS.speak("تست")
+                        Log.i("NavigationService", "🔊 هشدار تست: سرعت کم")
+                    }
+                    in 31..60 -> {
+                        advancedTTS.speak("تست")
+                        Log.i("NavigationService", "🔊 هشدار تست: سرعت عادی")
+                    }
+                    in 61..80 -> {
+                        advancedTTS.speak("سرعت بالا")
+                        Log.i("NavigationService", "🔊 هشدار تست: سرعت بالا")
+                    }
+                    else -> {
+                        advancedTTS.speak("کاهش سرعت")
+                        Log.i("NavigationService", "🔊 هشدار تست: کاهش سرعت")
+                    }
+                }
+            }
         }
     }
     
