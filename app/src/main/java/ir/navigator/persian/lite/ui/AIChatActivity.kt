@@ -92,6 +92,6 @@ class AIChatActivity : AppCompatActivity() {
     
     override fun onDestroy() {
         super.onDestroy()
-        aiAssistant.shutdown()
+        aiAssistant.cleanup()
     }
 }
