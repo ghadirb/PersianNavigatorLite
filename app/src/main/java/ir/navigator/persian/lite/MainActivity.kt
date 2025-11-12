@@ -31,7 +31,7 @@ import ir.navigator.persian.lite.tts.AdvancedPersianTTS
 import ir.navigator.persian.lite.tts.TTSMode
 import ir.navigator.persian.lite.test.AITestSuite
 import ir.navigator.persian.lite.ui.StatisticsActivity
-import ir.navigator.persian.lite.ui.AIChatActivity
+import ir.navigator.persian.lite.ui.SimpleChatActivity
 
 class MainActivity : AppCompatActivity() {
     
@@ -268,7 +268,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 Log.i("MainActivity", "🤖 در حال باز کردن صفحه چت با هوش مصنوعی...")
                 Toast.makeText(this, "🤖 در حال باز کردن صفحه چت...", Toast.LENGTH_SHORT).show()
-                val intent = Intent(this, AIChatActivity::class.java)
+                val intent = Intent(this, SimpleChatActivity::class.java)
                 startActivity(intent)
                 Log.i("MainActivity", "✅ صفحه چت با موفقیت باز شد")
             } catch (e: Exception) {

@@ -246,10 +246,25 @@ class NavigationService : Service() {
             delay(2000)
             advancedTTS.speak("شروع مسیر")
             
-            // هشدارهای دوره‌ای هر 15 ثانیه
+            // شبیه‌سازی سرعت برای تست و هشدارهای دوره‌ای
+            var simulatedSpeed = 0
             while (true) {
                 delay(15000)
-                currentSpeed = (0..80).random() // سرعت تصادفی برای تست
+                
+                // شبیه‌سازی تغییر سرعت (ایستاده → کم → عادی → بالا)
+                simulatedSpeed = when (simulatedSpeed) {
+                    0 -> 20
+                    20 -> 50
+                    50 -> 70
+                    else -> 0
+                }
+                
+                currentSpeed = simulatedSpeed
+                Log.i("NavigationService", "🚗 سرعت شبیه‌سازی شده: $currentSpeed km/h")
+                
+                // آپدیت نوتیفیکیشن با سرعت جدید
+                updateNotification(createMockLocation())
+                
                 when (currentSpeed) {
                     0 -> {
                         advancedTTS.speak("تست")
@@ -274,6 +289,14 @@ class NavigationService : Service() {
                 }
             }
         }
+    }
+    
+    private fun createMockLocation(): Location {
+        val location = Location("mock")
+        location.latitude = 35.6892
+        location.longitude = 51.3890
+        location.speed = (currentSpeed / 3.6f).toFloat()
+        return location
     }
     
     private val locationListener = object : LocationListener {

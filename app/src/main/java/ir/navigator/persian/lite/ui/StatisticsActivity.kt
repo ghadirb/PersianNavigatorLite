@@ -42,40 +42,46 @@ class StatisticsActivity : AppCompatActivity() {
                 Log.i("StatisticsActivity", " دکمه بازگشت فشرده شد")
                 finish()
             }
-            Log.i("StatisticsActivity", "✅ دکمه بازگشت تنظیم شد")
+            Log.i("StatisticsActivity", " دکمه بازگشت تنظیم شد")
             
-            // نمایش آمار رانندگی - تمام المان‌ها
-            val tvTotalDistance = findViewById<TextView>(R.id.tvTotalDistance)
-            val tvTotalTime = findViewById<TextView>(R.id.tvTotalTime)
-            val tvAverageSpeed = findViewById<TextView>(R.id.tvAverageSpeed)
-            val tvMaxSpeed = findViewById<TextView>(R.id.tvMaxSpeed)
-            val tvOverSpeedCount = findViewById<TextView>(R.id.tvOverSpeedCount)
-            val tvCameraAlerts = findViewById<TextView>(R.id.tvCameraAlerts)
-            val tvBumpAlerts = findViewById<TextView>(R.id.tvBumpAlerts)
+            // نمایش آمار رانندگی - فقط المان‌های موجود در layout ساده
+            try {
+                val tvTotalDistance = findViewById<TextView>(R.id.tvTotalDistance)
+                val tvTotalTime = findViewById<TextView>(R.id.tvTotalTime)
+                val tvAverageSpeed = findViewById<TextView>(R.id.tvAverageSpeed)
+                val tvMaxSpeed = findViewById<TextView>(R.id.tvMaxSpeed)
+                
+                tvTotalDistance.text = "0 کیلومتر"
+                tvTotalTime.text = "0 دقیقه"
+                tvAverageSpeed.text = "0 کیلومتر بر ساعت"
+                tvMaxSpeed.text = "0 کیلومتر بر ساعت"
+                
+                Log.i("StatisticsActivity", " مقادیر اولیه آمار تنظیم شد")
+            } catch (e: Exception) {
+                Log.e("StatisticsActivity", " خطا در تنظیم مقادیر آمار: ${e.message}")
+            }
             
-            // تنظیم مقادیر اولیه
-            tvTotalDistance.text = "0 کیلومتر"
-            tvTotalTime.text = "0 ساعت و 0 دقیقه"
-            tvAverageSpeed.text = "0 کیلومتر بر ساعت"
-            tvMaxSpeed.text = "0 کیلومتر بر ساعت"
-            tvOverSpeedCount.text = "0 بار"
-            tvCameraAlerts.text = "0 هشدار"
-            tvBumpAlerts.text = "0 هشدار"
-            
-            Log.i("StatisticsActivity", "✅ تمام آمار اولیه نمایش داده شد")
+            Log.i("StatisticsActivity", " تمام آمار اولیه نمایش داده شد")
             
             // دکمه بازنشانی
             val btnReset = findViewById<Button>(R.id.btnReset)
             btnReset.setOnClickListener {
                 Log.i("StatisticsActivity", " دکمه بازنشانی فشرده شد")
-                tvTotalDistance.text = "0 کیلومتر"
-                tvTotalTime.text = "0 ساعت و 0 دقیقه"
-                tvAverageSpeed.text = "0 کیلومتر بر ساعت"
-                tvMaxSpeed.text = "0 کیلومتر بر ساعت"
-                tvOverSpeedCount.text = "0 بار"
-                tvCameraAlerts.text = "0 هشدار"
-                tvBumpAlerts.text = "0 هشدار"
-                Toast.makeText(this, " آمار بازنشانی شد", Toast.LENGTH_SHORT).show()
+                try {
+                    val tvTotalDistance = findViewById<TextView>(R.id.tvTotalDistance)
+                    val tvTotalTime = findViewById<TextView>(R.id.tvTotalTime)
+                    val tvAverageSpeed = findViewById<TextView>(R.id.tvAverageSpeed)
+                    val tvMaxSpeed = findViewById<TextView>(R.id.tvMaxSpeed)
+                    
+                    tvTotalDistance.text = "0 کیلومتر"
+                    tvTotalTime.text = "0 ساعت و 0 دقیقه"
+                    tvAverageSpeed.text = "0 کیلومتر بر ساعت"
+                    tvMaxSpeed.text = "0 کیلومتر بر ساعت"
+                    
+                    Toast.makeText(this, " آمار بازنشانی شد", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Log.e("StatisticsActivity", " خطا در بازنشانی: ${e.message}")
+                }
             }
             
             Log.i("StatisticsActivity", "✅ صفحه آمار با موفقیت آماده شد")
