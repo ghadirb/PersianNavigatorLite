@@ -79,7 +79,7 @@ class NavigationLogger {
                 "longitude" to location.longitude.toString(),
                 "speed" to speed.toString(),
                 "accuracy" to accuracy.toString(),
-                "provider" to location.provider,
+                "provider" to (location.provider ?: "unknown"),
                 "time" to location.time.toString()
             )
         )
