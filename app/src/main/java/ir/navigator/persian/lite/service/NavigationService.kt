@@ -271,7 +271,7 @@ class NavigationService : Service() {
         // هشدارهای پایه‌ای هر 15 ثانیه برای تست (با فایل‌های صوتی موجود) - مستقل از مسیریابی
         val basicNow = System.currentTimeMillis()
         val timeDiff = basicNow - lastBasicAlertTime
-        Log.i("NavigationService", "⏰ بررسی هشدار پایه‌ای: زمان=$timeDiffms، شرط=${timeDiff > 15000}، سرعت=$currentSpeed")
+        Log.i("NavigationService", "⏰ بررسی هشدار پایه‌ای: زمان=${timeDiff}ms، شرط=${timeDiff > 15000}، سرعت=$currentSpeed")
         if (timeDiff > 15000) {
             Log.i("NavigationService", "✅ شرط هشدار پایه‌ای برقرار است - در حال صدور هشدار...")
             when (currentSpeed) {
