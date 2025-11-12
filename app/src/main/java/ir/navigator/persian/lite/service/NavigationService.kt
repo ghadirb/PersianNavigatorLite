@@ -512,13 +512,22 @@ class NavigationService : Service() {
         // ساخت داده‌های مسیر برای State Machine
         val routeData = createRouteData(location)
         
-        // پردازش با State Machine
+        // پردازش با State Machine با Rate Limiting
         val stateEvent = stateMachine.processLocationUpdate(location, currentSpeed, routeData)
         
-        // اگر State Machine رویدادی تولید کرد، هشدار صادر کن
+        // اگر State Machine رویدادی تولید کرد و زمان کافی گذشته، هشدار صادر کن
         stateEvent?.let { event ->
-            Log.i("NavigationService", "🤖 State Machine رویداد تولید کرد: ${event.type}")
-            smartAI.generateDynamicAlert(event)
+            val now = System.currentTimeMillis()
+            val timeSinceLastAlert = now - lastBasicAlertTime
+            
+            // حداقل 10 ثانیه بین هشدارهای State Machine
+            if (timeSinceLastAlert > 10000) {
+                Log.i("NavigationService", "🤖 State Machine رویداد تولید کرد: ${event.type}")
+                smartAI.generateDynamicAlert(event)
+                lastBasicAlertTime = now
+            } else {
+                Log.i("NavigationService", "⏸️ State Machine هشدار تولید کرد ولی Rate Limit فعال شد")
+            }
         }
         
         // بررسی مسیر و مقصد
@@ -566,11 +575,16 @@ class NavigationService : Service() {
             }
         }
         
-        // تحلیل هوشمند موقعیت و هشدارهای پیشرفته
-        analyzeAndProvideSmartAlerts(location)
+        // تحلیل هوشمند موقعیت فقط در حالت IDLE (برای جلوگیری از اسپم)
+        if (stateMachine.getCurrentState() == NavigationState.IDLE) {
+            analyzeAndProvideSmartAlerts(location)
+        }
         
-        // بررسی هشدارهای دوربین سرعت
-        checkSpeedCameraAlerts(location)
+        // بررسی هشدارهای دوربین سرعت (فقط هر 30 ثانیه)
+        val now = System.currentTimeMillis()
+        if (now - lastBasicAlertTime > 30000) {
+            checkSpeedCameraAlerts(location)
+        }
     }
     
     /**

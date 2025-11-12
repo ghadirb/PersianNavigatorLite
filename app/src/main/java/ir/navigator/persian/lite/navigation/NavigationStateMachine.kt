@@ -28,7 +28,8 @@ data class NavigationTransition(
 class NavigationStateMachine {
     
     private var currentState = NavigationState.IDLE
-    private var lastStateChange = System.currentTimeMillis()
+    private var lastStateChangeTime = 0L
+    private val minStateDuration = 5000L // حداقل 5 ثانیه در هر حالت (برای جلوگیری از اسپم)
     private var lastTurnDirection = ""
     private val stateHistory = mutableListOf<NavigationTransition>()
     
@@ -43,7 +44,7 @@ class NavigationStateMachine {
         val newState = determineNewState(location, speed, routeData)
         
         // اگر حالت تغییر کرده و زمان کافی گذشته
-        if (newState != currentState && (timestamp - lastStateChange) > MIN_STATE_DURATION) {
+        if (newState != currentState && (timestamp - lastStateChangeTime) > MIN_STATE_DURATION) {
             val transition = NavigationTransition(
                 fromState = currentState,
                 toState = newState,
@@ -53,7 +54,7 @@ class NavigationStateMachine {
             
             stateHistory.add(transition)
             currentState = newState
-            lastStateChange = timestamp
+            lastStateChangeTime = timestamp
             
             Log.i("NavigationStateMachine", "🔄 تغییر حالت: ${transition.fromState} → ${transition.toState} (${transition.trigger})")
             
